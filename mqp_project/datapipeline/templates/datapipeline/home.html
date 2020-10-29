@@ -3,7 +3,7 @@
 {% block content %}
   <h1>Dashboard</h1>
   <div class="grid-container center">
-    <a class="none" href="#">
+    <a class="none" href="{% url 'datapipeline-singleStudy' %}">
       <div class="grid-item">
         <ul class="icon-listings">
           <li>
@@ -15,7 +15,7 @@
         </ul>
       </div>
     </a>
-    <a class="none" href="#">
+    <a class="none" href="{% url 'datapipeline-crossStudy' %}">
       <div class="grid-item">
         <ul class="icon-listings">
           <li>

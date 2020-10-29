@@ -1,0 +1,24 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<form action="{% url 'datapipeline-crossStudy' %}" method="post">
+    {% csrf_token %}
+    <ul class="study-listings">
+        {% for study in studies %}
+        <li class="study-article">
+            <input class="radio" type="checkbox" name="tag[]" value="{{study}}">
+            <label class="study-article">
+                <article class="media content-section">
+                    <div class="media-body">
+                        <h2>{{ study.study_name }}</h2>
+                        <p class="article-content">{{ study.description }}</p>
+                    </div>
+                </article>
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <input type="submit" value="submit">
+</form>
+{% endblock content %}

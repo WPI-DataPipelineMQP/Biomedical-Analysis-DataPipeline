@@ -27,7 +27,7 @@
 }
 
 /* puts grid to hamburger layout if width is too small */
-@media(max-width: 991px) {
+@media(max-width: 1200px) {
 	.grid-container {
 		display: grid;
 		grid-template-columns: auto;
