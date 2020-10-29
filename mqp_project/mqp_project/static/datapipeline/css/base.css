@@ -1,0 +1,28 @@
+body {
+	margin-top: 5rem;
+}
+
+.container-width {
+	min-width: 80%;
+}
+
+.navbar-bg-color {
+	background-color: #016B48;
+}
+
+.center-nav-items {
+	text-align: center;
+}
+
+.site-header .navbar-nav .nav-link {
+	color: #ffffff;
+}
+
+.site-header .navbar-nav .nav-link:hover {
+	color: #cbd5db;
+}
+
+.site-header .navbar-nav .nav-link.active {
+	font-weight: 500;
+}
+

@@ -1,26 +1,55 @@
 {% extends "datapipeline/base.html" %}
+{% load static %}
 {% block content %}
   <h1>Dashboard</h1>
   <div class="grid-container center">
-    <div class="grid-item">
-      <button>
-        Single Study Selection
-      </button>
-    </div>
-    <div class="grid-item">
-      <button disabled>
-        Cross Study Selection
-      </button>
-    </div>
-    <div class="grid-item">
-      <button disabled>
-        Upload
-      </button>
-    </div>
-    <div class="grid-item">
-      <button disabled>
-        Inventory
-      </button>
-    </div>
+    <a class="none" href="#">
+      <div class="grid-item">
+        <ul class="icon-listings">
+          <li>
+            <img class="icons" src="{% static 'datapipeline/images/single-study.png' %}">
+          </li>
+          <li class="icon-description">
+            Single Study Selection
+          </li>
+        </ul>
+      </div>
+    </a>
+    <a class="none" href="#">
+      <div class="grid-item">
+        <ul class="icon-listings">
+          <li>
+            <img class="icons" src="{% static 'datapipeline/images/cross-study.png' %}">
+          </li>
+          <li class="icon-description">
+            Cross Study Selection
+          </li>
+        </ul>
+      </div>
+    </a>
+    <a class="none" href="#">
+      <div class="grid-item">
+        <ul class="icon-listings">
+          <li>
+            <img class="icons" src="{% static 'datapipeline/images/upload.png' %}">
+          </li>
+          <li class="icon-description">
+            Upload
+          </li>
+        </ul>
+      </div>
+    </a>
+    <a class="none" href="#">
+      <div class="grid-item">
+        <ul class="icon-listings">
+          <li>
+            <img class="icons" src="{% static 'datapipeline/images/inventory.png' %}">
+          </li>
+          <li class="icon-description">
+            Inventory
+          </li>
+        </ul>
+      </div>
+    </a>
   </div>
 {% endblock content %}
