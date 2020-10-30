@@ -1,0 +1,17 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<h1>Data Selection</h1>
+<ul>
+    {% for study in studies %}
+    <li>
+        <article class="media">
+            <div class="media-body">
+                <p>{{ study.study_name }}</p>
+            </div>
+        </article>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock content %}

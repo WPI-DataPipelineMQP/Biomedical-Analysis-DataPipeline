@@ -1,12 +1,12 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<form action="{% url 'datapipeline-crossStudy' %}" method="post">
+<form action="{% url 'datapipeline-dataSelection' %}" method="post">
     {% csrf_token %}
     <ul class="study-listings">
         {% for study in studies %}
         <li class="study-article">
-            <input class="radio" type="checkbox" name="tag[]" value="{{study}}">
+            <input class="radio" type="checkbox" name="studies[]" value="{{study}}">
             <label class="study-article">
                 <article class="media content-section">
                     <div class="media-body">

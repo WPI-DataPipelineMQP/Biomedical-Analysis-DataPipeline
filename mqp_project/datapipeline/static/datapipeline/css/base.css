@@ -2,6 +2,11 @@ body {
 	margin-top: 5rem;
 }
 
+h3.title-header {
+	font-family: 'Changa One', cursive;
+
+}
+
 .container-width {
 	min-width: 80%;
 }

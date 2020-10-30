@@ -2,5 +2,5 @@ from django.db import models
 from django import forms
 
 # Create your models here.
-class Tag:
+class Studies:
     field = forms.BooleanField()
