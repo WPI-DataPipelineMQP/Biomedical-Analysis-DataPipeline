@@ -13,5 +13,21 @@
     </li>
     {% endfor %}
 </ul>
+<h2>What data from this study would you like to view?</h2>
+{% csrf_token %}
+<ul class="study-listings">
+    {% for category in categories %}
+    <li class="study-article">
+        <input class="radio" type="checkbox" name="studies[]" value="{{study}}">
+        <label class="study-article">
+            <article class="media content-section">
+                <div class="media-body">
+                     <p>{{ category.name }}</p>
+                </div>
+            </article>
+        </label>
+    </li>
+    {% endfor %}
+</ul>
 
 {% endblock content %}

@@ -63,12 +63,26 @@ def getJSONVersion(raw_list):
 def dataSelection(request):
     raw_studies = request.POST.getlist('studies[]')
     studies = getJSONVersion(raw_studies)
+
+    data_categories = [
+		{
+			"name":"Heart Rate"
+		},
+		{
+			"name":"Corsi"
+		},
+		{
+			"name":"Flanker"
+		},
+	]
     
     context = {
 		'myCSS': 'dataSelection.css',
-		'studies': studies
+		'studies': studies,
+		'categories': data_categories
 	}
     
+
     # TODO  
     # (1) make queries to get all the data categories from the selected study/studies
     	# (1.1) each data category needs to an object
