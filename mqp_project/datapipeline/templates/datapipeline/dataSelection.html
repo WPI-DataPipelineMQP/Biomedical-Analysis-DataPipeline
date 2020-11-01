@@ -29,5 +29,21 @@
     </li>
     {% endfor %}
 </ul>
+<h2>Which groups would you like to analyze?</h2>
+{% csrf_token %}
+<ul class="study-listings">
+    {% for sgroup in sgroups %}
+    <li class="study-article">
+        <input class="radio" type="checkbox" name="studies[]" value="{{study}}">
+        <label class="study-article">
+            <article class="media content-section">
+                <div class="media-body">
+                     <p>{{ sgroup.name }}</p>
+                </div>
+            </article>
+        </label>
+    </li>
+    {% endfor %}
+</ul>
 
 {% endblock content %}
