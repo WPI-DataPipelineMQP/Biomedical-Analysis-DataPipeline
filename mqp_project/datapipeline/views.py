@@ -107,11 +107,17 @@ def dataSelection(request):
 
 def dataSelectionContinued(request):
     raw_studies = request.POST.getlist('studies[]')
+    raw_data_categories = request.POST.getlist('categories[]')
+    raw_study_groups = request.POST.getlist('sgroups[]')
     studies = getJSONVersion(raw_studies)
+    categories = getJSONVersion(raw_data_categories)
+    sgroups = getJSONVersion(raw_study_groups)
 
     context = {
         'myCSS': 'dataSelection.css',
         'studies': studies,
+        'categories': categories,
+        'sgroups': sgroups,
     }
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
