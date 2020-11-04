@@ -104,4 +104,15 @@ def dataSelection(request):
     print('\nGot Data Selection Request\n')
     
     return render(request, 'datapipeline/dataSelection.html', context)
+
+def dataSelectionContinued(request):
+    raw_studies = request.POST.getlist('studies[]')
+    studies = getJSONVersion(raw_studies)
+
+    context = {
+        'myCSS': 'dataSelection.css',
+        'studies': studies,
+    }
+
+    return render(request, 'datapipeline/dataSelection-2.html', context)
         
