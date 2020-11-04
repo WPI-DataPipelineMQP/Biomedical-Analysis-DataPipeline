@@ -93,29 +93,23 @@ def dataSelection(request):
         "sgroups": study_groups
     }
     
-    # TODO  
-    # (1) make queries to get all the data categories from the selected study/studies
-        # (1.1) each data category needs to an object
-    # (2) store the collected data categories to the context
-        # (2.1) may need to make an inner dictionary to allow for different objects???
-            # Potential Problem: How to Automate the listing of the Fields for each data category in the actual html?
-                # Idea: Handle the data here and throw back a cleaner data set to work with to the client
     
     print('\nGot Data Selection Request\n')
     
     return render(request, 'datapipeline/dataSelection.html', context)
 
 def dataSelectionContinued(request):
-    raw_studies = request.POST.getlist('studies[]')
+    #raw_studies = request.POST.getlist('studies[]')
     raw_data_categories = request.POST.getlist('categories[]')
-    raw_study_groups = request.POST.getlist('sgroups[]')
-    studies = getJSONVersion(raw_studies)
+    raw_study_groups = request.POST.getlist('studyGroups[]')
+    print(raw_data_categories)
+    #studies = getJSONVersion(raw_studies)
     categories = getJSONVersion(raw_data_categories)
     sgroups = getJSONVersion(raw_study_groups)
 
     context = {
         'myCSS': 'dataSelection.css',
-        'studies': studies,
+        #'studies': studies,
         'categories': categories,
         'sgroups': sgroups,
     }

@@ -19,7 +19,7 @@
     <ul class="study-listings">
         {% for category in categories %}
         <li class="study-article">
-            <input class="radio" type="checkbox" name="studies[]" value="{{study}}">
+            <input class="checkbox" type="checkbox" name="categories[]" value="{{category}}">
             <label class="study-article">
                 <article class="media content-section">
                     <div class="media-body">
@@ -35,7 +35,7 @@
     <ul class="study-listings">
         {% for sgroup in sgroups %}
         <li class="study-article">
-            <input class="radio" type="checkbox" name="studies[]" value="{{study}}">
+            <input class="radio" type="checkbox" name="studyGroups[]" value="{{sgroup}}">
             <label class="study-article">
                 <article class="media content-section">
                     <div class="media-body">
