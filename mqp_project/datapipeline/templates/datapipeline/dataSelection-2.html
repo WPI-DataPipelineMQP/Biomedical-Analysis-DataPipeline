@@ -3,4 +3,47 @@
 {% block content %}
 <h1>Data Selection</h1>
 
+<h2>What attributes would you like to view?</h2>
+<!--<form method="POST" action="/">-->
+<!--    {% csrf_token %}-->
+<!--    {{ form.as_p }}-->
+<!--    <input type="submit" value="Submit">-->
+<!--</form>-->
+<!--<ul>-->
+<!--    {% for study in studies %}-->
+<!--    <li>-->
+<!--        <article class="media">-->
+<!--            <div class="media-body">-->
+<!--            </div>-->
+<!--        </article>-->
+<!--    </li>-->
+<!--    {% endfor %}-->
+<!--</ul>-->
+
+<ul>
+    {% for study in studies %}
+    <li>
+        <article class="media">
+            <div class="media-body">
+                <p>{{ study.study_name }}</p>
+            </div>
+        </article>
+    </li>
+    {% endfor %}
+</ul>
+{% csrf_token %}
+<ul class="study-listings">
+    {% for attr in attributes %}
+    <li class="study-article">
+        <input class="radio" type="checkbox" name="studies[]" value="{{study}}">
+        <label class="study-article">
+            <article class="media content-section">
+                <div class="media-body">
+                     <p>{{ attr.name }}</p>
+                </div>
+            </article>
+        </label>
+    </li>
+    {% endfor %}
+</ul>
 {% endblock content %}

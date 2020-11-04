@@ -1,5 +1,7 @@
 from django.shortcuts import render
 import json
+from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
+from django.http import HttpResponseRedirect
 
 # Create your views here.
 def home(request):
@@ -109,10 +111,138 @@ def dataSelectionContinued(request):
     raw_studies = request.POST.getlist('studies[]')
     studies = getJSONVersion(raw_studies)
 
+    tables = ['HeartRate']  # Get this from the first data-selection screen
+    data_attributes = pickAttributesToShowUsers(tables)
+
     context = {
         'myCSS': 'dataSelection.css',
         'studies': studies,
+        'attributes': data_attributes,
     }
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
-        
+
+
+    # tables = ['HeartRate'] #Get this from the first data-selection screen
+    # if request.method == 'POST':
+    #     if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateCorsiForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateFlankerForm(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateANDCorsi(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateHeartRateANDFlanker(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateCorsiANDFlanker(request.POST)
+    #     else:
+    #         attributeForm = CreateALL(request.POST)
+    #     if attributeForm.is_valid():
+    #         viewControl = attributeForm.cleaned_data['viewControl']
+    #         viewExperimental = attributeForm.cleaned_data['viewExperimental']
+    #         print(str(viewControl) + "\n")
+    #         print(str(viewExperimental) + "\n")
+    #         if attributeForm.is_valid():
+    #             return HttpResponseRedirect('/dataSelection-2')
+    # else:
+    #     if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateCorsiForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateFlankerForm(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateANDCorsi(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateHeartRateANDFlanker(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateCorsiANDFlanker(request.POST)
+    #     else:
+    #         attributeForm = CreateALL(request.POST)
+    #
+    # return render(request, 'datapipeline/dataSelection-2.html', {'form': attributeForm})
+
+
+def pickAttributesToShowUsers(tables):
+    if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
+        data_attributes = [
+            {"name": "HeartRate.date_time"},
+            {"name": "HeartRate.heart_rate"},
+            {"name": "subject_number"},
+            {"name": "study_group_name"},
+        ]
+    elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+        data_attributes = [
+            {"name": "Corsi.binary_result"},
+            {"name": "Corsi.highest_corsi_span"},
+            {"name": "Corsi.num_of_items"},
+            {"name": "Corsi.sequence_number"},
+            {"name": "Corsi.trial"},
+            {"name": "subject_number"},
+            {"name": "study_group_name"},
+        ]
+    elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+        data_attributes = [
+            {"name": "Flanker.response_time"},
+            {"name": "Flanker.is_congruent"},
+            {"name": "Flanker.result"},
+            {"name": "Flanker.trial"},
+            {"name": "subject_number"},
+            {"name": "study_group_name"},
+        ]
+    elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+        data_attributes = [
+            {"name": "HeartRate.date_time"},
+            {"name": "HeartRate.heart_rate"},
+            {"name": "Corsi.binary_result"},
+            {"name": "Corsi.highest_corsi_span"},
+            {"name": "Corsi.num_of_items"},
+            {"name": "Corsi.sequence_number"},
+            {"name": "Corsi.trial"},
+            {"name": "subject_number"},
+            {"name": "study_group_name"},
+        ]
+    elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+        data_attributes = [
+            {"name": "HeartRate.date_time"},
+            {"name": "HeartRate.heart_rate"},
+            {"name": "Flanker.response_time"},
+            {"name": "Flanker.is_congruent"},
+            {"name": "Flanker.result"},
+            {"name": "Flanker.trial"},
+            {"name": "subject_number"},
+            {"name": "study_group_name"},
+        ]
+    elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
+        data_attributes = [
+            {"name": "Corsi.binary_result"},
+            {"name": "Corsi.highest_corsi_span"},
+            {"name": "Corsi.num_of_items"},
+            {"name": "Corsi.sequence_number"},
+            {"name": "Corsi.trial"},
+            {"name": "Flanker.response_time"},
+            {"name": "Flanker.is_congruent"},
+            {"name": "Flanker.result"},
+            {"name": "Flanker.trial"},
+            {"name": "subject_number"},
+            {"name": "study_group_name"},
+        ]
+    else:
+        data_attributes = [
+            {"name": "HeartRate.date_time"},
+            {"name": "HeartRate.heart_rate"},
+            {"name": "Corsi.binary_result"},
+            {"name": "Corsi.highest_corsi_span"},
+            {"name": "Corsi.num_of_items"},
+            {"name": "Corsi.sequence_number"},
+            {"name": "Corsi.trial"},
+            {"name": "Flanker.response_time"},
+            {"name": "Flanker.is_congruent"},
+            {"name": "Flanker.result"},
+            {"name": "Flanker.trial"},
+            {"name": "subject_number"},
+            {"name": "study_group_name"},
+        ]
+    return data_attributes
