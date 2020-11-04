@@ -46,4 +46,28 @@
     </li>
     {% endfor %}
 </ul>
+<h2>Which attributes would you like to filter?</h2>
+{% csrf_token %}
+<ul class="study-listings">
+    {% for fil in filters %}
+    <li class="study-article">
+        <label class="study-article">
+            <article class="media content-section">
+                <div class="media-body">
+                     <p>{{ fil.name }}</p>
+                </div>
+            </article>
+        </label>
+        <select name="cars" id="cars">
+          <option value="equal">=</option>
+          <option value="notequal">!=</option>
+          <option value="less"><</option>
+          <option value="greater"><</option>
+            <option value="lessorequal"><=</option>
+            <option value="greaterorequal">>=</option>
+        </select>
+        <input class="text" type="text">
+    </li>
+    {% endfor %}
+</ul>
 {% endblock content %}

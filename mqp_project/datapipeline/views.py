@@ -118,6 +118,7 @@ def dataSelectionContinued(request):
         'myCSS': 'dataSelection.css',
         'studies': studies,
         'attributes': data_attributes,
+        'filters': data_attributes,
     }
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
