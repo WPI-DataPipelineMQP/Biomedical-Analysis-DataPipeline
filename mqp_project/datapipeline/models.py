@@ -7,3 +7,6 @@ class Studies:
 
 class DataCategories:
 	field = forms.BooleanField()
+
+class StudyGroups:
+	field = forms.BooleanField()

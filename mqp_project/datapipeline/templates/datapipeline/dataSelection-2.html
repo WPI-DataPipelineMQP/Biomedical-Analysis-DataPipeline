@@ -2,6 +2,35 @@
 {% load static %}
 {% block content %}
 <h1>Data Selection</h1>
+{% for study in studies %}
+    <li>
+        <article class="media">
+            <div class="media-body">
+                <p>{{ study.study_name }}</p>
+            </div>
+        </article>
+    </li>
+{% endfor %}
+<h2>Categories Chosen:</h2>
+{% for category in categories %}
+    <li>
+        <article class="media">
+            <div class="media-body">
+                <p>{{ category.name }}</p>
+            </div>
+        </article>
+    </li>
+{% endfor %}
+<h2>Study Groups Chosen:</h2>
+{% for sgroup in sgroups %}
+    <li>
+        <article class="media">
+            <div class="media-body">
+                <p>{{ sgroup.name }}</p>
+            </div>
+        </article>
+    </li>
+{% endfor %}
 
 <h2>What attributes would you like to view?</h2>
 
