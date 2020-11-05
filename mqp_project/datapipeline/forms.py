@@ -14,7 +14,7 @@ NonInteger_Symbols = [
 ]
 
 class CreateHeartRateForm(forms.Form):
-    viewHRDateTime = forms.NullBooleanField(label= 'HeartRate.date_time', required = False)
+    viewHRDateTime = forms.BooleanField(label= 'HeartRate.date_time', required = False)
     viewHRHeartRate = forms.BooleanField(label= 'HeartRate.heart_rate', required = False)
     viewSubjectNumber = forms.BooleanField(label= 'subject_number', required = False) #required = True ?
     viewSGName = forms.BooleanField(label= 'study_group_name', required = False) #required = True ?
