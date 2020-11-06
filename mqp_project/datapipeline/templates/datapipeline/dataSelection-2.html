@@ -2,35 +2,41 @@
 {% load static %}
 {% block content %}
 <h1>Data Selection</h1>
-{% for study in studies %}
-    <li>
-        <article class="media">
-            <div class="media-body">
-                <p>{{ study.study_name }}</p>
-            </div>
-        </article>
-    </li>
-{% endfor %}
+<ul>
+    {% for study in studies %}
+        <li>
+            <article class="media">
+                <div class="media-body">
+                    <p>{{ study.study_name }}</p>
+                </div>
+            </article>
+        </li>
+    {% endfor %}
+</ul>
 <h2>Categories Chosen:</h2>
-{% for category in categories %}
-    <li>
-        <article class="media">
-            <div class="media-body">
-                <p>{{ category.name }}</p>
-            </div>
-        </article>
-    </li>
-{% endfor %}
+<ul>
+    {% for category in categories %}
+        <li>
+            <article class="media">
+                <div class="media-body">
+                    <p>{{ category.name }}</p>
+                </div>
+            </article>
+        </li>
+    {% endfor %}
+</ul>
 <h2>Study Groups Chosen:</h2>
-{% for sgroup in sgroups %}
-    <li>
-        <article class="media">
-            <div class="media-body">
-                <p>{{ sgroup.name }}</p>
-            </div>
-        </article>
-    </li>
-{% endfor %}
+<ul>
+    {% for sgroup in sgroups %}
+        <li>
+            <article class="media">
+                <div class="media-body">
+                    <p>{{ sgroup.name }}</p>
+                </div>
+            </article>
+        </li>
+    {% endfor %}
+</ul>
 
 <h2>What attributes would you like to view?</h2>
 
@@ -40,55 +46,54 @@
 <!--    <input type="submit" value="Submit">-->
 <!--</form>-->
 
-<html lang="en">
-<head>
-    <div class="i-am-centered">
-        <form method="POST">
-            {% csrf_token %}
-            <div class="form-group">
-                {{ form.viewHRDateTime }}
-                <label>{{ form.viewHRDateTime.label }} </label>
-            </div>
-            <div class="form-group">
-                {{ form.viewHRHeartRate }}
-                <label>{{ form.viewHRHeartRate.label }} </label>
-            </div>
-            <div class="form-group">
-                {{ form.viewSubjectNumber }}
-                <label>{{ form.viewSubjectNumber.label }}</label>
-            </div>
-            <div class="form-group">
-                {{ form.viewSGName }}
-                <label>{{ form.viewSGName.label }}</label>
-            </div>
-            <h2>What attributes would you like to filter?</h2>
-            <div class="form-group">
-                {{ form.filterHRDateTime }}
-                <label>{{ form.viewHRDateTime.label }} </label>
-                {{ form.filterSymHRDateTime }}
-                {{ form.filterValueHRDateTime }}
-            </div>
-            <div class="form-group">
-                {{ form.filterHRHeartRate }}
-                <label>{{ form.viewHRHeartRate.label }} </label>
-                {{ form.filterSymHRHeartRate }}
-                {{ form.filterValueHRHeartRate }}
-            </div>
-            <div class="form-group">
-                {{ form.filterSubjectNumber }}
-                <label>{{ form.viewSubjectNumber.label }}</label>
-                {{ form.filterSymSubjectNumber }}
-                {{ form.filterValueSubjectNumber }}
-            </div>
-            <div class="form-group">
-                {{ form.filterSGName }}
-                <label>{{ form.viewSGName.label }}</label>
-                {{ form.filterSymSGName }}
-                {{ form.filterValueSGName }}
-            </div>
-            <button type="submit" >Submit</button>
-        </form>
-    </div>
+
+<div class="i-am-centered">
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.viewHRDateTime }}
+            <label>{{ form.viewHRDateTime.label }} </label>
+        </div>
+        <div class="form-group">
+            {{ form.viewHRHeartRate }}
+            <label>{{ form.viewHRHeartRate.label }} </label>
+        </div>
+        <div class="form-group">
+            {{ form.viewSubjectNumber }}
+            <label>{{ form.viewSubjectNumber.label }}</label>
+        </div>
+        <div class="form-group">
+            {{ form.viewSGName }}
+            <label>{{ form.viewSGName.label }}</label>
+        </div>
+        <h2>What attributes would you like to filter?</h2>
+        <div class="form-group">
+            {{ form.filterHRDateTime }}
+            <label>{{ form.viewHRDateTime.label }} </label>
+            {{ form.filterSymHRDateTime }}
+            {{ form.filterValueHRDateTime }}
+        </div>
+        <div class="form-group">
+            {{ form.filterHRHeartRate }}
+            <label>{{ form.viewHRHeartRate.label }} </label>
+            {{ form.filterSymHRHeartRate }}
+            {{ form.filterValueHRHeartRate }}
+        </div>
+        <div class="form-group">
+            {{ form.filterSubjectNumber }}
+            <label>{{ form.viewSubjectNumber.label }}</label>
+            {{ form.filterSymSubjectNumber }}
+            {{ form.filterValueSubjectNumber }}
+        </div>
+        <div class="form-group">
+            {{ form.filterSGName }}
+            <label>{{ form.viewSGName.label }}</label>
+            {{ form.filterSymSGName }}
+            {{ form.filterValueSGName }}
+        </div>
+        <button type="submit" >Submit</button>
+    </form>
+</div>
 <!--    <h2>What attributes would you like to filter?</h2>-->
 <!--    <div class="i-am-centered">-->
 <!--        <form method="POST">-->
@@ -120,19 +125,6 @@
 <!--            <button type="submit" >Submit</button>-->
 <!--        </form>-->
 <!--    </div>-->
-
-    <ul>
-        {% for study in studies %}
-        <li>
-            <article class="media">
-                <div class="media-body">
-                </div>
-            </article>
-        </li>
-        {% endfor %}
-    </ul>
-</head>
-</html>
 
 <!--<ul>-->
 <!--    {% for study in studies %}-->

@@ -92,29 +92,24 @@ def dataSelection(request):
         'myCSS': 'dataSelection.css',
         'studies': studies,
         'categories': data_categories,
-        "sgroups": study_groups
+        'sgroups': study_groups
     }
-    
-    
+       
     print('\nGot Data Selection Request\n')
     
     return render(request, 'datapipeline/dataSelection.html', context)
 
 def dataSelectionContinued(request):
-    # raw_studies = request.POST.getlist('studies[]')
-    # studies = getJSONVersion(raw_studies)
+    raw_studies = request.POST.getlist('studies[]')
+    raw_data_categories = request.POST.getlist('categories[]')
+    raw_study_groups = request.POST.getlist('studyGroups[]')
+
+    studies = getJSONVersion(raw_studies)
+    categories = getJSONVersion(raw_data_categories)
+    sgroups = getJSONVersion(raw_study_groups)
     #
     # tables = ['HeartRate']  # Get this from the first data-selection screen
     # data_attributes = pickAttributesToShowUsers(tables)
-    #
-    # context = {
-    #     'myCSS': 'dataSelection.css',
-    #     'studies': studies,
-    #     'attributes': data_attributes,
-    #     'filters': data_attributes,
-    # }
-    #
-    # return render(request, 'datapipeline/dataSelection-2.html', context)
 
 
     tables = ['HeartRate'] #Get this from the first data-selection screen
@@ -166,7 +161,17 @@ def dataSelectionContinued(request):
         else:
             attributeForm = CreateALL(request.POST)
 
-    return render(request, 'datapipeline/dataSelection-2.html', {'form': attributeForm})
+    context = {
+         'myCSS': 'dataSelection.css',
+         'studies': studies,
+         'categories': categories,
+         'sgroups': sgroups,
+         'form': attributeForm,
+    #     'attributes': data_attributes,
+    #     'filters': data_attributes,
+    }
+
+    return render(request, 'datapipeline/dataSelection-2.html', context)
 
 
 def pickAttributesToShowUsers(tables):

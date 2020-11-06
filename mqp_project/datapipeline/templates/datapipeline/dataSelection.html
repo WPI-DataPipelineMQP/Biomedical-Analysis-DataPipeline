@@ -14,7 +14,7 @@
     {% endfor %}
 </ul>
 <h2>What data from this study would you like to view?</h2>
-<form action="{% url 'datapipeline-dataSelection-2' %}" method="post">
+<form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     {% csrf_token %}
     <ul class="study-listings">
         {% for category in categories %}
@@ -46,6 +46,6 @@
         </li>
         {% endfor %}
     </ul>
-    <input type="submit" value="submit">
+    <input type="submit" value="Submit">
 </form>
 {% endblock content %}
