@@ -2,6 +2,8 @@
 {% load static %}
 {% block content %}
 <h1>Data Selection</h1>
+
+<!--WITH FORM OBJECTS-->
 <ul>
     {% for study in studies %}
         <li>
@@ -38,62 +40,67 @@
     {% endfor %}
 </ul>
 
-<h2>What attributes would you like to view?</h2>
+<!--<h2>What attributes would you like to view?</h2>-->
 
-<!--<form method="POST" action="/">-->
-<!--    {% csrf_token %}-->
-<!--    {{ form.as_p }}-->
-<!--    <input type="submit" value="Submit">-->
-<!--</form>-->
+<!--&lt;!&ndash;<form method="POST" action="/">&ndash;&gt;-->
+<!--&lt;!&ndash;    {% csrf_token %}&ndash;&gt;-->
+<!--&lt;!&ndash;    {{ form.as_p }}&ndash;&gt;-->
+<!--&lt;!&ndash;    <input type="submit" value="Submit">&ndash;&gt;-->
+<!--&lt;!&ndash;</form>&ndash;&gt;-->
 
 
-<div class="i-am-centered">
-    <form method="POST">
-        {% csrf_token %}
-        <div class="form-group">
-            {{ form.viewHRDateTime }}
-            <label>{{ form.viewHRDateTime.label }} </label>
-        </div>
-        <div class="form-group">
-            {{ form.viewHRHeartRate }}
-            <label>{{ form.viewHRHeartRate.label }} </label>
-        </div>
-        <div class="form-group">
-            {{ form.viewSubjectNumber }}
-            <label>{{ form.viewSubjectNumber.label }}</label>
-        </div>
-        <div class="form-group">
-            {{ form.viewSGName }}
-            <label>{{ form.viewSGName.label }}</label>
-        </div>
-        <h2>What attributes would you like to filter?</h2>
-        <div class="form-group">
-            {{ form.filterHRDateTime }}
-            <label>{{ form.viewHRDateTime.label }} </label>
-            {{ form.filterSymHRDateTime }}
-            {{ form.filterValueHRDateTime }}
-        </div>
-        <div class="form-group">
-            {{ form.filterHRHeartRate }}
-            <label>{{ form.viewHRHeartRate.label }} </label>
-            {{ form.filterSymHRHeartRate }}
-            {{ form.filterValueHRHeartRate }}
-        </div>
-        <div class="form-group">
-            {{ form.filterSubjectNumber }}
-            <label>{{ form.viewSubjectNumber.label }}</label>
-            {{ form.filterSymSubjectNumber }}
-            {{ form.filterValueSubjectNumber }}
-        </div>
-        <div class="form-group">
-            {{ form.filterSGName }}
-            <label>{{ form.viewSGName.label }}</label>
-            {{ form.filterSymSGName }}
-            {{ form.filterValueSGName }}
-        </div>
-        <button type="submit" >Submit</button>
-    </form>
-</div>
+<!--<div class="i-am-centered">-->
+<!--    <form method="POST">-->
+<!--        {% csrf_token %}-->
+<!--        <div class="form-group">-->
+<!--            {{ form.viewHRDateTime }}-->
+<!--            <label>{{ form.viewHRDateTime.label }} </label>-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            {{ form.viewHRHeartRate }}-->
+<!--            <label>{{ form.viewHRHeartRate.label }} </label>-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            {{ form.viewSubjectNumber }}-->
+<!--            <label>{{ form.viewSubjectNumber.label }}</label>-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            {{ form.viewSGName }}-->
+<!--            <label>{{ form.viewSGName.label }}</label>-->
+<!--        </div>-->
+<!--        <h2>What attributes would you like to filter?</h2>-->
+<!--        <div class="form-group">-->
+<!--            {{ form.filterHRDateTime }}-->
+<!--            <label>{{ form.viewHRDateTime.label }} </label>-->
+<!--            {{ form.filterSymHRDateTime }}-->
+<!--            {{ form.filterValueHRDateTime }}-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            {{ form.filterHRHeartRate }}-->
+<!--            <label>{{ form.viewHRHeartRate.label }} </label>-->
+<!--            {{ form.filterSymHRHeartRate }}-->
+<!--            {{ form.filterValueHRHeartRate }}-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            {{ form.filterSubjectNumber }}-->
+<!--            <label>{{ form.viewSubjectNumber.label }}</label>-->
+<!--            {{ form.filterSymSubjectNumber }}-->
+<!--            {{ form.filterValueSubjectNumber }}-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            {{ form.filterSGName }}-->
+<!--            <label>{{ form.viewSGName.label }}</label>-->
+<!--            {{ form.filterSymSGName }}-->
+<!--            {{ form.filterValueSGName }}-->
+<!--        </div>-->
+<!--        <button type="submit" >Submit</button>-->
+<!--    </form>-->
+<!--</div>-->
+
+
+
+<!--W/O FORM OBJECTS-->
+
 <!--    <h2>What attributes would you like to filter?</h2>-->
 <!--    <div class="i-am-centered">-->
 <!--        <form method="POST">-->
@@ -125,55 +132,59 @@
 <!--            <button type="submit" >Submit</button>-->
 <!--        </form>-->
 <!--    </div>-->
-
-<!--<ul>-->
-<!--    {% for study in studies %}-->
-<!--    <li>-->
-<!--        <article class="media">-->
-<!--            <div class="media-body">-->
-<!--                <p>{{ study.study_name }}</p>-->
-<!--            </div>-->
-<!--        </article>-->
-<!--    </li>-->
-<!--    {% endfor %}-->
-<!--</ul>-->
-<!--{% csrf_token %}-->
-<!--<ul class="study-listings">-->
-<!--    {% for attr in attributes %}-->
-<!--    <li class="study-article">-->
-<!--        <input class="radio" type="checkbox" name="studies[]" value="{{study}}">-->
-<!--        <label class="study-article">-->
-<!--            <article class="media content-section">-->
-<!--                <div class="media-body">-->
-<!--                     <p>{{ attr.name }}</p>-->
-<!--                </div>-->
-<!--            </article>-->
-<!--        </label>-->
-<!--    </li>-->
-<!--    {% endfor %}-->
-<!--</ul>-->
-<!--<h2>Which attributes would you like to filter?</h2>-->
-<!--{% csrf_token %}-->
-<!--<ul class="study-listings">-->
-<!--    {% for fil in filters %}-->
-<!--    <li class="study-article">-->
-<!--        <label class="study-article">-->
-<!--            <article class="media content-section">-->
-<!--                <div class="media-body">-->
-<!--                     <p>{{ fil.name }}</p>-->
-<!--                </div>-->
-<!--            </article>-->
-<!--        </label>-->
-<!--        <select name="cars" id="cars">-->
-<!--          <option value="equal">=</option>-->
-<!--          <option value="notequal">!=</option>-->
-<!--          <option value="less"><</option>-->
-<!--          <option value="greater"><</option>-->
-<!--            <option value="lessorequal"><=</option>-->
-<!--            <option value="greaterorequal">>=</option>-->
-<!--        </select>-->
-<!--        <input class="text" type="text">-->
-<!--    </li>-->
-<!--    {% endfor %}-->
-<!--</ul>-->
+<form action="{% url 'datapipeline-output' %}" method="POST">
+    <ul>
+        {% for study in studies %}
+        <li>
+            <article class="media">
+                <div class="media-body">
+                    <p>{{ study.study_name }}</p>
+                </div>
+            </article>
+        </li>
+        {% endfor %}
+    </ul>
+{% csrf_token %}
+<h2>What attributes would you like to view?</h2>
+    <ul class="study-listings">
+        {% for attr in attributes %}
+        <li class="study-article">
+            <input class="radio" type="checkbox" name="attributes[]" value="{{attr}}">
+            <label class="study-article">
+                <article class="media content-section">
+                    <div class="media-body">
+                         <p>{{ attr.name }}</p>
+                    </div>
+                </article>
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+    <h2>Which attributes would you like to filter?</h2>
+    {% csrf_token %}
+    <ul class="study-listings">
+        {% for fil in filters %}
+        <li class="study-article">
+            <input class="radio" type="checkbox" name="filters[]" value="{{fil}}">
+            <label class="study-article">
+                <article class="media content-section">
+                    <div class="media-body">
+                         <p>{{ fil.name }}</p>
+                    </div>
+                </article>
+            </label>
+            <select name="filters[]">
+              <option value="equal">=</option>
+              <option value="notequal">!=</option>
+              <option value="less"><</option>
+              <option value="greater">></option>
+              <option value="lessorequal"><=</option>
+              <option value="greaterorequal">>=</option>
+            </select>
+            <input class="text" type="text" name="filters[]">
+        </li>
+        {% endfor %}
+    </ul>
+    <input type="submit" value="Submit">
+</form>
 {% endblock content %}

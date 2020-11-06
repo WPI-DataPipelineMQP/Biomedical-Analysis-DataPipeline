@@ -1,9 +1,12 @@
 from django.shortcuts import render
 import json
+import pandas as pd
+from django.shortcuts import HttpResponse
 from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
-
+from django.core import serializers
 # Create your views here.
+
 def home(request):
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
 
@@ -66,6 +69,9 @@ def dataSelection(request):
     raw_studies = request.POST.getlist('studies[]')
     studies = getJSONVersion(raw_studies)
 
+    print("Fay-studies:")
+    print(studies)
+
     #replace these with queries below
     data_categories = [
         {
@@ -107,69 +113,95 @@ def dataSelectionContinued(request):
     studies = getJSONVersion(raw_studies)
     categories = getJSONVersion(raw_data_categories)
     sgroups = getJSONVersion(raw_study_groups)
+
+    print("data-studies:")
+    print(studies)
+    print("data-categories:")
+    print(categories)
+
+    tables = ['HeartRate']  # Get this from the first data-selection screen
+    #data_attributes = pickAttributesToShowUsers(tables)
+    data_attributes = [
+        {"name": "HeartRate.date_time"},
+        {"name": "HeartRate.heart_rate"},
+        {"name": "subject_number"},
+        {"name": "study_group_name"},
+    ]
+    print("dataattr0:")
+    print(data_attributes[0])
+    # tables = ['HeartRate'] #Get this from the first data-selection screen
+    # if request.method == 'POST':
+    #     if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateCorsiForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateFlankerForm(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateANDCorsi(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateHeartRateANDFlanker(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateCorsiANDFlanker(request.POST)
+    #     else:
+    #         attributeForm = CreateALL(request.POST)
+    #     if attributeForm.is_valid():
+    #         viewHRDateTime = attributeForm.cleaned_data['viewHRDateTime']
+    #         viewHRHeartRate = attributeForm.cleaned_data['viewHRHeartRate']
+    #         viewSubjectNumber = attributeForm.cleaned_data['viewSubjectNumber']
+    #         viewSGName = attributeForm.cleaned_data['viewSGName']
+    #         filterHRDateTime = attributeForm.cleaned_data['filterHRDateTime']
+    #         filterHRHeartRate = attributeForm.cleaned_data['filterHRHeartRate']
+    #         filterSubjectNumber = attributeForm.cleaned_data['filterSubjectNumber']
+    #         filterSGName = attributeForm.cleaned_data['filterSGName']
     #
-    # tables = ['HeartRate']  # Get this from the first data-selection screen
-    # data_attributes = pickAttributesToShowUsers(tables)
-
-
-    tables = ['HeartRate'] #Get this from the first data-selection screen
-    if request.method == 'POST':
-        if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
-            attributeForm = CreateHeartRateForm(request.POST)
-        elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-            attributeForm = CreateCorsiForm(request.POST)
-        elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-            attributeForm = CreateFlankerForm(request.POST)
-        elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-            attributeForm = CreateHeartRateANDCorsi(request.POST)
-        elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-            attributeForm = CreateHeartRateANDFlanker(request.POST)
-        elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
-            attributeForm = CreateCorsiANDFlanker(request.POST)
-        else:
-            attributeForm = CreateALL(request.POST)
-        if attributeForm.is_valid():
-            viewHRDateTime = attributeForm.cleaned_data['viewHRDateTime']
-            viewHRHeartRate = attributeForm.cleaned_data['viewHRHeartRate']
-            viewSubjectNumber = attributeForm.cleaned_data['viewSubjectNumber']
-            viewSGName = attributeForm.cleaned_data['viewSGName']
-            filterValueHRDateTime = attributeForm.cleaned_data['filterValueHRDateTime']
-
-            print("DATETIME: " + str(viewHRDateTime) + "\n")
-            print("HEARTREATE: " + str(viewHRHeartRate) + "\n")
-            print("SUBJECT: " + str(viewSubjectNumber) + "\n")
-            print("STUDYGROUP: " + str(viewSGName) + "\n")
-            print("TEXT: " + filterValueHRDateTime + "\n")
-
-            if attributeForm.is_valid():
-                return HttpResponseRedirect('/dataSelection-2')
-        else:
-            print("invalid")
-    else:
-        if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
-            attributeForm = CreateHeartRateForm(request.POST)
-        elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-            attributeForm = CreateCorsiForm(request.POST)
-        elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-            attributeForm = CreateFlankerForm(request.POST)
-        elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-            attributeForm = CreateHeartRateANDCorsi(request.POST)
-        elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-            attributeForm = CreateHeartRateANDFlanker(request.POST)
-        elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
-            attributeForm = CreateCorsiANDFlanker(request.POST)
-        else:
-            attributeForm = CreateALL(request.POST)
+    #         filterSymHRDateTime = attributeForm.cleaned_data['filterSymHRDateTime']
+    #         filterSymHRHeartRate = attributeForm.cleaned_data['filterSymHRHeartRate']
+    #         filterSymSubjectNumber = attributeForm.cleaned_data['filterSymSubjectNumber']
+    #         filterSymSGName = attributeForm.cleaned_data['filterSymSGName']
+    #
+    #         filterValueHRDateTime = attributeForm.cleaned_data['filterValueHRDateTime']
+    #         filterValueHRHeartRate = attributeForm.cleaned_data['filterValueHRHeartRate']
+    #         filterValueSubjectNumber = attributeForm.cleaned_data['filterValueSubjectNumber']
+    #         filterValueSGName = attributeForm.cleaned_data['filterValueSGName']
+    #
+    #         print("DATETIME: " + str(viewHRDateTime) + "\n")
+    #         print("HEARTREATE: " + str(viewHRHeartRate) + "\n")
+    #         print("SUBJECT: " + str(viewSubjectNumber) + "\n")
+    #         print("STUDYGROUP: " + str(viewSGName) + "\n")
+    #         print("TEXT: " + filterValueHRDateTime + "\n")
+    #
+    #         return HttpResponseRedirect('/output')
+    #     else:
+    #         print("invalid")
+    # else:
+    #     if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateCorsiForm(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateFlankerForm(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
+    #         attributeForm = CreateHeartRateANDCorsi(request.POST)
+    #     elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateHeartRateANDFlanker(request.POST)
+    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
+    #         attributeForm = CreateCorsiANDFlanker(request.POST)
+    #     else:
+    #         attributeForm = CreateALL(request.POST)
+    #
+    # # assuming obj is a model instance
+    # serialized_obj = serializers.serialize('json', [attributeForm, ])
 
     context = {
          'myCSS': 'dataSelection.css',
          'studies': studies,
          'categories': categories,
          'sgroups': sgroups,
-         'form': attributeForm,
-    #     'attributes': data_attributes,
-    #     'filters': data_attributes,
+         'attributes': data_attributes,
+         'filters': data_attributes
     }
+
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
 
@@ -255,3 +287,39 @@ def pickAttributesToShowUsers(tables):
             {"name": "study_group_name"},
         ]
     return data_attributes
+
+def output(request):
+    #raw_studies = request.POST.getlist('studies[]')
+    raw_data_categories = request.POST.getlist('categories[]')
+    raw_study_groups = request.POST.getlist('studyGroups[]')
+    raw_data_attributes = request.POST.getlist('attributes[]')
+    raw_data_filters = request.POST.getlist('filters[]')
+
+    print("output-attr")
+    print(raw_data_attributes)
+    print("output-filters")
+    print(raw_data_filters)
+    print("output-cat")
+    print(raw_data_categories)
+
+
+    #studies = getJSONVersion(raw_studies)
+    categories = getJSONVersion(raw_data_categories)
+    sgroups = getJSONVersion(raw_study_groups)
+    data_attributes = getJSONVersion(raw_data_attributes)
+
+    data = pd.read_csv('1_fitbit.csv')
+    data_html = data.to_html()
+    return HttpResponse(data_html)
+
+    # context = {
+    #      'myCSS': 'dataSelection.css',
+    #      #'studies': studies,
+    #      'categories': categories,
+    #      'sgroups': sgroups,
+    #      #'form': attributeForm,
+    #      'attributes': data_attributes,
+    # #     'filters': data_attributes,
+    # }
+    #
+    # return render(request, 'datapipeline/output.html', context)

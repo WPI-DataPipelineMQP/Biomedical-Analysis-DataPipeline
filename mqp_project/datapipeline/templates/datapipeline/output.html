@@ -1,0 +1,39 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<h2>Categories Chosen:</h2>
+<ul>
+    {% for category in categories %}
+        <li>
+            <article class="media">
+                <div class="media-body">
+                    <p>{{ category.name }}</p>
+                </div>
+            </article>
+        </li>
+    {% endfor %}
+</ul>
+<h2>Study Groups Chosen:</h2>
+<ul>
+    {% for sgroup in sgroups %}
+        <li>
+            <article class="media">
+                <div class="media-body">
+                    <p>{{ sgroup.name }}</p>
+                </div>
+            </article>
+        </li>
+    {% endfor %}
+</ul>
+<h2>Study Groups Chosen:</h2>
+<ul>
+    <li>
+        <article class="media">
+            <div class="media-body">
+                <p>{{ loaded_data }}</p>
+            </div>
+        </article>
+    </li>
+</ul>
+
+{% endblock content %}
