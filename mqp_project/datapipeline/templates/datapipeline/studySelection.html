@@ -3,9 +3,9 @@
 {% block content %}
 <form action="{% url 'datapipeline-dataSelection' %}" method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <!--ul class="study-listings">
-        {% for study in studies %}
+    <ul class="study-listings">
+        {{ form.as_p }}
+        <!--{% for study in studies %}
         <li class="study-article">
             <input class="checkbox" type="checkbox" name="studies[]" value="{{study}}">
             <label class="study-article">
@@ -17,8 +17,8 @@
                 </article>
             </label>
         </li>
-        {% endfor %}
-    </ul-->
+        {% endfor %}-->
+    </ul>
 
     <input type="submit" value="submit">
 </form>

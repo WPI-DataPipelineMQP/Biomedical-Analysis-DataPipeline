@@ -2,7 +2,7 @@
 {% load static %}
 {% block content %}
 <h1>Data Selection</h1>
-<ul>
+<!--ul>
     {% for study in studies %}
     <li>
         <article class="media">
@@ -12,7 +12,7 @@
         </article>
     </li>
     {% endfor %}
-</ul>
+</ul-->
 <h2>What data from this study would you like to view?</h2>
 <form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     {% csrf_token %}

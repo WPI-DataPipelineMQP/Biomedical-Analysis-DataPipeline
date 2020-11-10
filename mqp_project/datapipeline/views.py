@@ -40,11 +40,11 @@ def studySelection(request):
 
 
 def dataSelection(request):
-    raw_studies = request.POST.getlist('studies[]')
-    studies = ViewHelper.getJSONVersion(raw_studies)
+    #raw_studies = request.POST.getlist('studies[]')
+    #studies = ViewHelper.getJSONVersion(raw_studies)
 
-    print("Fay-studies:")
-    print(studies)
+    #print("Fay-studies:")
+    #print(studies)
 
     #replace these with queries below
     data_categories = [
@@ -68,9 +68,12 @@ def dataSelection(request):
         },
     ]
     
+    print(request.POST)
+    #studyForm = CreateChosenBooleanForm(request.POST)
+
     context = {
         'myCSS': 'dataSelection.css',
-        'studies': studies,
+        #'studies': studies,
         'categories': data_categories,
         'sgroups': study_groups
     }
@@ -80,16 +83,16 @@ def dataSelection(request):
     return render(request, 'datapipeline/dataSelection.html', context)
 
 def dataSelectionContinued(request):
-    raw_studies = request.POST.getlist('studies[]')
+    #raw_studies = request.POST.getlist('studies[]')
     raw_data_categories = request.POST.getlist('categories[]')
     raw_study_groups = request.POST.getlist('studyGroups[]')
 
-    studies = ViewHelper.getJSONVersion(raw_studies)
+    #studies = ViewHelper.getJSONVersion(raw_studies)
     categories = ViewHelper.getJSONVersion(raw_data_categories)
     sgroups = ViewHelper.getJSONVersion(raw_study_groups)
 
-    print("data-studies:")
-    print(studies)
+    #print("data-studies:")
+    #print(studies)
     print("data-categories:")
     print(categories)
 
@@ -169,7 +172,7 @@ def dataSelectionContinued(request):
 
     context = {
          'myCSS': 'dataSelection.css',
-         'studies': studies,
+         #'studies': studies,
          'categories': categories,
          'sgroups': sgroups,
          'attributes': data_attributes,
