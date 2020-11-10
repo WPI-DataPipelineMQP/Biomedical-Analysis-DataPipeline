@@ -2,7 +2,7 @@ from django.shortcuts import render
 import json
 import pandas as pd
 from django.shortcuts import HttpResponse
-from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
+from .forms import CreateChosenBooleanForm, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
 from django.core import serializers
 from .viewsHelper import ViewHelper
@@ -14,19 +14,25 @@ def home(request):
 def studySelection(request):
     available_studies = [
         {
-            "study_name": "Exercise IQP",
+            "id": 1,
+            "name": "Exercise IQP",
             "description": "Duis ultrices, velit vitae feugiat sagittis, ipsum dolor interdum risus, et pretium tellus nulla vitae quam. Nullam placerat dapibus lorem sit amet cursus. In ac mauris hendrerit, rutrum orci et, bibendum sem. Donec massa nisl, sagittis vel molestie elementum, semper sed leo. Nullam eros nulla, varius eget est quis, condimentum convallis quam. Praesent varius diam non libero ullamcorper, vel pulvinar erat commodo. Quisque tincidunt sollicitudin leo ut viverra."
         },
         {
-            "study_name": "Covid",
+            "id": 2,
+            "name": "Covid",
             "description": "Etiam purus libero, efficitur semper dui vitae, tempus molestie est. Fusce enim tellus, placerat et dolor rutrum, volutpat consectetur ex. In vel nulla accumsan, suscipit quam ac, varius diam. Quisque sed mauris quis nulla mattis sagittis. Etiam fringilla turpis nec nisi luctus elementum. Quisque in sodales elit, sed ornare felis. Quisque eget venenatis est, nec dictum tortor. Donec ultrices odio massa, quis vestibulum nulla blandit non. Cras ut fermentum velit. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Suspendisse auctor neque id neque bibendum sagittis. Maecenas ac nunc eu risus congue ultricies."
         },
     ]
+
+    # CHANGE ONCE WE CAN QUERY THE DATABASE
+    fields = available_studies
+    
+    form = CreateChosenBooleanForm(customFields=fields)
     context = {
-        'studies': available_studies,
+        'form': form,
         'myCSS' : 'studySelection.css'
     }
-    
     print('\nGot Study Selection Request\n')
     
     return render(request, 'datapipeline/studySelection.html', context)

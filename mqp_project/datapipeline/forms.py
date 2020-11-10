@@ -13,6 +13,17 @@ NonInteger_Symbols = [
     ('notequal', '!='),
 ]
 
+# Dynamic form that uses customFields arg to create boolean fields with given names and labels
+#taken from Django practice repo
+class CreateChosenBooleanForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('customFields')
+        super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
+
+        for field in fields:
+            self.fields[field['id']] = forms.BooleanField(label=field['name'], required=False)
+
+
 class CreateHeartRateForm(forms.Form):
     viewHRDateTime = forms.BooleanField(label= 'HeartRate.date_time', required = False)
     viewHRHeartRate = forms.BooleanField(label= 'HeartRate.heart_rate', required = False)
