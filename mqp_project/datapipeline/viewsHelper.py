@@ -1,7 +1,7 @@
 import json
 
 class ViewHelper():
-    def getJSONVersion(self, raw_list):
+    def getJSONVersion(raw_list):
         dictionaries = []
     
         for raw_dict in raw_list:

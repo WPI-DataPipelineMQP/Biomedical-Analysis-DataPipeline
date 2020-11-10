@@ -291,3 +291,12 @@ def output(request):
     # }
     #
     # return render(request, 'datapipeline/output.html', context)
+    
+def uploader(request):
+    context = {
+         'myCSS': 'uploader.css',
+    }
+
+
+    return render(request, 'datapipeline/uploader.html', context)
+    
