@@ -5,13 +5,13 @@ from django.shortcuts import HttpResponse
 from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
 from django.core import serializers
+from .viewsHelper import ViewHelper
 # Create your views here.
 
 def home(request):
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
 
-
-def singleStudy(request):
+def studySelection(request):
     available_studies = [
         {
             "study_name": "Exercise IQP",
@@ -24,50 +24,18 @@ def singleStudy(request):
     ]
     context = {
         'studies': available_studies,
-        'myCSS' : 'singleStudy.css'
+        'myCSS' : 'studySelection.css'
     }
     
-    print('\nGot Single Study Request\n')
+    print('\nGot Study Selection Request\n')
     
-    return render(request, 'datapipeline/singleStudy.html', context)
+    return render(request, 'datapipeline/studySelection.html', context)
 
-
-
-def crossStudy(request):
-    available_studies = [
-        {
-            "study_name": "Exercise IQP",
-            "description": "Duis ultrices, velit vitae feugiat sagittis, ipsum dolor interdum risus, et pretium tellus nulla vitae quam. Nullam placerat dapibus lorem sit amet cursus. In ac mauris hendrerit, rutrum orci et, bibendum sem. Donec massa nisl, sagittis vel molestie elementum, semper sed leo. Nullam eros nulla, varius eget est quis, condimentum convallis quam. Praesent varius diam non libero ullamcorper, vel pulvinar erat commodo. Quisque tincidunt sollicitudin leo ut viverra."
-        },
-        {
-            "study_name": "Covid",
-            "description": "Etiam purus libero, efficitur semper dui vitae, tempus molestie est. Fusce enim tellus, placerat et dolor rutrum, volutpat consectetur ex. In vel nulla accumsan, suscipit quam ac, varius diam. Quisque sed mauris quis nulla mattis sagittis. Etiam fringilla turpis nec nisi luctus elementum. Quisque in sodales elit, sed ornare felis. Quisque eget venenatis est, nec dictum tortor. Donec ultrices odio massa, quis vestibulum nulla blandit non. Cras ut fermentum velit. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Suspendisse auctor neque id neque bibendum sagittis. Maecenas ac nunc eu risus congue ultricies."
-        },
-    ]
-    context = {
-        'studies': available_studies,
-        'myCSS' : 'singleStudy.css'
-    }
-    
-    print('\nGot Cross Study Request\n')
-    
-    return render(request, 'datapipeline/crossStudy.html', context)
-
-
-def getJSONVersion(raw_list):
-    dictionaries = []
-    
-    for raw_dict in raw_list:
-        reformatted = str(raw_dict).replace("'", '"')
-        study = json.loads(reformatted)
-        dictionaries.append(study)
-        
-    return dictionaries
 
 
 def dataSelection(request):
     raw_studies = request.POST.getlist('studies[]')
-    studies = getJSONVersion(raw_studies)
+    studies = ViewHelper.getJSONVersion(raw_studies)
 
     print("Fay-studies:")
     print(studies)
@@ -110,9 +78,9 @@ def dataSelectionContinued(request):
     raw_data_categories = request.POST.getlist('categories[]')
     raw_study_groups = request.POST.getlist('studyGroups[]')
 
-    studies = getJSONVersion(raw_studies)
-    categories = getJSONVersion(raw_data_categories)
-    sgroups = getJSONVersion(raw_study_groups)
+    studies = ViewHelper.getJSONVersion(raw_studies)
+    categories = ViewHelper.getJSONVersion(raw_data_categories)
+    sgroups = ViewHelper.getJSONVersion(raw_study_groups)
 
     print("data-studies:")
     print(studies)
@@ -304,9 +272,9 @@ def output(request):
 
 
     #studies = getJSONVersion(raw_studies)
-    categories = getJSONVersion(raw_data_categories)
-    sgroups = getJSONVersion(raw_study_groups)
-    data_attributes = getJSONVersion(raw_data_attributes)
+    categories = ViewHelper.getJSONVersion(raw_data_categories)
+    sgroups = ViewHelper.getJSONVersion(raw_study_groups)
+    data_attributes = ViewHelper.getJSONVersion(raw_data_attributes)
 
     data = pd.read_csv('1_fitbit.csv')
     data_html = data.to_html()
