@@ -1,0 +1,13 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<div class="container" style="background-color: gray;">
+    <h2>Uploader Rules/Conditions:</h2>
+</div>
+<form method="POST" action="{% url 'datapipeline-uploaderStudyName' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <input type="submit" value="Next">
+</form>
+{% endblock content %}
