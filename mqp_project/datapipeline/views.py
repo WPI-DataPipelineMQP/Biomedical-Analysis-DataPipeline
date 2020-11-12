@@ -28,9 +28,9 @@ def studySelection(request):
     # CHANGE ONCE WE CAN QUERY THE DATABASE
     fields = available_studies
     
-    form = CreateChosenBooleanForm(customFields=fields)
+    studies_form = CreateChosenBooleanForm(customFields=fields)
     context = {
-        'form': form,
+        'studies_form': studies_form,
         'myCSS' : 'studySelection.css'
     }
     print('\nGot Study Selection Request\n')
@@ -43,10 +43,14 @@ def dataSelection(request):
     #raw_studies = request.POST.getlist('studies[]')
     #studies = ViewHelper.getJSONVersion(raw_studies)
 
+    print(request.POST)
+    studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session[fields])
+    #get data from studies_form, print each one out
+
     #print("Fay-studies:")
     #print(studies)
 
-    #replace these with queries below
+    #Query for data categories
     data_categories = [
         {
             "name":"Heart Rate"
@@ -59,6 +63,7 @@ def dataSelection(request):
         },
     ]
 
+    #Query for study groups
     study_groups = [
         {
             "name":"Control"
@@ -67,15 +72,15 @@ def dataSelection(request):
             "name":"Experimental"
         },
     ]
-    
-    print(request.POST)
-    #studyForm = CreateChosenBooleanForm(request.POST)
+
+    categories_form = CreateChosenBooleanForm(customFields=data_categories)
+    study_groups_form = CreateChosenBooleanForm(customFields=study_groups)
 
     context = {
         'myCSS': 'dataSelection.css',
-        #'studies': studies,
-        'categories': data_categories,
-        'sgroups': study_groups
+        'studies_form': studies_form,
+        'categories_form': categories_form,
+        'study_groups_form': study_groups_form
     }
        
     print('\nGot Data Selection Request\n')
