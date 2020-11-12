@@ -23,6 +23,14 @@ class CreateChosenBooleanForm(forms.Form):
         for field in fields:
             self.fields[field['id']] = forms.BooleanField(label=field['name'], required=False)
 
+class CreateChosenFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('customFields')
+        super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
+
+    #for field in fields:
+        
+
 
 class CreateHeartRateForm(forms.Form):
     viewHRDateTime = forms.BooleanField(label= 'HeartRate.date_time', required = False)

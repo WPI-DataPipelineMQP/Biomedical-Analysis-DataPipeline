@@ -26,9 +26,11 @@ def studySelection(request):
     ]
 
     # CHANGE ONCE WE CAN QUERY THE DATABASE
-    fields = available_studies
+    study_fields = available_studies
     
-    studies_form = CreateChosenBooleanForm(customFields=fields)
+    request.session['study_fields'] = study_fields
+
+    studies_form = CreateChosenBooleanForm(customFields=study_fields)
     context = {
         'studies_form': studies_form,
         'myCSS' : 'studySelection.css'
@@ -44,7 +46,7 @@ def dataSelection(request):
     #studies = ViewHelper.getJSONVersion(raw_studies)
 
     print(request.POST)
-    studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session[fields])
+    studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_fields'])
     #get data from studies_form, print each one out
 
     #print("Fay-studies:")
@@ -53,12 +55,15 @@ def dataSelection(request):
     #Query for data categories
     data_categories = [
         {
+            "id": 1,
             "name":"Heart Rate"
         },
         {
+            "id": 2,
             "name":"Corsi"
         },
         {
+            "id": 3,
             "name":"Flanker"
         },
     ]
@@ -66,9 +71,11 @@ def dataSelection(request):
     #Query for study groups
     study_groups = [
         {
+            "id": 1,
             "name":"Control"
         },
         {
+            "id": 2,
             "name":"Experimental"
         },
     ]
