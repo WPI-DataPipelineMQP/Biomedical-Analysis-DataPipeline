@@ -42,16 +42,20 @@ def studySelection(request):
 
 
 def dataSelection(request):
-    #raw_studies = request.POST.getlist('studies[]')
-    #studies = ViewHelper.getJSONVersion(raw_studies)
-
     print(request.POST)
     studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_fields'])
+
     #get data from studies_form, print each one out
-
-    #print("Fay-studies:")
-    #print(studies)
-
+    #to print each one out, access the dictionary inside, and then get the name
+    studies_data = {}
+    if studies_form.is_valid():
+        for study_field in studies_form.fields:
+            studies_data[study_field] = {
+                                            'id': studies_form[study_field].name,
+                                            'name': studies_form[study_field].label, 
+                                            'value': studies_form.cleaned_data[study_field]
+                                        }
+    print(studies_data)
     #Query for data categories
     data_categories = [
         {
@@ -83,9 +87,12 @@ def dataSelection(request):
     categories_form = CreateChosenBooleanForm(customFields=data_categories)
     study_groups_form = CreateChosenBooleanForm(customFields=study_groups)
 
+    request.session['data_categories'] = data_categories
+    request.session['study_groups'] = study_groups
+
     context = {
         'myCSS': 'dataSelection.css',
-        'studies_form': studies_form,
+        'studies_data': studies_data,
         'categories_form': categories_form,
         'study_groups_form': study_groups_form
     }
@@ -96,17 +103,17 @@ def dataSelection(request):
 
 def dataSelectionContinued(request):
     #raw_studies = request.POST.getlist('studies[]')
-    raw_data_categories = request.POST.getlist('categories[]')
-    raw_study_groups = request.POST.getlist('studyGroups[]')
+    #raw_data_categories = request.POST.getlist('categories[]')
+    #raw_study_groups = request.POST.getlist('studyGroups[]')
 
     #studies = ViewHelper.getJSONVersion(raw_studies)
-    categories = ViewHelper.getJSONVersion(raw_data_categories)
-    sgroups = ViewHelper.getJSONVersion(raw_study_groups)
+    #categories = ViewHelper.getJSONVersion(raw_data_categories)
+    #sgroups = ViewHelper.getJSONVersion(raw_study_groups)
 
     #print("data-studies:")
     #print(studies)
-    print("data-categories:")
-    print(categories)
+    #print("data-categories:")
+    #print(categories)
 
     tables = ['HeartRate']  # Get this from the first data-selection screen
     #data_attributes = pickAttributesToShowUsers(tables)
@@ -185,8 +192,8 @@ def dataSelectionContinued(request):
     context = {
          'myCSS': 'dataSelection.css',
          #'studies': studies,
-         'categories': categories,
-         'sgroups': sgroups,
+         #'categories': categories,
+         #'sgroups': sgroups,
          'attributes': data_attributes,
          'filters': data_attributes
     }
@@ -279,23 +286,23 @@ def pickAttributesToShowUsers(tables):
 
 def output(request):
     #raw_studies = request.POST.getlist('studies[]')
-    raw_data_categories = request.POST.getlist('categories[]')
-    raw_study_groups = request.POST.getlist('studyGroups[]')
-    raw_data_attributes = request.POST.getlist('attributes[]')
-    raw_data_filters = request.POST.getlist('filters[]')
+    #raw_data_categories = request.POST.getlist('categories[]')
+    #raw_study_groups = request.POST.getlist('studyGroups[]')
+    #raw_data_attributes = request.POST.getlist('attributes[]')
+    #raw_data_filters = request.POST.getlist('filters[]')
 
-    print("output-attr")
-    print(raw_data_attributes)
-    print("output-filters")
-    print(raw_data_filters)
-    print("output-cat")
-    print(raw_data_categories)
+    # print("output-attr")
+    # print(raw_data_attributes)
+    # print("output-filters")
+    # print(raw_data_filters)
+    # print("output-cat")
+    # print(raw_data_categories)
 
 
     #studies = getJSONVersion(raw_studies)
-    categories = ViewHelper.getJSONVersion(raw_data_categories)
-    sgroups = ViewHelper.getJSONVersion(raw_study_groups)
-    data_attributes = ViewHelper.getJSONVersion(raw_data_attributes)
+    #categories = ViewHelper.getJSONVersion(raw_data_categories)
+    #sgroups = ViewHelper.getJSONVersion(raw_study_groups)
+    #data_attributes = ViewHelper.getJSONVersion(raw_data_attributes)
 
     data = pd.read_csv('1_fitbit.csv')
     data_html = data.to_html()

@@ -2,17 +2,17 @@
 {% load static %}
 {% block content %}
 <h1>Data Selection</h1>
-<!--ul>
-    {% for study in studies %}
+<ul>
+    {% for study in studies_data %}
     <li>
         <article class="media">
             <div class="media-body">
-                <p>{{ study.study_name }}</p>
+                <p>{{ study.study_field.name }}</p>
             </div>
         </article>
     </li>
     {% endfor %}
-</ul-->
+</ul>
 <h2>What data from this study would you like to view?</h2>
 <form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     {% csrf_token %}
