@@ -31,10 +31,12 @@ def studySelection(request):
     request.session['study_fields'] = study_fields
 
     studies_form = CreateChosenBooleanForm(customFields=study_fields)
+
     context = {
         'studies_form': studies_form,
         'myCSS' : 'studySelection.css'
     }
+
     print('\nGot Study Selection Request\n')
     
     return render(request, 'datapipeline/studySelection.html', context)
@@ -43,6 +45,7 @@ def studySelection(request):
 
 def dataSelection(request):
     print(request.POST)
+    #get information from form on previous page
     studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_fields'])
 
     #get data from studies_form, print each one out
@@ -55,8 +58,12 @@ def dataSelection(request):
                                             'name': studies_form[study_field].label, 
                                             'value': studies_form.cleaned_data[study_field]
                                         }
+
     print(studies_data)
-    #Query for data categories
+    #gets the names to be printed out                                
+    study_names = ViewHelper.getNameList(studies_data)
+
+    #replace with query for data categories
     data_categories = [
         {
             "id": 1,
@@ -72,7 +79,7 @@ def dataSelection(request):
         },
     ]
 
-    #Query for study groups
+    #reqplace with query for study groups
     study_groups = [
         {
             "id": 1,
@@ -92,7 +99,7 @@ def dataSelection(request):
 
     context = {
         'myCSS': 'dataSelection.css',
-        'studies_data': studies_data,
+        'study_names': study_names,
         'categories_form': categories_form,
         'study_groups_form': study_groups_form
     }
@@ -102,9 +109,37 @@ def dataSelection(request):
     return render(request, 'datapipeline/dataSelection.html', context)
 
 def dataSelectionContinued(request):
+    print(request.POST)
+    # get information from previous page
+    categories_form = CreateChosenBooleanForm(request.POST, customFields=request.session['data_categories'])
+    study_groups_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_groups'])
+
     #raw_studies = request.POST.getlist('studies[]')
     #raw_data_categories = request.POST.getlist('categories[]')
     #raw_study_groups = request.POST.getlist('studyGroups[]')
+
+    #process the data
+    categories_data = {}
+    if categories_form.is_valid():
+        for field in categories_form.fields:
+            categories_data[field] = {
+                                        'id': categories_form[field].name,
+                                        'name': categories_form[field].label, 
+                                        'value': categories_form.cleaned_data[field]
+                                        }
+
+    category_names = ViewHelper.getNameList(categories_data)
+
+    study_groups_data = {}
+    if study_groups_form.is_valid():
+        for field in study_groups_form.fields:
+            study_groups_data[field] = {
+                                            'id': study_groups_form[field].name,
+                                            'name': study_groups_form[field].label, 
+                                            'value': study_groups_form.cleaned_data[field]
+                                        }
+
+    study_group_names = ViewHelper.getNameList(study_groups_data)
 
     #studies = ViewHelper.getJSONVersion(raw_studies)
     #categories = ViewHelper.getJSONVersion(raw_data_categories)
@@ -113,7 +148,7 @@ def dataSelectionContinued(request):
     #print("data-studies:")
     #print(studies)
     #print("data-categories:")
-    #print(categories)
+    #print(categories)    
 
     tables = ['HeartRate']  # Get this from the first data-selection screen
     #data_attributes = pickAttributesToShowUsers(tables)
@@ -191,9 +226,8 @@ def dataSelectionContinued(request):
 
     context = {
          'myCSS': 'dataSelection.css',
-         #'studies': studies,
-         #'categories': categories,
-         #'sgroups': sgroups,
+         'category_names': category_names,
+         'study_group_names': study_group_names,
          'attributes': data_attributes,
          'filters': data_attributes
     }

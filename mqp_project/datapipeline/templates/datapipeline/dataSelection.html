@@ -3,11 +3,11 @@
 {% block content %}
 <h1>Data Selection</h1>
 <ul>
-    {% for study in studies_data %}
+    {% for study in study_names %}
     <li>
         <article class="media">
             <div class="media-body">
-                <p>{{ study.study_field.name }}</p>
+                <p>{{ study }}</p>
             </div>
         </article>
     </li>

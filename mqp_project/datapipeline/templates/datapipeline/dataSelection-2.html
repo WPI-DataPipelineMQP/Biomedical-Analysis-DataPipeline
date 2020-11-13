@@ -5,11 +5,11 @@
 
 <!--WITH FORM OBJECTS-->
 <ul>
-    {% for study in studies %}
+    {% for study in study_names %}
         <li>
             <article class="media">
                 <div class="media-body">
-                    <p>{{ study.study_name }}</p>
+                    <p>{{ study }}</p>
                 </div>
             </article>
         </li>
@@ -17,11 +17,11 @@
 </ul>
 <h2>Categories Chosen:</h2>
 <ul>
-    {% for category in categories %}
+    {% for category in category_names %}
         <li>
             <article class="media">
                 <div class="media-body">
-                    <p>{{ category.name }}</p>
+                    <p>{{ category }}</p>
                 </div>
             </article>
         </li>
@@ -29,11 +29,11 @@
 </ul>
 <h2>Study Groups Chosen:</h2>
 <ul>
-    {% for sgroup in sgroups %}
+    {% for sgroup in study_group_names %}
         <li>
             <article class="media">
                 <div class="media-body">
-                    <p>{{ sgroup.name }}</p>
+                    <p>{{ sgroup }}</p>
                 </div>
             </article>
         </li>
