@@ -62,6 +62,7 @@ def dataSelection(request):
     print(studies_data)
     #gets the names to be printed out                                
     study_names = ViewHelper.getNameList(studies_data)
+    request.session['study_names'] = study_names
 
     #replace with query for data categories
     data_categories = [
@@ -226,6 +227,7 @@ def dataSelectionContinued(request):
 
     context = {
          'myCSS': 'dataSelection.css',
+         'study_names': request.session['study_names'],
          'category_names': category_names,
          'study_group_names': study_group_names,
          'attributes': data_attributes,
