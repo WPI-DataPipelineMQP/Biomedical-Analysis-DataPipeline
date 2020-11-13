@@ -7,12 +7,10 @@ from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
 from . import viewsHelper as ViewHelper
-from .models import Document 
-from .database import DBClient, DBHandler 
+from .database import DBClient
 
 from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi
 from .forms import CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
-from .forms import UploaderInfoForm, StudyNameForm
 
 # Create your views here.
 
@@ -300,142 +298,5 @@ def output(request):
     #
     # return render(request, 'datapipeline/output.html', context)
 
-def uploaderInfoGathering(request):
-    studyName = request.session['studyName']
-    
-    context = {
-         'myCSS': 'uploaderInfo.css',
-         'studyName': studyName
-    }
-    
-    if request.method == 'POST':
-        uploaderForm = UploaderInfoForm(request.POST, request.FILES)
-        fields = {}
-        filenames = []
-        
-        if uploaderForm.is_valid():
-            for field in uploaderForm.fields:
-                if uploaderForm.cleaned_data[field]:
-                    if field == 'uploadedFiles':
-                        files = request.FILES.getlist(field)
-                        count = len(files)
-                        for file in files:
-                            filenames.append(file.name)
-                            newdoc = Document(uploadedFile = file, filename=file.name)
-                            newdoc.save()
-                        
-                    else:
-                        fields[field] = uploaderForm[field].data
-             
-            subjectOrgVal = fields.get('subjectOrganization')
-            timeSeriesVal = fields.get('isTimeSeries') 
-            
-            val = DBClient.getTableColumns('HeartRate_1')
-            print(val)
-            
-            # for deleting
-            path = 'uploaded_csvs/'
-            for name in filenames:
-                tmpPath = path + name
-                instance = Document.objects.get(uploadedFile=tmpPath)
-                print(instance.filename)
-                instance.uploadedFile.delete()
-                instance.delete()
-                
-            
-            fields['studyName'] = studyName
-            print(fields)
-            
-            # do any table creations or db lookups here
-            request.session['uploaderInfo'] = fields 
-            
-            print(request.session['uploaderInfo'])
-            print()
-            
-            if (subjectOrgVal == 'row' and timeSeriesVal == 'y'):
-                print('\nFound Special Handler\n')
-        else:
-            print('Not Valid')
-            
-    elif request.method == 'GET':
-        print('\nGot Uploader Info Request\n')
-        
-        studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
-        
-        if studyID == -1:
-            DBHandler.insertToStudy(studyName)
-            studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
-    
-        studyGroups = DBHandler.getInfoOnStudy('study_group_name', 'StudyGroup', [('study_id', studyID, False)], [None, None])
-        
-        where_params = [('study_id', studyID, False)]
-        join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
-        joinInfo = ['INNER JOIN', join_stmt]
-    
-        dataCategories = DBHandler.getInfoOnStudy('dc.data_category_name', 'DataCategory dc', where_params, joinInfo)
-        
-        context['studyGroups'] = studyGroups
-        context['dataCategories'] = dataCategories
-            
-    
-    # get all the Study Groups and Data Categories for the Study and add to context
-    
-    form = UploaderInfoForm()
-    
-    context['form'] = form
-    
-    return render(request, 'datapipeline/uploaderInfo.html', context) 
 
-
-def uploaderStudyName(request):
-    
-    context = {
-         'myCSS': 'uploaderStudyName.css',
-    }
-    
-    if request.method == 'POST':
-        studyNameForm = StudyNameForm(request.POST)
-        fields = []
-        
-        if studyNameForm.is_valid():
-            for field in studyNameForm.fields:
-                if studyNameForm.cleaned_data[field]:
-                    fields.append(
-                        {
-                            'name': field,
-                            'label': studyNameForm[field].label,
-                            'value': studyNameForm[field].data
-                        }
-                    )
-            studyName = fields[0].get('value')
-            request.session['studyName'] = studyName
-            print(studyName)
-            
-            return redirect(uploaderInfoGathering)
-            
-            
-            
-    elif request.method == 'GET':
-        print('\nGot Uploader Study Name Request\n')
-        
-        args = {
-            'selectors': '*',
-            'from': 'Study',
-            'join-type': None,
-            'join-stmt': None,
-            'where': None,
-            'group-by': None,
-            'order-by': None,
-        }
-    
-        result = DBClient.executeQuery(args)
-        
-        context['studies'] = result
-        
-    
-    form = StudyNameForm()
-    
-    context['form'] = form 
-    
-    return render(request, 'datapipeline/uploaderStudyName.html', context)
     

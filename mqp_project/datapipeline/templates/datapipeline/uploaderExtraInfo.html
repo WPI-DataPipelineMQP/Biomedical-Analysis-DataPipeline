@@ -1,0 +1,49 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<form method="POST" action="{% url 'datapipeline-uploaderExtraInfo' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if case1 is True %}
+    <p>
+       {{ form.hasSubjectID.errors }}
+       <label for="{{ form.hasSubjectID.id_for_label }}"> {{form.hasSubjectID.label}}</label>
+        {{ form.hasSubjectID }}
+    </p>
+    <p>
+        {{ form.nameOfValueMeasured.errors }} 
+        {{ form.datatypeOfMeasured.errors }}
+        <label for="{{ form.nameOfValueMeasured.id_for_label }}"> {{form.nameOfValueMeasured.label}}</label>
+        {{ form.nameOfValueMeasured }}
+        {{ form.datatypeOfMeasured }}
+    </p>
+    {% endif %}
+
+    {% if case2 is True %}
+    <p>
+        {{ form.studyGroupDescription.errors }}
+        <label for="{{ form.studyGroupDescription.id_for_label }}"> {{form.studyGroupDescription.label}}</label>
+        {{ form.studyGroupDescription }}
+    </p>
+    {% endif %}
+
+    {% if case3 is True %}
+        <p>
+            {{ form.dataCategoryDescription.errors }}
+            <label for="{{ form.dataCategoryDescription.id_for_label }}"> {{form.dataCategoryDescription.label}}</label>
+            {{ form.dataCategoryDescription }}
+        </p> 
+        
+        {% for field in form %}
+            {% if '_custom_' in field.html_name %}
+                <p>
+                    <label for="{{ form.field.id_for_label }}"> {{field.label}}</label>
+                    {{ field }}
+                </p>
+            
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+    <input type="submit" value="Next">
+</form>
+{% endblock content %}

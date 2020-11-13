@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, uploaderViews
 
 urlpatterns = [
     path('', views.home, name='datapipeline-home'),
@@ -7,6 +7,7 @@ urlpatterns = [
     path('dataSelection/', views.dataSelection, name='datapipeline-dataSelection'),
     path('dataSelection-2/', views.dataSelectionContinued, name='datapipeline-dataSelection-2'),
     path('output', views.output, name='datapipeline-output'),
-    path('uploaderStudyName/', views.uploaderStudyName, name='datapipeline-uploaderStudyName'),
-    path('uploaderInfo/', views.uploaderInfoGathering, name='datapipeline-uploaderInfo'),
+    path('uploaderStudyName/', uploaderViews.uploaderStudyName, name='datapipeline-uploaderStudyName'),
+    path('uploaderInfo/', uploaderViews.uploaderInfoGathering, name='datapipeline-uploaderInfo'),
+    path('uploaderExtraInfo/', uploaderViews.uploaderExtraInfo, name='datapipeline-uploaderExtraInfo'),
 ]

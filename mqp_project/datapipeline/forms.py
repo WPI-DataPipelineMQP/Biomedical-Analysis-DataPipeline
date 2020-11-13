@@ -13,26 +13,6 @@ NonInteger_Symbols = [
     ('notequal', '!='),
 ]
 
-class StudyNameForm(forms.Form):
-    studyName = forms.CharField(label='Study Name', required=True)
-    
-    
-class UploaderInfoForm(forms.Form):
-    groupName = forms.CharField(label='Study Group Name', required=False)
-    categoryName = forms.CharField(label='Data Category Name', required=True)
-    
-    SUBJECT_CHOICES = [('file', ('Subject per File')), ('row', 'Subject per Row')]
-    
-    subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES, widget=forms.RadioSelect, label="What Format Does this Data Category Follow?", required=True)
-    
-    TIMESERIES_CHOICES = [('y', 'Yes'), ('n', 'No')]
-    
-    isTimeSeries = forms.ChoiceField(choices=TIMESERIES_CHOICES, widget=forms.RadioSelect, label="Is this Data Category Time Series?", required=True)
-    
-    uploadedFiles = forms.FileField(label="Select Files", required=True, widget=forms.ClearableFileInput(attrs={'multiple': True}))
-    
-    
-
 class CreateHeartRateForm(forms.Form):
     viewHRDateTime = forms.BooleanField(label= 'HeartRate.date_time', required = False)
     viewHRHeartRate = forms.BooleanField(label= 'HeartRate.heart_rate', required = False)

@@ -98,3 +98,113 @@ def insertToStudy(study_name):
         print('ERROR: Error Found When Attempting to Insert {} to Study Table'.format(study_name))
     
     return result
+
+
+def insertToStudyGroup(study_group_name, description, study_id):
+    
+    group_insert_template = ("INSERT INTO StudyGroup "
+               "(study_group_name, study_group_description, study_id) "
+               "VALUES (%s, %s, %s)")
+    
+   
+    new_group_name = (study_group_name, description, study_id)
+        
+    result = DBClient.executeCommand(group_insert_template, new_group_name)
+        
+    if not result :
+        print('ERROR: Error Found When Attempting to Insert {} to StudyGroup Table'.format(study_group_name))
+    
+    return result
+
+
+def insertToDataCategory(category_name, time_series_val, dc_table_name, description):
+    
+    dataCategory_insert_template = ("INSERT INTO DataCategory "
+                                    "(data_category_name, is_time_series, dc_table_name, dc_description) "
+                                    "VALUE (%s, %s, %s, %s)")
+     
+    new_data_category = (category_name, time_series_val, dc_table_name, description)
+     
+    result = DBClient.executeCommand(dataCategory_insert_template, new_data_category)
+    
+    if not result :
+        print('ERROR: Error Found When Attempting to Insert Data Category Name: {} to DataCategory Table'.format(category_name))
+    
+    return result 
+
+
+def insertToDataCategoryXref(category_id, study_id):
+
+    dataCategoryStudyXref_insert_template = ("INSERT INTO DataCategoryStudyXref "
+                                             "(data_category_id, study_id) "
+                                             "VALUES (%s, %s)")
+
+    new_data_category_xref = (category_id, study_id)
+    
+    result = DBClient.executeCommand(dataCategoryStudyXref_insert_template, new_data_category_xref)
+    
+    if not result :
+        print("ERROR: Error Found When Attempting to Insert Data Category ID: {} and Study ID: {} to DataCategoryXref Table".format(category_id, study_id))
+    
+    return result
+        
+def dataCategoryHandler(myMap, study_id):
+    
+    data_category_name = myMap.get('categoryName')
+    
+    time_series_int = 0 
+    
+    if myMap.get('isTimeSeries'):
+        time_series_int = 1
+        
+    myMap['createTable'] = False
+    
+    description = myMap.get('DC_description')
+    dc_table_name = data_category_name + '_' + str(study_id)
+    
+    insertToDataCategory(data_category_name, time_series_int, dc_table_name, description)
+        
+    where_params = [('dc_table_name', dc_table_name, True), ('is_time_series', time_series_int, False)]
+
+    data_category_id = getSelectorFromTable('data_category_id', 'DataCategory', where_params, [None, None])
+        
+    insertToDataCategoryXref(data_category_id, study_id)
+        
+    myMap['tableName'] = data_category_name + '_' + str(study_id)
+
+    return myMap
+
+
+def newTableHandler(myMap):
+    
+    if myMap.get('createTable') is False:
+        dataTypeMap = {
+            '1' : 'TEXT',
+            '2' : 'INT',
+            '3' : 'FLOAT(10,5)',
+            '4' : 'Datetime',
+            '5' : 'BOOLEAN'
+        }
+
+        table_name = myMap.get('tableName')
+        
+        dataID_field = "data_id INT AUTO_INCREMENT,"
+        subjectID_field = "subject_id INT,"
+        pk_field = "PRIMARY KEY (data_id),"
+        fk_field = "CONSTRAINT FK_{}_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE)".format(table_name.upper())
+    
+        stmt = "CREATE TABLE {}({}".format(table_name, dataID_field)
+    
+        for column in myMap.get('columns'):
+            field_name = column[0]
+            data_type = dataTypeMap.get(column[1]) 
+        
+            tmp_stmt = "{} {},".format(field_name, data_type)
+        
+            stmt += tmp_stmt
+        
+        stmt += subjectID_field
+        stmt += pk_field
+        stmt += fk_field
+    
+        DBClient.createTable(stmt, table_name, 1)
