@@ -117,13 +117,13 @@ def insertToStudyGroup(study_group_name, description, study_id):
     return result
 
 
-def insertToDataCategory(category_name, time_series_val, dc_table_name, description):
+def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_table_name, description):
     
     dataCategory_insert_template = ("INSERT INTO DataCategory "
-                                    "(data_category_name, is_time_series, dc_table_name, dc_description) "
-                                    "VALUE (%s, %s, %s, %s)")
+                                    "(data_category_name, is_time_series, has_subject_name, dc_table_name, dc_description) "
+                                    "VALUE (%s, %s, %s, %s, %s)")
      
-    new_data_category = (category_name, time_series_val, dc_table_name, description)
+    new_data_category = (category_name, time_series_val, hasSubjectNames, dc_table_name, description)
      
     result = DBClient.executeCommand(dataCategory_insert_template, new_data_category)
     
@@ -147,26 +147,55 @@ def insertToDataCategoryXref(category_id, study_id):
         print("ERROR: Error Found When Attempting to Insert Data Category ID: {} and Study ID: {} to DataCategoryXref Table".format(category_id, study_id))
     
     return result
+
+def insertToAttribute(attributes, dcID):
+    for colName in attributes:
+        currDict = attributes.get(colName)
+        name = colName
+        description = currDict.get('description')
+        dataType = currDict.get('dataType')
+        unit = currDict.get('unit')
+        device = currDict.get('deviceUsed')
+        
+        attribute_insert_template = ("INSERT INTO Attribute "
+                                        "(attr_name, attr_description, data_type, unit, device_name, data_category_id) "
+                                             "VALUES (%s, %s, %s, %s, %s, %s)")
+
+        new_attribute = (name, description, dataType, unit, device, dcID) 
+        
+        result = DBClient.executeCommand(attribute_insert_template, new_attribute)
+        
+        if not result:
+            print('\nERROR during insert to Attribute\n')
+            
+    
+        
         
 def dataCategoryHandler(myMap, study_id):
     
     data_category_name = myMap.get('categoryName')
     
     time_series_int = 0 
+    has_subjectNames_int = 0
     
     if myMap.get('isTimeSeries'):
         time_series_int = 1
+        
+    if myMap.get('hasSubjectNames'):
+        has_subjectNames_int = 1
         
     myMap['createTable'] = False
     
     description = myMap.get('DC_description')
     dc_table_name = data_category_name + '_' + str(study_id)
     
-    insertToDataCategory(data_category_name, time_series_int, dc_table_name, description)
+    insertToDataCategory(data_category_name, time_series_int, has_subjectNames_int, dc_table_name, description)
         
     where_params = [('dc_table_name', dc_table_name, True), ('is_time_series', time_series_int, False)]
 
     data_category_id = getSelectorFromTable('data_category_id', 'DataCategory', where_params, [None, None])
+    
+    myMap['DC_ID'] = data_category_id
         
     insertToDataCategoryXref(data_category_id, study_id)
         

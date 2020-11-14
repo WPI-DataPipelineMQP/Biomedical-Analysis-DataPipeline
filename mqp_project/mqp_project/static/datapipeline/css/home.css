@@ -4,7 +4,7 @@
 
 .grid-container {
 	display: grid;
-	grid-template-columns: auto auto auto auto;
+	grid-template-columns: auto auto auto;
 	grid-auto-rows: auto;
 	background-color: #2196F3;
   	padding: 10px;
@@ -16,11 +16,18 @@
   	padding: 20px;
   	font-size: 30px;
   	text-align: center;
-  	background-color: red;
+}
+
+.grid-item:hover {
+  	background-color: #cbd5db;
+  	border: 1px solid rgba(0, 0, 0, 0.8);
+  	padding: 20px;
+  	font-size: 30px;
+  	text-align: center;
 }
 
 /* puts grid to hamburger layout if width is too small */
-@media(max-width: 991px) {
+@media(max-width: 1200px) {
 	.grid-container {
 		display: grid;
 		grid-template-columns: auto;
@@ -30,6 +37,22 @@
 	}
 }
 
+ul.icon-listings {
+	list-style-type: none;
+	margin: 0; 
+  	padding: 0;
+}
+
 .icons {
 	width: 200px;
+	height: 200px;
+}
+
+li.icon-description {
+	margin-top: 50px;
+}
+
+a.none {
+	text-decoration: none;
+	color: black;
 }

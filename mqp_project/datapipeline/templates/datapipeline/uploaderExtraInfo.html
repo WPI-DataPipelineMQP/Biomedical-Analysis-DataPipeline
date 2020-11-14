@@ -43,6 +43,14 @@
             {% endif %}
         {% endfor %}
     {% endif %}
+
+    {% if case4 is True %}
+    <p>
+        {{ form.dataCategoryDescription.errors }}
+        <label for="{{ form.dataCategoryDescription.id_for_label }}"> {{form.dataCategoryDescription.label}}</label>
+        {{ form.dataCategoryDescription }}
+    </p>
+    {% endif %}
     
     <input type="submit" value="Next">
 </form>

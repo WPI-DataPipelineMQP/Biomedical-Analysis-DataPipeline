@@ -10,4 +10,6 @@ urlpatterns = [
     path('uploaderStudyName/', uploaderViews.uploaderStudyName, name='datapipeline-uploaderStudyName'),
     path('uploaderInfo/', uploaderViews.uploaderInfoGathering, name='datapipeline-uploaderInfo'),
     path('uploaderExtraInfo/', uploaderViews.uploaderExtraInfo, name='datapipeline-uploaderExtraInfo'),
+    path('uploaderFinalPrompt/', uploaderViews.uploaderFinalPrompt, name='datapipeline-uploaderFinalPrompt'),
+    path('uploader/', uploaderViews.uploader, name='datapipeline-uploader'),
 ]

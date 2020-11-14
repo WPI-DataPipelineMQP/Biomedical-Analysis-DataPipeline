@@ -51,8 +51,8 @@ class UploadInfoCreationForm(forms.Form):
         ]
         super(UploadInfoCreationForm, self).__init__(*args, **kwargs) 
         
-        for i, j in enumerate(extra):
-            fieldName = j
+        for name in extra:
+            fieldName = name
             
             dataType = '{}_custom_dataType'.format(fieldName)
             description = '{}_custom_description'.format(fieldName)
@@ -76,6 +76,41 @@ class UploadInfoCreationForm(forms.Form):
     def reset(self):
         for field in self.fields:
             self.fields[field].required = False
+            
+class UploadPositionForm(forms.Form) :
+    
+    def __init__(self, *args, **kwargs):
+        columns = kwargs.pop('columns')
+        
+        size = len(columns)
+        
+        available_positions = [(i, i) for i in range(size)]
+        
+        allowed_datatypes = [
+            (1, 'String/text'),
+            (2, 'Integer'),
+            (3, 'Float/Decimal'),
+            (4, 'Datetime'),
+            (5, 'Boolean')
+        ]
+        
+        super(UploadPositionForm, self).__init__(*args, **kwargs) 
+        
+        for column in columns:
+            position = '{}_custom_position'.format(column)
+            dataType = '{}_custom_dataType'.format(column)
+            
+            self.fields[position] = forms.CharField(label="{}'s Position: ".format(column), widget=forms.Select(choices=available_positions, attrs={'id': 'mySelection'}), required=True)
+            self.fields[dataType] = forms.CharField(label='Datatype:', widget=forms.Select(choices=allowed_datatypes, attrs={'id': 'mySelection'}), required=True)
+    
+    def getColumnFields(self):
+        for name, value in self.cleaned_data.items():
+            yield (name, value)
+        
+        
+        
+        
+        
             
     
             

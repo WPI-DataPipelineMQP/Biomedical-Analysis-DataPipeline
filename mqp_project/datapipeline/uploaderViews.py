@@ -6,18 +6,91 @@ from django.shortcuts import redirect
 from .models import Document 
 from .database import DBClient, DBHandler 
 from . import uploaderViewHelper as Helper
-from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm
+from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm
 
 import pandas as pd
 import numpy as np 
 
+def uploader(request):
+    studyName = request.session['studyName']
+    uploaderInfo = request.session['uploaderInfo']
+    positionInfo = request.session['positionInfo']
+    
+    context = {
+         'myCSS': 'uploader.css',
+         'studyName': studyName
+    }
+    print()
+    print(studyName)
+    print()
+    
+    print()
+    print(uploaderInfo)
+    print()
+    
+    print()
+    print(positionInfo)
+    print()
+    
+    return render(request, 'datapipeline/uploader.html', context) 
+    
+    
+
+def uploaderFinalPrompt(request):
+    studyName = request.session['studyName']
+    uploaderInfo = request.session['uploaderInfo']
+    
+    print()
+    print(uploaderInfo)
+    print()
+    context = {
+         'myCSS': 'uploaderFinalPrompt.css',
+         'studyName': studyName,
+         'error': False
+    }
+    
+    headers = uploaderInfo.get('headerInfo')
+    isTimeSeries = uploaderInfo.get('isTimeSeries')
+    subjectOrg = uploaderInfo.get('subjectOrganization')
+    
+    form = UploadPositionForm(None, columns=headers)
+    
+    if request.method == 'POST':
+        form = UploadPositionForm(request.POST, columns=headers)
+        myFields = []
+        
+        if form.is_valid():
+            for (i, val) in form.getColumnFields():
+                myFields.append((i, val)) 
+        
+        clean = Helper.seperateByName(myFields, 2)       
+        
+        if Helper.foundDuplicatePositions(clean) is True:
+            print('Found Duplicate!')
+            context['error'] = True
+            
+        else:
+            request.session['positionInfo'] = clean 
+            
+            return redirect(uploader)
+            
+        
+    elif request.method == 'GET':
+        if isTimeSeries and subjectOrg == 'row':
+            print('go right to upload')
+            
+        print('\nGot Uploader Extra Info Request\n')
+        
+    context['form'] = form
+    
+    return render(request, 'datapipeline/uploaderFinalPrompt.html', context)
     
 def uploaderExtraInfo(request):
     studyName = request.session['studyName']
     uploaderInfo = request.session['uploaderInfo']
     
     context = {
-         'myCSS': 'uploaderInfo.css',
+         'myCSS': 'uploaderExtraInfo.css',
          'studyName': studyName
     }
     
@@ -45,54 +118,94 @@ def uploaderExtraInfo(request):
             for (name, val) in form.getExtraFields():
                 myExtras.append((name, val))
             
-        
-        print(myFields)
-        print(uploaderInfo)
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
             DBHandler.insertToStudyGroup(groupName, description, studyID) 
-        
+            
+            where_params = [('study_group_name', groupName, True), ('study_id', studyID, False)]
+            groupID = DBHandler.getSelectorFromTable('study_group_id', 'StudyGroup', where_params, [None, None])
+            
+            uploaderInfo['groupID'] = groupID
+            
+            
         if dcID == -1:
             isTS = False 
+            hasSubjectNames = False 
+            
+            subjectVal = myFields.get('hasSubjectID')
+            
+            if subjectVal == 'y':
+                hasSubjectNames = True 
             
             if isTimeSeries == 'y':
                 isTS = True 
                 
+            uploaderInfo['hasSubjectNames'] = hasSubjectNames 
+            uploaderInfo['isTimeSeries'] = isTS
+            
+               
             myMap = {
                 'categoryName': uploaderInfo.get('categoryName'),
                 'isTimeSeries': isTS,
+                'hasSubjectNames': hasSubjectNames,
                 'DC_description': myFields.get('dataCategoryDescription')
             }
             
             myMap = DBHandler.dataCategoryHandler(myMap, studyID)
             
+            uploaderInfo['tableName'] = myMap.get('tableName')
+            uploaderInfo['dcID'] = myMap.get('DC_ID')
+            
             cleanResult = Helper.getCleanFormat(myExtras)
+            
+            if subjectRule == 'row' and isTimeSeries == 'y':
+                columnName = myFields.get('nameOfValueMeasured')
+                columnVal = myFields.get('datatypeOfMeasured') 
+                cleanResult = [(columnName, columnVal)] 
+                uploaderInfo['headerInfo'] = [columnName]
+        
             
             myMap['columns'] = cleanResult
             
             DBHandler.newTableHandler(myMap)
-            # create table
+            
+            cleanAttributeFormat = Helper.seperateByName(myExtras, 4)
+            
+            DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+            
         
-      
+        request.session['uploaderInfo'] = uploaderInfo
+        
+        return redirect(uploaderFinalPrompt)
+        
+          
     elif request.method == 'GET':
+        case1 = False
         if subjectRule == 'row' and isTimeSeries == 'y':
             print('FOUND CASE 1')
             form.fields['hasSubjectID'].required = True
             form.fields['nameOfValueMeasured'].required = True 
             context['case1'] = True
+            case1 = True
+            form = UploadInfoCreationForm(None, dynamicFields=[])
             
         if groupID == -1:
             print('FOUND CASE 2')
             form.fields['studyGroupDescription'].required = True 
             context['case2'] = True 
             
-        if dcID == -1:
+        if dcID == -1 and case1 is False:
             print('FOUND CASE 3')
             form.fields['dataCategoryDescription'].required = True
             filenames = uploaderInfo.get('filenames')
-            form = UploadInfoCreationForm(None, dynamicFields=headers)
             context['case3'] = True
-                
+            
+        elif dcID == -1 and case1 is True: 
+            print('FOUND CASE 4')
+            form.fields['dataCategoryDescription'].required = True
+            context['case4'] = True
+            #form = UploadInfoCreationForm(None, dynamicFields=[])
+                 
         print('\nGot Uploader Extra Info Request\n')
         
     
@@ -166,12 +279,25 @@ def uploaderInfoGathering(request):
     
             data_category_id = DBHandler.getSelectorFromTable('dc.data_category_id', 'DataCategory dc', where_params, joinInfo)
             
+            if data_category_id != -1:
+                where_params = [('data_category_id', data_category_id, False)]
+                
+                tableName = DBHandler.getSelectorFromTable('dc_table_name', 'DataCategory', where_params, [None, None])
+                isTimeSeries = DBHandler.getSelectorFromTable('is_time_series', 'DataCategory', where_params, [None, None])
+                hasSubjectNames = DBHandler.getSelectorFromTable('has_subject_name', 'DataCategory', where_params, [None, None])
+                
+                fields['tableName'] = tableName
+                fields['isTimeSeries'] = isTimeSeries
+                fields['hasSubjectNames'] = hasSubjectNames
+            
+            
             fields['studyID'] = studyID
             fields['filenames'] = filenames
             fields['studyName'] = studyName
             fields['groupName'] = groupName
             fields['groupID'] = groupID
             fields['dcID'] = data_category_id
+            fields['hasSubjectNames'] = False 
             
             # do any table creations or db lookups here
             request.session['uploaderInfo'] = fields 
@@ -179,6 +305,9 @@ def uploaderInfoGathering(request):
             if (subjectOrgVal == 'row' and timeSeriesVal == 'y') or (groupID == -1) or (data_category_id == -1):
                 print('\nFound Special Handler\n')
                 return redirect(uploaderExtraInfo)
+            
+            else:
+                return redirect(uploaderFinalPrompt)
         else:
             print('Not Valid')
             

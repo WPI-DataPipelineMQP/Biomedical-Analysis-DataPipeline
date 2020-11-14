@@ -1,0 +1,36 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% load bootstrap_tags %}
+{% block content %}
+<form method="POST" action="{% url 'datapipeline-uploaderFinalPrompt' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if error is True %}
+    <h1 class="add-bottom-margin">Found Duplicate Positions!</h1>
+    {% endif %}
+    <table class="table-center">
+        <tr>
+        {% for field in form %}
+            <td>
+                {% if '_custom_dataType' in field.html_name %}
+                <label id="dataType-label">DataType: </label>
+        
+                {% else %}
+                <label for="{{ form.field.id_for_label }}"> {{field.label}}</label>
+                {% endif %}
+        
+                {{ field }}
+            </td>
+        
+        {% if forloop.last %}
+        </tr>
+        {% else %}
+        {% if forloop.counter|divisibleby:"2" %}
+        </tr><tr>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+    </table>
+    <input type="submit" value="Upload">
+</form>    
+
+{% endblock content %}
