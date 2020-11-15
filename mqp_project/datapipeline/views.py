@@ -33,16 +33,12 @@ def studySelection(request):
     if request.method == 'POST':
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
 
-        context = {
-            'studies_form': studies_form,
-            'myCSS' : 'studySelection.css'
-        }
-
-        print("valid: " + str(studies_form.is_valid()))
+        #print(studies_form)
         if studies_form.is_valid():
             for field in studies_form:
-                #print('')
-                print("STUDY: " + studies_form.cleaned_data[field])
+                print(field)
+                this = studies_form.cleaned_data[field.name]
+                print("STUDY: " + str(this))
         print('\nGot Study Selection Request\n')
 
         return HttpResponseRedirect('/dataSelection')

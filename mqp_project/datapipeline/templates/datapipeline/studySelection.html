@@ -1,14 +1,14 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<form action="{% url 'datapipeline-dataSelection' %}" method="POST">
+<form action="{% url 'datapipeline-studySelection' %}" method="POST">
     {% csrf_token %}
     <ul class="study-listings">
 <!--        {{ studies_form.as_p }}-->
         {% for field in studies_form %}
             {{ field }}
             {{ field.label }}
-        <p class="hello">{{ field.help_text }}</p>
+        <p class="description">{{ field.help_text }}</p>
         {% endfor %}
         <!--{% for study in studies %}
         <li class="study-article">
