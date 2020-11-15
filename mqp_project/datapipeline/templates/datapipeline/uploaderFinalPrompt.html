@@ -2,6 +2,10 @@
 {% load static %}
 {% load bootstrap_tags %}
 {% block content %}
+{% if schema %}
+<p class="finalPrompt">{{ schema }}</p>
+{% endif %}
+<p class="prompt">PROMPT: Please map each column to its corresponding column within the table</p>
 <form method="POST" action="{% url 'datapipeline-uploaderFinalPrompt' %}" enctype="multipart/form-data">
     {% csrf_token %}
     {% if error is True %}

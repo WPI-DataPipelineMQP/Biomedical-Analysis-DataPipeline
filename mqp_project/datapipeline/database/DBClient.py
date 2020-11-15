@@ -1,6 +1,8 @@
 from django.db import connection
+from django.conf import settings
 import pandas as pd 
 import numpy as np
+import sqlalchemy as sql
 
 def dictfetchall(cursor):
     # "Return all rows from a cursor as a dict"
@@ -139,3 +141,7 @@ def executeCommand(template, args):
         print('ERROR IN EXECUTE COMMAND')
             
         return False
+    
+def dfInsert(df, tableName):
+    db_engine = sql.create_engine(settings.DB_CONNECTION_URL)
+    df.to_sql(name=tableName, con=db_engine, if_exists='append', index=False)

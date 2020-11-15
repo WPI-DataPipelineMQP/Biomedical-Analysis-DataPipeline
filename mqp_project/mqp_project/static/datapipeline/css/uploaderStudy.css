@@ -24,16 +24,8 @@
 }
 
 h1 {
-    margin-bottom: 40px;
-}
-
-h3.uploaderInfo {
-    margin-left: 1.5em;
-    margin-bottom: 20px;
-}
-
-h3.center {
     text-align: center;
+    margin-bottom: 40px;
 }
 
 input[type="submit"] {
@@ -44,14 +36,10 @@ input[type="submit"] {
 }
 
 ul {
-    list-style-type: none;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-ul.uploaderInfo {
-    list-style-type: square;
-    margin-left: 2em;
-}
-
-li.uploaderInfo {
+li {
     font-size: 20px;
 }

@@ -72,7 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mqp_project.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
@@ -87,6 +86,13 @@ DATABASES = {
     }
 }
 
+DB_CONNECTION_URL = 'mysql://{}:{}@{}:{}/{}'.format(
+    DATABASES.get('default').get('USER'),
+    DATABASES.get('default').get('PASSWORD'),
+    DATABASES.get('default').get('HOST'),
+    DATABASES.get('default').get('PORT'),
+    DATABASES.get('default').get('NAME')
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

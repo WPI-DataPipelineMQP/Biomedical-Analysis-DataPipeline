@@ -172,9 +172,36 @@ def insertToAttribute(attributes, dcID):
         if not result:
             print('\nERROR during insert to Attribute\n')
             
+def subjectHandler(filename, study_group_id, subjectNumber=None):
     
+    subject_number = subjectNumber
+    
+    if subjectNumber is None:
+        subject_number = filename.split('_')[0] 
+    
+    
+    where_params = [('subject_number', subject_number, True), ('study_group_id', study_group_id, False)]
+    
+    result = getSelectorFromTable('subject_id', 'Subject', where_params, [None, None])
+    
+    if result == -1:
+        subject_insert_template = ("INSERT INTO Subject "
+                            "(subject_number, study_group_id) "
+                            "VALUES (%s, %s)")
+        
+        new_subject = (subject_number, study_group_id)
+        
+        insertResult = DBClient.executeCommand(subject_insert_template, new_subject)
+        
+        if not result :
+            print('ERROR: Error Found When Attempting to Insert Subject_Number: {} and Study Group ID: {} to Subject Table'.format(subject_number, study_group_id))
         
         
+
+
+    return getSelectorFromTable('subject_id', 'Subject', where_params, [None, None]) 
+
+
 def dataCategoryHandler(myMap, study_id):
     
     data_category_name = myMap.get('categoryName')
@@ -202,7 +229,8 @@ def dataCategoryHandler(myMap, study_id):
     myMap['DC_ID'] = data_category_id
         
     insertToDataCategoryXref(data_category_id, study_id)
-        
+    
+    data_category_name = data_category_name.replace(" ", "_")
     myMap['tableName'] = data_category_name + '_' + str(study_id)
 
     return myMap

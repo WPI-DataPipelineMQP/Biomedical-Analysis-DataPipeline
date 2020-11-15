@@ -15,7 +15,7 @@ import numpy as np
 def uploaderStudy(request):
     
     context = {
-         'myCSS': 'uploaderStudyName.css',
+         'myCSS': 'uploaderStudy.css',
     }
     
     #############################################################################################################
@@ -50,7 +50,7 @@ def uploaderStudy(request):
         print('\nGot Uploader Study Name Request\n')
         
         args = {
-            'selectors': '*',
+            'selectors': 'study_name',
             'from': 'Study',
             'join-type': None,
             'join-stmt': None,
@@ -60,8 +60,13 @@ def uploaderStudy(request):
         }
     
         result = DBClient.executeQuery(args)
+        cleanResult = []
+        for item in result:
+            study = item[0]
+            cleanResult.append(study)
+            
         
-        context['studies'] = result
+        context['studies'] = cleanResult
         
     #############################################################################################################
         
@@ -157,14 +162,6 @@ def uploaderInfo(request):
         headers = list(df.columns)
             
         fields['headerInfo'] = headers
-            
-        # DELETING UPLOADED CSV FILES - TEMPORARY
-        path = 'uploaded_csvs/'
-        for name in filenames:
-            tmpPath = path + name
-            instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
-            instance.uploadedFile.delete()
-            instance.delete()
             
         subjectOrgVal = fields.get('subjectOrganization')
         timeSeriesVal = fields.get('isTimeSeries')
@@ -275,7 +272,8 @@ def uploaderExtraInfo(request):
         if subjectRule == 'row' and isTimeSeries == 'y':
             colName = myFields.get('nameOfValueMeasured')
             dataType = myFields.get('datatypeOfMeasured')
-            uploaderInfo['specialInsert'] = {colName: dataType}
+            dataType = Helper.getActualDataType(dataType)
+            uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
              
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
@@ -339,6 +337,7 @@ def uploaderFinalPrompt(request):
     
     context = {
          'myCSS': 'uploaderFinalPrompt.css',
+         'myJS': 'uploaderFinalPrompt.js',
          'studyName': studyName,
          'error': False
     }
@@ -346,6 +345,7 @@ def uploaderFinalPrompt(request):
     headers = uploaderInfo.get('headerInfo')
     isTimeSeries = uploaderInfo.get('isTimeSeries')
     subjectOrg = uploaderInfo.get('subjectOrganization')
+    tableName = uploaderInfo.get('tableName')
     
     form = UploadPositionForm(None, columns=headers)
     
@@ -358,7 +358,7 @@ def uploaderFinalPrompt(request):
             for (i, val) in form.getColumnFields():
                 myFields.append((i, val)) 
         
-        clean = Helper.seperateByName(myFields, 2)       
+        clean = Helper.seperateByName(myFields, 2, True)       
         
         if Helper.foundDuplicatePositions(clean) is True:
             print('Found Duplicate!')
@@ -378,7 +378,10 @@ def uploaderFinalPrompt(request):
         print('\nGot Uploader Extra Info Request\n')
         
     #############################################################################################################
-        
+    
+    tableSchema = Helper.getTableSchema(tableName)
+    
+    context['schema'] = tableSchema
     context['form'] = form
     
     return render(request, 'datapipeline/uploaderFinalPrompt.html', context)
@@ -389,24 +392,47 @@ def uploader(request):
     uploaderInfo = request.session['uploaderInfo']
     positionInfo = request.session['positionInfo']
     
+    specialFlag = False 
+    
     key = 'specialInsert'
     if key in uploaderInfo.keys():
         positionInfo = uploaderInfo.get(key)
+        specialFlag = True
     
     context = {
          'myCSS': 'uploader.css',
          'studyName': studyName
     }
-    print()
-    print(studyName)
-    print()
     
-    print()
-    print(uploaderInfo)
-    print()
+    filenames = uploaderInfo.get('filenames')
+    groupID = uploaderInfo.get('groupID')
+    hasSubjectNames = uploaderInfo.get('hasSubjectNames')
+    tableName = uploaderInfo.get('tableName')
     
-    print()
-    print(positionInfo)
-    print()
+    columnInfo = []
+    organizedColumns = []
+    
+    path = 'uploaded_csvs/'
+    for i, file in enumerate(filenames):
+        filepath = path + file
+        if i == 0:
+            columnInfo, organizedColumns = Helper.getInfo(positionInfo)
+        
+        if specialFlag is True:
+            print('Do Special Insert')
+            
+        else:
+            Helper.uploadToDatabase(filepath, uploaderInfo, columnInfo, organizedColumns, groupID)
+    
+    print('Upload Completed!')
+            
+    
+    # DELETING UPLOADED CSV FILES
+    for name in filenames:
+        tmpPath = path + name
+        instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
+        instance.uploadedFile.delete()
+        instance.delete()
+        
     
     return render(request, 'datapipeline/uploader.html', context) 

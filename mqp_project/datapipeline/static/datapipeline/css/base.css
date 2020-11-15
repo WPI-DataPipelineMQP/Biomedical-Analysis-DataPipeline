@@ -1,37 +1,36 @@
 body {
-	margin-top: 5rem;
+  margin-top: 5rem;
 }
 
 h3.title-header {
-	font-family: 'Changa One', cursive;
+  font-family: "Changa One", cursive;
 }
 
 .container-width {
-	min-width: 80%;
+  min-width: 80%;
 }
 
 .navbar-bg-color {
-	background-color: #016B48;
+  background-color: #016b48;
 }
 
 .center-nav-items {
-	text-align: center;
+  text-align: center;
 }
 
 .site-header .navbar-nav .nav-link {
-	color: #ffffff;
+  color: #ffffff;
 }
 
 .site-header .navbar-nav .nav-link:hover {
-	color: #cbd5db;
+  color: #cbd5db;
 }
 
 .site-header .navbar-nav .nav-link.active {
-	font-weight: 500;
+  font-weight: 500;
 }
 
 .ui-datepicker {
-    background: #333;
-    color: #EEE;
+  background: #333;
+  color: #eee;
 }
-
