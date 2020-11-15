@@ -1,0 +1,16 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<h1 class="header-left">Info Gathering For {{ studyName }}</h1>
+
+{% if error is True %}
+<h2 class="header-error">Found Start Date After End Date!</h2>
+{% endif %}
+
+<form class="center" method="POST" action="{% url 'datapipeline-uploaderStudyInfo' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <input type="submit" value="Next">
+</form>
+{% endblock content %}

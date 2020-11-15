@@ -83,19 +83,23 @@ def convertToList(data):
     return result
 
 
-def insertToStudy(study_name):
+def insertToStudy(values):
     
     study_insert_template = ("INSERT INTO Study "
-               "(study_name, total_sample_size) "
-               "VALUES (%s, %s)")
+               "(study_name, study_description, is_irb_approved, institutions_involved, study_start_date, study_end_date, study_contact, study_notes) "
+               "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
     
-    new_study = (study_name, 0)
+    new_study = ()
+    
+    for val in values:
+        new_study += (val,)
+        
+    print(new_study)
     
     result = DBClient.executeCommand(study_insert_template, new_study)
-
-        
+ 
     if not result :
-        print('ERROR: Error Found When Attempting to Insert {} to Study Table'.format(study_name))
+        print('ERROR: Error Found When Attempting to Insert {} to Study Table'.format(values[0]))
     
     return result
 

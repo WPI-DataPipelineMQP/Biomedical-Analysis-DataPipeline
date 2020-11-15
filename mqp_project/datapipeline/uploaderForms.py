@@ -1,7 +1,21 @@
 from django import forms
+from functools import partial
 
 class StudyNameForm(forms.Form):
     studyName = forms.CharField(label='Study Name', required=True)
+    
+    
+class StudyInfoForm(forms.Form):
+    YES_NO_CHOICES = [(1, 'Yes'), (0, 'No')]
+    DateInput = partial(forms.DateInput, {'class': 'datepicker'})
+    studyDescription = forms.CharField(label='Study Description', required=True)
+    isIRB_Approved = forms.ChoiceField(choices=YES_NO_CHOICES, widget=forms.RadioSelect, label="Is study IRB approved?", required=True)
+    institutions = forms.CharField(label="Institutions Involved (separate by comma if multiple)", required=False)
+    startDate = forms.DateField(widget=DateInput(), label="Study Start Date", required=True)
+    endDate = forms.DateField(widget=DateInput(), label="Study End Date", required=True)
+    contactInfo = forms.CharField(label='Study Contact Info', required=False)
+    notes = forms.CharField(label='Study Notes', required=False) 
+    
     
 class UploaderInfoForm(forms.Form):
     groupName = forms.CharField(label='Study Group Name', required=False)
@@ -21,15 +35,16 @@ class UploaderInfoForm(forms.Form):
 class UploadInfoCreationForm(forms.Form):
     YES_NO_CHOICES = [('y', 'Yes'), ('n', 'No')]
     
+    
     subjectLabel = "Is the subject name or ID included in the file? Note that it must be the first column"
     hasSubjectID = forms.ChoiceField(choices=YES_NO_CHOICES, widget=forms.RadioSelect, label=subjectLabel, required=False)
     
     nameOfValueMeasured = forms.CharField(label='What is the name of the value being measured in this time series?', required=False)
     
     allowed_datatypes = [
-        (1, 'String/text'),
+        (1, 'String / Text'),
         (2, 'Integer'),
-        (3, 'Float/Decimal'),
+        (3, 'Float / Decimal'),
         (4, 'Datetime'),
         (5, 'Boolean')
     ]
@@ -43,9 +58,9 @@ class UploadInfoCreationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         extra = kwargs.pop('dynamicFields')
         allowed_datatypes = [
-            (1, 'String/text'),
+            (1, 'String / Text'),
             (2, 'Integer'),
-            (3, 'Float/Decimal'),
+            (3, 'Float / Decimal'),
             (4, 'Datetime'),
             (5, 'Boolean')
         ]
@@ -87,9 +102,9 @@ class UploadPositionForm(forms.Form) :
         available_positions = [(i, i) for i in range(size)]
         
         allowed_datatypes = [
-            (1, 'String/text'),
+            (1, 'String / Text'),
             (2, 'Integer'),
-            (3, 'Float/Decimal'),
+            (3, 'Float / Decimal'),
             (4, 'Datetime'),
             (5, 'Boolean')
         ]

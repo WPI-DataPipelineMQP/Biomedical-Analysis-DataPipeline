@@ -30,3 +30,8 @@ h3.title-header {
 	font-weight: 500;
 }
 
+.ui-datepicker {
+    background: #333;
+    color: #EEE;
+}
+

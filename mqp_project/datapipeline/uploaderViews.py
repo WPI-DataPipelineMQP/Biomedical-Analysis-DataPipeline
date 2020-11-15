@@ -6,85 +6,238 @@ from django.shortcuts import redirect
 from .models import Document 
 from .database import DBClient, DBHandler 
 from . import uploaderViewHelper as Helper
-from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm
+from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm
 
 import pandas as pd
 import numpy as np 
 
-def uploader(request):
-    studyName = request.session['studyName']
-    uploaderInfo = request.session['uploaderInfo']
-    positionInfo = request.session['positionInfo']
+# FIRST PAGE
+def uploaderStudy(request):
     
     context = {
-         'myCSS': 'uploader.css',
-         'studyName': studyName
+         'myCSS': 'uploaderStudyName.css',
     }
-    print()
-    print(studyName)
-    print()
     
-    print()
-    print(uploaderInfo)
-    print()
+    #############################################################################################################
+    if request.method == 'POST':
+        studyNameForm = StudyNameForm(request.POST)
+        fields = []
+        
+        if studyNameForm.is_valid():
+            for field in studyNameForm.fields:
+                if studyNameForm.cleaned_data[field]:
+                    fields.append(
+                        {
+                            'name': field,
+                            'label': studyNameForm[field].label,
+                            'value': studyNameForm[field].data
+                        }
+                    )
+            studyName = fields[0].get('value')
+            request.session['studyName'] = studyName
+            
+            studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
+        
+            if studyID == -1:
+                # redirect to another page
+                return redirect(uploaderStudyInfo)
+            
+            else:
+                return redirect(uploaderInfo)
+            
+    #############################################################################################################           
+    elif request.method == 'GET':
+        print('\nGot Uploader Study Name Request\n')
+        
+        args = {
+            'selectors': '*',
+            'from': 'Study',
+            'join-type': None,
+            'join-stmt': None,
+            'where': None,
+            'group-by': None,
+            'order-by': None,
+        }
     
-    print()
-    print(positionInfo)
-    print()
+        result = DBClient.executeQuery(args)
+        
+        context['studies'] = result
+        
+    #############################################################################################################
+        
     
-    return render(request, 'datapipeline/uploader.html', context) 
+    form = StudyNameForm()
     
+    context['form'] = form 
     
+    return render(request, 'datapipeline/uploaderStudy.html', context)
 
-def uploaderFinalPrompt(request):
+
+# PAGE IF STUDY DOESN'T EXIST IN STUDY TABLE
+def uploaderStudyInfo(request):
     studyName = request.session['studyName']
-    uploaderInfo = request.session['uploaderInfo']
     
-    print()
-    print(uploaderInfo)
-    print()
     context = {
-         'myCSS': 'uploaderFinalPrompt.css',
+         'myCSS': 'uploaderStudyInfo.css',
          'studyName': studyName,
          'error': False
     }
     
-    headers = uploaderInfo.get('headerInfo')
-    isTimeSeries = uploaderInfo.get('isTimeSeries')
-    subjectOrg = uploaderInfo.get('subjectOrganization')
-    
-    form = UploadPositionForm(None, columns=headers)
-    
+    #############################################################################################################
     if request.method == 'POST':
-        form = UploadPositionForm(request.POST, columns=headers)
-        myFields = []
+        form = StudyInfoForm(request.POST)
+        
+        fields = {}
         
         if form.is_valid():
-            for (i, val) in form.getColumnFields():
-                myFields.append((i, val)) 
+            for field in form.fields:
+                if form.cleaned_data[field]:
+                    fields[field] = form[field].data 
         
-        clean = Helper.seperateByName(myFields, 2)       
         
-        if Helper.foundDuplicatePositions(clean) is True:
-            print('Found Duplicate!')
-            context['error'] = True
+        studyDescription = fields.get('studyDescription')
+        hasIRB = fields.get('isIRB_Approved')
+        institutions = fields.get('institutions', '') 
+        startDate = Helper.getDatetime(fields.get('startDate')) 
+        endDate = Helper.getDatetime(fields.get('endDate')) 
+        contactInfo = fields.get('contactInfo', '')
+        notes = fields.get('notes', '')
+        
+        if Helper.validDates(startDate, endDate):
+            values = [studyName, studyDescription, hasIRB, institutions, startDate, endDate, contactInfo, notes]
+            
+            DBHandler.insertToStudy(values)
+            
+            return redirect(uploaderInfo)
             
         else:
-            request.session['positionInfo'] = clean 
+            context['error'] = True
             
-            return redirect(uploader)
-            
+        #############################################################################################################
         
+    
+    context['form'] = StudyInfoForm()
+    
+    return render(request, 'datapipeline/uploaderStudyInfo.html', context)
+
+
+# PAGE THAT GETS THE UPLOADED CSV FILES
+def uploaderInfo(request):
+    studyName = request.session['studyName']
+    
+    context = {
+         'myCSS': 'uploaderInfo.css',
+         'studyName': studyName
+    }
+    
+    #############################################################################################################
+    if request.method == 'POST':
+        uploaderForm = UploaderInfoForm(request.POST, request.FILES)
+        fields = {}
+        filenames = []
+        
+        if uploaderForm.is_valid():
+            for field in uploaderForm.fields:
+                if uploaderForm.cleaned_data[field]:
+                    if field == 'uploadedFiles':
+                        files = request.FILES.getlist(field)
+                        count = len(files)
+                        for file in files:
+                            filenames.append(file.name)
+                            newdoc = Document(uploadedFile = file, filename=file.name)
+                            newdoc.save()
+                        
+                    else:
+                        fields[field] = uploaderForm[field].data
+        
+        # READING THE CSV FILE
+        firstFile = filenames[0]
+        path = 'uploaded_csvs/{}'.format(firstFile)
+        df = pd.read_csv(path) 
+        headers = list(df.columns)
+            
+        fields['headerInfo'] = headers
+            
+        # DELETING UPLOADED CSV FILES - TEMPORARY
+        path = 'uploaded_csvs/'
+        for name in filenames:
+            tmpPath = path + name
+            instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
+            instance.uploadedFile.delete()
+            instance.delete()
+            
+        subjectOrgVal = fields.get('subjectOrganization')
+        timeSeriesVal = fields.get('isTimeSeries')
+        groupName = fields.get('groupName') 
+        dataCategoryName = fields.get('categoryName')
+            
+        studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
+            
+        where_params = [('study_group_name', groupName, True), ('study_id', studyID, False)]
+        groupID = DBHandler.getSelectorFromTable('study_group_id', 'StudyGroup', where_params, [None, None])
+            
+        time_series_int = 0
+            
+        if timeSeriesVal == 'y':
+            time_series_int = 1
+                
+        where_params = [('study_id', studyID, False), ('is_time_series', time_series_int, False), ('data_category_name', dataCategoryName, True)]
+
+        join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
+        joinInfo = ['INNER JOIN', join_stmt]
+    
+        data_category_id = DBHandler.getSelectorFromTable('dc.data_category_id', 'DataCategory dc', where_params, joinInfo)
+            
+        if data_category_id != -1:
+            fields = Helper.handleDataCategoryID(data_category_id, fields)
+            
+            
+        fields['studyID'] = studyID
+        fields['filenames'] = filenames
+        fields['studyName'] = studyName
+        fields['groupName'] = groupName
+        fields['groupID'] = groupID
+        fields['dcID'] = data_category_id
+        fields['hasSubjectNames'] = False 
+            
+        # do any table creations or db lookups here
+        request.session['uploaderInfo'] = fields 
+            
+        if (subjectOrgVal == 'row' and timeSeriesVal == 'y') or (groupID == -1) or (data_category_id == -1):
+            print('\nFound Special Handler\n')
+            return redirect(uploaderExtraInfo)
+            
+        else:
+            return redirect(uploaderFinalPrompt)
+    
+    #############################################################################################################
+          
     elif request.method == 'GET':
-        if isTimeSeries and subjectOrg == 'row':
-            print('go right to upload')
-            
-        print('\nGot Uploader Extra Info Request\n')
+        print('\nGot Uploader Info Request\n')
         
+        studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
+        
+        studyGroups = DBHandler.getInfoOnStudy('study_group_name', 'StudyGroup', [('study_id', studyID, False)], [None, None])
+        
+        where_params = [('study_id', studyID, False)]
+        join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
+        joinInfo = ['INNER JOIN', join_stmt]
+    
+        dataCategories = DBHandler.getInfoOnStudy('dc.data_category_name', 'DataCategory dc', where_params, joinInfo)
+        
+        context['studyGroups'] = studyGroups
+        context['dataCategories'] = dataCategories
+    
+    #############################################################################################################
+    # get all the Study Groups and Data Categories for the Study and add to context
+    
+    form = UploaderInfoForm()
+    
     context['form'] = form
     
-    return render(request, 'datapipeline/uploaderFinalPrompt.html', context)
-    
+    return render(request, 'datapipeline/uploaderInfo.html', context)
+
+
 def uploaderExtraInfo(request):
     studyName = request.session['studyName']
     uploaderInfo = request.session['uploaderInfo']
@@ -103,7 +256,8 @@ def uploaderExtraInfo(request):
     dcID = uploaderInfo.get('dcID')
     
     form = UploadInfoCreationForm(None, dynamicFields=headers)
-        
+    
+    ############################################################################################################# 
     if request.method == 'POST':
         form = UploadInfoCreationForm(request.POST, dynamicFields=headers)
         form.reset()
@@ -117,7 +271,12 @@ def uploaderExtraInfo(request):
             
             for (name, val) in form.getExtraFields():
                 myExtras.append((name, val))
-            
+        
+        if subjectRule == 'row' and isTimeSeries == 'y':
+            colName = myFields.get('nameOfValueMeasured')
+            dataType = myFields.get('datatypeOfMeasured')
+            uploaderInfo['specialInsert'] = {colName: dataType}
+             
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
             DBHandler.insertToStudyGroup(groupName, description, studyID) 
@@ -129,56 +288,14 @@ def uploaderExtraInfo(request):
             
             
         if dcID == -1:
-            isTS = False 
-            hasSubjectNames = False 
-            
-            subjectVal = myFields.get('hasSubjectID')
-            
-            if subjectVal == 'y':
-                hasSubjectNames = True 
-            
-            if isTimeSeries == 'y':
-                isTS = True 
-                
-            uploaderInfo['hasSubjectNames'] = hasSubjectNames 
-            uploaderInfo['isTimeSeries'] = isTS
-            
-               
-            myMap = {
-                'categoryName': uploaderInfo.get('categoryName'),
-                'isTimeSeries': isTS,
-                'hasSubjectNames': hasSubjectNames,
-                'DC_description': myFields.get('dataCategoryDescription')
-            }
-            
-            myMap = DBHandler.dataCategoryHandler(myMap, studyID)
-            
-            uploaderInfo['tableName'] = myMap.get('tableName')
-            uploaderInfo['dcID'] = myMap.get('DC_ID')
-            
-            cleanResult = Helper.getCleanFormat(myExtras)
-            
-            if subjectRule == 'row' and isTimeSeries == 'y':
-                columnName = myFields.get('nameOfValueMeasured')
-                columnVal = myFields.get('datatypeOfMeasured') 
-                cleanResult = [(columnName, columnVal)] 
-                uploaderInfo['headerInfo'] = [columnName]
-        
-            
-            myMap['columns'] = cleanResult
-            
-            DBHandler.newTableHandler(myMap)
-            
-            cleanAttributeFormat = Helper.seperateByName(myExtras, 4)
-            
-            DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+            uploaderInfo = Helper.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
             
         
         request.session['uploaderInfo'] = uploaderInfo
         
         return redirect(uploaderFinalPrompt)
-        
-          
+    
+    #############################################################################################################     
     elif request.method == 'GET':
         case1 = False
         if subjectRule == 'row' and isTimeSeries == 'y':
@@ -208,187 +325,88 @@ def uploaderExtraInfo(request):
                  
         print('\nGot Uploader Extra Info Request\n')
         
-    
+    #############################################################################################################
+        
     context['form'] = form
     
-    return render(request, 'datapipeline/uploaderExtraInfo.html', context) 
-    
-    
-    
-def uploaderInfoGathering(request):
+    return render(request, 'datapipeline/uploaderExtraInfo.html', context)
+
+
+
+def uploaderFinalPrompt(request):
     studyName = request.session['studyName']
+    uploaderInfo = request.session['uploaderInfo']
     
     context = {
-         'myCSS': 'uploaderInfo.css',
+         'myCSS': 'uploaderFinalPrompt.css',
+         'studyName': studyName,
+         'error': False
+    }
+    
+    headers = uploaderInfo.get('headerInfo')
+    isTimeSeries = uploaderInfo.get('isTimeSeries')
+    subjectOrg = uploaderInfo.get('subjectOrganization')
+    
+    form = UploadPositionForm(None, columns=headers)
+    
+    #############################################################################################################
+    if request.method == 'POST':
+        form = UploadPositionForm(request.POST, columns=headers)
+        myFields = []
+        
+        if form.is_valid():
+            for (i, val) in form.getColumnFields():
+                myFields.append((i, val)) 
+        
+        clean = Helper.seperateByName(myFields, 2)       
+        
+        if Helper.foundDuplicatePositions(clean) is True:
+            print('Found Duplicate!')
+            context['error'] = True
+            
+        else:
+            request.session['positionInfo'] = clean 
+            
+            return redirect(uploader)
+            
+    #############################################################################################################
+    elif request.method == 'GET':
+        if isTimeSeries and subjectOrg == 'row':
+            print(uploaderInfo)
+            return redirect(uploader)
+            
+        print('\nGot Uploader Extra Info Request\n')
+        
+    #############################################################################################################
+        
+    context['form'] = form
+    
+    return render(request, 'datapipeline/uploaderFinalPrompt.html', context)
+
+
+def uploader(request):
+    studyName = request.session['studyName']
+    uploaderInfo = request.session['uploaderInfo']
+    positionInfo = request.session['positionInfo']
+    
+    key = 'specialInsert'
+    if key in uploaderInfo.keys():
+        positionInfo = uploaderInfo.get(key)
+    
+    context = {
+         'myCSS': 'uploader.css',
          'studyName': studyName
     }
+    print()
+    print(studyName)
+    print()
     
-    if request.method == 'POST':
-        uploaderForm = UploaderInfoForm(request.POST, request.FILES)
-        fields = {}
-        filenames = []
-        
-        if uploaderForm.is_valid():
-            for field in uploaderForm.fields:
-                if uploaderForm.cleaned_data[field]:
-                    if field == 'uploadedFiles':
-                        files = request.FILES.getlist(field)
-                        count = len(files)
-                        for file in files:
-                            filenames.append(file.name)
-                            newdoc = Document(uploadedFile = file, filename=file.name)
-                            newdoc.save()
-                        
-                    else:
-                        fields[field] = uploaderForm[field].data
-            
-            firstFile = filenames[0]
-            path = 'uploaded_csvs/{}'.format(firstFile)
-            df = pd.read_csv(path) 
-            headers = list(df.columns)
-            
-            fields['headerInfo'] = headers
-            
-            # for deleting
-            path = 'uploaded_csvs/'
-            for name in filenames:
-                tmpPath = path + name
-                instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
-                instance.uploadedFile.delete()
-                instance.delete()
-            
-            subjectOrgVal = fields.get('subjectOrganization')
-            timeSeriesVal = fields.get('isTimeSeries')
-            groupName = fields.get('groupName') 
-            dataCategoryName = fields.get('categoryName')
-            
-            studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
-            
-            where_params = [('study_group_name', groupName, True), ('study_id', studyID, False)]
-            groupID = DBHandler.getSelectorFromTable('study_group_id', 'StudyGroup', where_params, [None, None])
-            
-            time_series_int = 0
-            
-            if timeSeriesVal == 'y':
-                time_series_int = 1
-                
-            where_params = [('study_id', studyID, False), ('is_time_series', time_series_int, False), ('data_category_name', dataCategoryName, True)]
-
-            join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
-            joinInfo = ['INNER JOIN', join_stmt]
+    print()
+    print(uploaderInfo)
+    print()
     
-            data_category_id = DBHandler.getSelectorFromTable('dc.data_category_id', 'DataCategory dc', where_params, joinInfo)
-            
-            if data_category_id != -1:
-                where_params = [('data_category_id', data_category_id, False)]
-                
-                tableName = DBHandler.getSelectorFromTable('dc_table_name', 'DataCategory', where_params, [None, None])
-                isTimeSeries = DBHandler.getSelectorFromTable('is_time_series', 'DataCategory', where_params, [None, None])
-                hasSubjectNames = DBHandler.getSelectorFromTable('has_subject_name', 'DataCategory', where_params, [None, None])
-                
-                fields['tableName'] = tableName
-                fields['isTimeSeries'] = isTimeSeries
-                fields['hasSubjectNames'] = hasSubjectNames
-            
-            
-            fields['studyID'] = studyID
-            fields['filenames'] = filenames
-            fields['studyName'] = studyName
-            fields['groupName'] = groupName
-            fields['groupID'] = groupID
-            fields['dcID'] = data_category_id
-            fields['hasSubjectNames'] = False 
-            
-            # do any table creations or db lookups here
-            request.session['uploaderInfo'] = fields 
-            
-            if (subjectOrgVal == 'row' and timeSeriesVal == 'y') or (groupID == -1) or (data_category_id == -1):
-                print('\nFound Special Handler\n')
-                return redirect(uploaderExtraInfo)
-            
-            else:
-                return redirect(uploaderFinalPrompt)
-        else:
-            print('Not Valid')
-            
-    elif request.method == 'GET':
-        print('\nGot Uploader Info Request\n')
-        
-        studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
-        
-        if studyID == -1:
-            # redirect to another page
-            return None
-        
-        studyGroups = DBHandler.getInfoOnStudy('study_group_name', 'StudyGroup', [('study_id', studyID, False)], [None, None])
-        
-        where_params = [('study_id', studyID, False)]
-        join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
-        joinInfo = ['INNER JOIN', join_stmt]
+    print()
+    print(positionInfo)
+    print()
     
-        dataCategories = DBHandler.getInfoOnStudy('dc.data_category_name', 'DataCategory dc', where_params, joinInfo)
-        
-        context['studyGroups'] = studyGroups
-        context['dataCategories'] = dataCategories
-    
-    
-    # get all the Study Groups and Data Categories for the Study and add to context
-    
-    form = UploaderInfoForm()
-    
-    context['form'] = form
-    
-    return render(request, 'datapipeline/uploaderInfo.html', context) 
-
-
-def uploaderStudyName(request):
-    
-    context = {
-         'myCSS': 'uploaderStudyName.css',
-    }
-    
-    if request.method == 'POST':
-        studyNameForm = StudyNameForm(request.POST)
-        fields = []
-        
-        if studyNameForm.is_valid():
-            for field in studyNameForm.fields:
-                if studyNameForm.cleaned_data[field]:
-                    fields.append(
-                        {
-                            'name': field,
-                            'label': studyNameForm[field].label,
-                            'value': studyNameForm[field].data
-                        }
-                    )
-            studyName = fields[0].get('value')
-            request.session['studyName'] = studyName
-            print(studyName)
-            
-            return redirect(uploaderInfoGathering)
-            
-            
-            
-    elif request.method == 'GET':
-        print('\nGot Uploader Study Name Request\n')
-        
-        args = {
-            'selectors': '*',
-            'from': 'Study',
-            'join-type': None,
-            'join-stmt': None,
-            'where': None,
-            'group-by': None,
-            'order-by': None,
-        }
-    
-        result = DBClient.executeQuery(args)
-        
-        context['studies'] = result
-        
-    
-    form = StudyNameForm()
-    
-    context['form'] = form 
-    
-    return render(request, 'datapipeline/uploaderStudyName.html', context)
+    return render(request, 'datapipeline/uploader.html', context) 

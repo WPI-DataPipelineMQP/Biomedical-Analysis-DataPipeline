@@ -1,3 +1,69 @@
+from datetime import datetime 
+from .database import DBClient, DBHandler 
+
+def handleDataCategoryID(data_category_id, fields):
+    where_params = [('data_category_id', data_category_id, False)]
+                
+    tableName = DBHandler.getSelectorFromTable('dc_table_name', 'DataCategory', where_params, [None, None])
+    isTimeSeries = DBHandler.getSelectorFromTable('is_time_series', 'DataCategory', where_params, [None, None])
+    hasSubjectNames = DBHandler.getSelectorFromTable('has_subject_name', 'DataCategory', where_params, [None, None])
+                
+    fields['tableName'] = tableName
+    fields['isTimeSeries'] = isTimeSeries
+    fields['hasSubjectNames'] = hasSubjectNames
+    
+    return fields
+
+
+def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, otherInfo):
+    isTS = False 
+    hasSubjectNames = False 
+    
+    myFields, myExtras = otherInfo[0], otherInfo[1]
+            
+    subjectVal = myFields.get('hasSubjectID')
+            
+    if subjectVal == 'y':
+        hasSubjectNames = True 
+            
+    if isTimeSeries == 'y':
+        isTS = True 
+                
+    uploaderInfo['hasSubjectNames'] = hasSubjectNames 
+    uploaderInfo['isTimeSeries'] = isTS
+                       
+    myMap = {
+        'categoryName': uploaderInfo.get('categoryName'),
+        'isTimeSeries': isTS,
+        'hasSubjectNames': hasSubjectNames,
+        'DC_description': myFields.get('dataCategoryDescription')
+    }
+            
+    myMap = DBHandler.dataCategoryHandler(myMap, studyID)
+            
+    uploaderInfo['tableName'] = myMap.get('tableName')
+    uploaderInfo['dcID'] = myMap.get('DC_ID')
+            
+    cleanResult = getCleanFormat(myExtras)
+            
+    if subjectRule == 'row' and isTimeSeries == 'y':
+        columnName = myFields.get('nameOfValueMeasured')
+        columnVal = myFields.get('datatypeOfMeasured') 
+        cleanResult = [(columnName, columnVal)] 
+        uploaderInfo['headerInfo'] = [columnName]
+        
+            
+    myMap['columns'] = cleanResult
+            
+    DBHandler.newTableHandler(myMap)
+            
+    cleanAttributeFormat = seperateByName(myExtras, 4)
+            
+    DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+    
+    return uploaderInfo
+
+
 def extractName(string):
     indexPos = string.find('_')
     
@@ -5,12 +71,14 @@ def extractName(string):
     
     return name 
 
+
 def getFieldName(string):
     indexPos = string.rfind('_')
     
     name = string[(indexPos+1):]
     
     return name
+
 
 def getCleanFormat(myList):
     clean = []
@@ -72,6 +140,7 @@ def seperateByName(myList, flag):
     result = clean(columns)
     
     return result         
+       
             
 def foundDuplicatePositions(myMap):
     foundPositions = {}
@@ -86,4 +155,16 @@ def foundDuplicatePositions(myMap):
         else:
             foundPositions[currPos] = 0
             
+    return False
+
+
+def getDatetime(string):
+    dateObj = datetime.strptime(string, '%Y-%m-%d').date()
+    
+    return dateObj
+
+def validDates(start, end):
+    if start <= end:
+        return True 
+    
     return False

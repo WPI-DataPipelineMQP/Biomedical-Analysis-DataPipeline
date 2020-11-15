@@ -1,6 +1,7 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
+
 <form method="POST" action="{% url 'datapipeline-uploaderExtraInfo' %}" enctype="multipart/form-data">
     {% csrf_token %}
     {% if case1 is True %}
@@ -32,16 +33,20 @@
             <label for="{{ form.dataCategoryDescription.id_for_label }}"> {{form.dataCategoryDescription.label}}</label>
             {{ form.dataCategoryDescription }}
         </p> 
-        
+        <div class="scrollable">
         {% for field in form %}
             {% if '_custom_' in field.html_name %}
-                <p>
-                    <label for="{{ form.field.id_for_label }}"> {{field.label}}</label>
-                    {{ field }}
-                </p>
-            
+            {% cycle False False False True as flag silent %}
+            <p>
+                <label for="{{ form.field.id_for_label }}"> {{field.label}}</label>
+                {{ field }}
+            </p>
+            {% if flag %}
+            <br/>
+            {% endif %}
             {% endif %}
         {% endfor %}
+        </div>
     {% endif %}
 
     {% if case4 is True %}
@@ -51,7 +56,7 @@
         {{ form.dataCategoryDescription }}
     </p>
     {% endif %}
-    
+    <br/>
     <input type="submit" value="Next">
 </form>
 {% endblock content %}
