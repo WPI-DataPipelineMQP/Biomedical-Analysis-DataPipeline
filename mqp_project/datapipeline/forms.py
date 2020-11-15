@@ -21,7 +21,19 @@ class CreateChosenBooleanForm(forms.Form):
         super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
         for field in fields:
+            self.fields[field['id']] = forms.BooleanField(label=field['name'], required=False, help_text=field['description'])
+            #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
+        #print(fields)
+
+
+class CreateChosenBooleanFormWithoutDesc(forms.Form):
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('customFields')
+        super(CreateChosenBooleanFormWithoutDesc, self).__init__(*args, **kwargs)
+
+        for field in fields:
             self.fields[field['id']] = forms.BooleanField(label=field['name'], required=False)
+
 
 class CreateChosenFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):

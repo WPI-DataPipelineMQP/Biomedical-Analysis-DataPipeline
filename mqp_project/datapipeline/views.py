@@ -2,7 +2,7 @@ from django.shortcuts import render
 import json
 import pandas as pd
 from django.shortcuts import HttpResponse
-from .forms import CreateChosenBooleanForm, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
+from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
 from django.core import serializers
 from .viewsHelper import ViewHelper
@@ -29,18 +29,47 @@ def studySelection(request):
     study_fields = available_studies
     
     request.session['study_fields'] = study_fields
+    print(request.method)
+    if request.method == 'POST':
+        studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
+
+        context = {
+            'studies_form': studies_form,
+            'myCSS' : 'studySelection.css'
+        }
+
+        print("valid: " + str(studies_form.is_valid()))
+        if studies_form.is_valid():
+            for field in studies_form:
+                #print('')
+                print("STUDY: " + studies_form.cleaned_data[field])
+        print('\nGot Study Selection Request\n')
+
+        return HttpResponseRedirect('/dataSelection')
+        #return render(request, 'datapipeline/studySelection.html', context)
 
     studies_form = CreateChosenBooleanForm(customFields=study_fields)
 
     context = {
         'studies_form': studies_form,
-        'myCSS' : 'studySelection.css'
+        'myCSS': 'studySelection.css'
     }
-
-    print('\nGot Study Selection Request\n')
-    
     return render(request, 'datapipeline/studySelection.html', context)
 
+    # study_fields = available_studies
+    #
+    # request.session['study_fields'] = study_fields
+    #
+    # studies_form = CreateChosenBooleanForm(customFields=study_fields)
+    #
+    # context = {
+    #     'studies_form': studies_form,
+    #     'myCSS': 'studySelection.css'
+    # }
+    #
+    # print('\nGot Study Selection Request\n')
+    #
+    # return render(request, 'datapipeline/studySelection.html', context)
 
 
 def dataSelection(request):
@@ -92,8 +121,8 @@ def dataSelection(request):
         },
     ]
 
-    categories_form = CreateChosenBooleanForm(customFields=data_categories)
-    study_groups_form = CreateChosenBooleanForm(customFields=study_groups)
+    categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
+    study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
 
     request.session['data_categories'] = data_categories
     request.session['study_groups'] = study_groups

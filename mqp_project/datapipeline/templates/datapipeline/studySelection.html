@@ -4,7 +4,12 @@
 <form action="{% url 'datapipeline-dataSelection' %}" method="POST">
     {% csrf_token %}
     <ul class="study-listings">
-        {{ studies_form.as_p }}
+<!--        {{ studies_form.as_p }}-->
+        {% for field in studies_form %}
+            {{ field }}
+            {{ field.label }}
+        <p class="hello">{{ field.help_text }}</p>
+        {% endfor %}
         <!--{% for study in studies %}
         <li class="study-article">
             <input class="checkbox" type="checkbox" name="studies[]" value="{{study}}">
