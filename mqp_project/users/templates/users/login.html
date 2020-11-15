@@ -3,15 +3,10 @@
 {% block content %}
     <form method="POST">
         {% csrf_token %}
-        {{ form | crispy }}
-
-<!--        <fieldset class="form-group">-->
-<!--            <legend class="border-bottom mb-4">Join Today</legend>-->
-<!--            {{ form|crispy }}-->
-<!--        </fieldset>-->
-<!--        <div class="form-group">-->
-<!--            <button class="btn btn-outline-info" type="submit">Sign Up</button>-->
-<!--        </div>-->
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Login</legend>
+            {{ form | crispy }}
+        </fieldset>
         <input type="submit" value="Login">
     </form>
     <div class="border-top mt-3">
