@@ -389,50 +389,53 @@ def uploaderFinalPrompt(request):
 
 def uploader(request):
     studyName = request.session['studyName']
-    uploaderInfo = request.session['uploaderInfo']
-    positionInfo = request.session['positionInfo']
-    
-    specialFlag = False 
-    
-    key = 'specialInsert'
-    if key in uploaderInfo.keys():
-        positionInfo = uploaderInfo.get(key)
-        specialFlag = True
     
     context = {
          'myCSS': 'uploader.css',
          'studyName': studyName
     }
     
-    filenames = uploaderInfo.get('filenames')
-    groupID = uploaderInfo.get('groupID')
-    hasSubjectNames = uploaderInfo.get('hasSubjectNames')
-    tableName = uploaderInfo.get('tableName')
+    if request.method == 'POST':
+        positionInfo = request.session['positionInfo']
+        uploaderInfo = request.session['uploaderInfo']
+        specialFlag = False 
     
-    columnInfo = []
-    organizedColumns = []
-    
-    path = 'uploaded_csvs/'
-    for i, file in enumerate(filenames):
-        filepath = path + file
-        if i == 0:
-            columnInfo, organizedColumns = Helper.getInfo(positionInfo)
+        key = 'specialInsert'
+        if key in uploaderInfo.keys():
+            positionInfo = uploaderInfo.get(key)
+            specialFlag = True
         
-        if specialFlag is True:
-            print('Do Special Insert')
-            
-        else:
-            Helper.uploadToDatabase(filepath, uploaderInfo, columnInfo, organizedColumns, groupID)
+           
+        filenames = uploaderInfo.get('filenames')
+        groupID = uploaderInfo.get('groupID')
+        hasSubjectNames = uploaderInfo.get('hasSubjectNames')
+        tableName = uploaderInfo.get('tableName')
     
-    print('Upload Completed!')
-            
+        columnInfo = []
+        organizedColumns = []
     
-    # DELETING UPLOADED CSV FILES
-    for name in filenames:
-        tmpPath = path + name
-        instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
-        instance.uploadedFile.delete()
-        instance.delete()
+        # put this in a POST
+        path = 'uploaded_csvs/'
+        for i, file in enumerate(filenames):
+            filepath = path + file
+            if i == 0:
+                columnInfo, organizedColumns = Helper.getInfo(positionInfo)
         
+            if specialFlag is True:
+                Helper.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
+            
+            else:
+                Helper.uploadToDatabase(filepath, uploaderInfo, columnInfo, organizedColumns, groupID)
     
+        print('Upload Completed!')
+            
+    
+        # DELETING UPLOADED CSV FILES
+        for name in filenames:
+            tmpPath = path + name
+            instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
+            instance.uploadedFile.delete()
+            instance.delete()
+    
+        
     return render(request, 'datapipeline/uploader.html', context) 

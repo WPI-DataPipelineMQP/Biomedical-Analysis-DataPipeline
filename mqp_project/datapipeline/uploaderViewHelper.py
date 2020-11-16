@@ -242,7 +242,43 @@ def specialUploadToDatabase(file, myMap, column_info):
     
     columnHeaders = DBClient.getTableColumns(tableName)
     
-    # TODO: finish this
+    columnName = column_info[0][0]
+    dt = column_info[0][1]
+    
+    df = pd.read_csv(file)
+    
+    numpyArray = df.to_numpy()
+    
+    for i, row in enumerate(numpyArray):
+        subject_number = i 
+        
+        if myMap.get('hasSubjectNames') is True:
+            subject_number = row[0]
+            row = row[1:]
+        
+        subject_id = DBHandler.subjectHandler("", groupID, subject_number)
+        
+        tmpDf = pd.DataFrame(row, columns=[columnName])
+        
+        if dt == 1:
+            tmpDf[[columnName]].astype(str)
+
+        elif dt == 2:
+            tmpDf[[columnName]].astype(int)
+
+        elif dt == 3:
+            tmpDf[[columnName]].astype(float)
+
+        elif dt == 4:
+            tmpDf[columnName] = pd.to_datetime(df[columnName])
+            tmpDf[columnName] = df[columnName].dt.strftime('%Y-%m-%d %H:%M:%S')
+            
+        else:
+            tmpDf[columnName].astype(bool)
+            
+        tmpDf['subject_id'] = subject_id
+        
+        DBClient.dfInsert(tmpDf, tableName)
     
     
     
