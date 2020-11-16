@@ -14,7 +14,7 @@
     {% endfor %}
 </ul>
 <h2>What data from this study would you like to view?</h2>
-<form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
+<form action="{% url 'datapipeline-dataSelection' %}" method="POST">
     {% csrf_token %}
     <ul class="study-listings">
         {{ categories_form.as_p }}

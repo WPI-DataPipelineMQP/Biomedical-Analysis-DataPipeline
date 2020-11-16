@@ -35,11 +35,26 @@ def studySelection(request):
 
         #print(studies_form)
         if studies_form.is_valid():
-            for field in studies_form:
+            for field in studies_form.fields:
                 print(field)
-                this = studies_form.cleaned_data[field.name]
+                this = studies_form.cleaned_data[field]
                 print("STUDY: " + str(this))
         print('\nGot Study Selection Request\n')
+
+        studies_data = {}
+        if studies_form.is_valid():
+            for field in studies_form.fields:
+                studies_data[field] = {
+                    'id': studies_form[field].name,
+                    'name': studies_form[field].label, 
+                    'value': studies_form.cleaned_data[field]
+                }
+
+        print(studies_data)
+
+        #gets the names to be printed out                                
+        study_names = ViewHelper.getNameList(studies_data)
+        request.session['study_names'] = study_names
 
         return HttpResponseRedirect('/dataSelection')
         #return render(request, 'datapipeline/studySelection.html', context)
@@ -52,42 +67,10 @@ def studySelection(request):
     }
     return render(request, 'datapipeline/studySelection.html', context)
 
-    # study_fields = available_studies
-    #
-    # request.session['study_fields'] = study_fields
-    #
-    # studies_form = CreateChosenBooleanForm(customFields=study_fields)
-    #
-    # context = {
-    #     'studies_form': studies_form,
-    #     'myCSS': 'studySelection.css'
-    # }
-    #
-    # print('\nGot Study Selection Request\n')
-    #
-    # return render(request, 'datapipeline/studySelection.html', context)
-
 
 def dataSelection(request):
-    print(request.POST)
     #get information from form on previous page
-    studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_fields'])
-
-    #get data from studies_form, print each one out
-    #to print each one out, access the dictionary inside, and then get the name
-    studies_data = {}
-    if studies_form.is_valid():
-        for study_field in studies_form.fields:
-            studies_data[study_field] = {
-                                            'id': studies_form[study_field].name,
-                                            'name': studies_form[study_field].label, 
-                                            'value': studies_form.cleaned_data[study_field]
-                                        }
-
-    print(studies_data)
-    #gets the names to be printed out                                
-    study_names = ViewHelper.getNameList(studies_data)
-    request.session['study_names'] = study_names
+    #studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_fields'])
 
     #replace with query for data categories
     data_categories = [
@@ -117,6 +100,39 @@ def dataSelection(request):
         },
     ]
 
+    print(request.method)
+    if request.method == 'POST':
+        categories_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['data_categories'])
+        study_groups_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['study_groups'])
+
+        #process the data
+        categories_data = {}
+        if categories_form.is_valid():
+            for field in categories_form.fields:
+                categories_data[field] = {
+                    'id': categories_form[field].name,
+                    'name': categories_form[field].label, 
+                    'value': categories_form.cleaned_data[field]
+                }
+
+        category_names = ViewHelper.getNameList(categories_data)
+        request.session['category_names'] = category_names
+
+        study_groups_data = {}
+        if study_groups_form.is_valid():
+            for field in study_groups_form.fields:
+                study_groups_data[field] = {
+                        'id': study_groups_form[field].name,
+                        'name': study_groups_form[field].label, 
+                        'value': study_groups_form.cleaned_data[field]
+                    }
+
+        study_group_names = ViewHelper.getNameList(study_groups_data)
+        request.session['study_group_names'] = study_group_names
+
+        return HttpResponseRedirect('/dataSelection-2')
+
+
     categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
     study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
 
@@ -125,7 +141,7 @@ def dataSelection(request):
 
     context = {
         'myCSS': 'dataSelection.css',
-        'study_names': study_names,
+        'study_names': request.session['study_names'],
         'categories_form': categories_form,
         'study_groups_form': study_groups_form
     }
@@ -135,37 +151,9 @@ def dataSelection(request):
     return render(request, 'datapipeline/dataSelection.html', context)
 
 def dataSelectionContinued(request):
-    print(request.POST)
-    # get information from previous page
-    categories_form = CreateChosenBooleanForm(request.POST, customFields=request.session['data_categories'])
-    study_groups_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_groups'])
-
     #raw_studies = request.POST.getlist('studies[]')
     #raw_data_categories = request.POST.getlist('categories[]')
     #raw_study_groups = request.POST.getlist('studyGroups[]')
-
-    #process the data
-    categories_data = {}
-    if categories_form.is_valid():
-        for field in categories_form.fields:
-            categories_data[field] = {
-                                        'id': categories_form[field].name,
-                                        'name': categories_form[field].label, 
-                                        'value': categories_form.cleaned_data[field]
-                                        }
-
-    category_names = ViewHelper.getNameList(categories_data)
-
-    study_groups_data = {}
-    if study_groups_form.is_valid():
-        for field in study_groups_form.fields:
-            study_groups_data[field] = {
-                                            'id': study_groups_form[field].name,
-                                            'name': study_groups_form[field].label, 
-                                            'value': study_groups_form.cleaned_data[field]
-                                        }
-
-    study_group_names = ViewHelper.getNameList(study_groups_data)
 
     #studies = ViewHelper.getJSONVersion(raw_studies)
     #categories = ViewHelper.getJSONVersion(raw_data_categories)
@@ -253,12 +241,11 @@ def dataSelectionContinued(request):
     context = {
          'myCSS': 'dataSelection.css',
          'study_names': request.session['study_names'],
-         'category_names': category_names,
-         'study_group_names': study_group_names,
+         'category_names': request.session['category_names'],
+         'study_group_names': request.session['study_group_names'],
          'attributes': data_attributes,
          'filters': data_attributes
     }
-
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
 
