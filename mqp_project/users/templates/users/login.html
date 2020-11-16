@@ -8,7 +8,11 @@
             {{ form | crispy }}
         </fieldset>
         <input type="submit" value="Login">
+        <small class="text-muted">
+            <a class="ml-2" href="{% url 'users-password_reset' %}">Forget Password?</a>
+        </small>
     </form>
+
     <div class="border-top mt-3">
         <small class="text-muted">
             Don't have an account? <a class="ml-2" href="{% url 'users-register' %}">Register Here</a>

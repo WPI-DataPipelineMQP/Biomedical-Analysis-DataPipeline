@@ -50,3 +50,7 @@ def delete(request):
         return redirect('users-login')
 
     return render(request, 'users/delete.html')
+
+def password_reset_complete(request):
+    # Show message that reset was successful
+    return redirect('users-login')
