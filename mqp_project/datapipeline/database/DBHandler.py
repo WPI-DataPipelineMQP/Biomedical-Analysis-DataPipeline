@@ -162,11 +162,11 @@ def insertToAttribute(attributes, dcID):
         
         result = DBClient.executeCommand(attribute_insert_template, new_attribute)
         
-        if not result:
+        if result is False:
             print('\nERROR during insert to Attribute\n')
-            return -1
+            return False
         
-    return 1
+    return True
 
             
 def subjectHandler(filename, study_group_id, subjectNumber=None):
@@ -192,11 +192,11 @@ def subjectHandler(filename, study_group_id, subjectNumber=None):
         
         if not result :
             print('ERROR: Error Found When Attempting to Insert Subject_Number: {} and Study Group ID: {} to Subject Table'.format(subject_number, study_group_id))
+            
+            return -1, False
         
         
-
-
-    return getSelectorFromTable('subject_id', 'Subject', where_params, [None, None]) 
+    return getSelectorFromTable('subject_id', 'Subject', where_params, [None, None]), True 
 
 
 def dataCategoryHandler(myMap, study_id):
@@ -218,7 +218,7 @@ def dataCategoryHandler(myMap, study_id):
     dc_table_name = data_category_name + '_' + str(study_id)
     
     result = insertToDataCategory(data_category_name, time_series_int, has_subjectNames_int, dc_table_name, description)
-
+    
     if result is False:
         return myMap, False
         
@@ -229,7 +229,8 @@ def dataCategoryHandler(myMap, study_id):
     myMap['DC_ID'] = data_category_id
         
     result2 = insertToDataCategoryXref(data_category_id, study_id)
-    
+
+
     if result2 is False:
         return myMap, False
     

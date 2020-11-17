@@ -290,7 +290,7 @@ def uploaderExtraInfo(request):
             
         if error is True:
             print('\nFOUND ERROR!\n')
-            return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
+            return redirect(uploaderError)
             
         
         request.session['uploaderInfo'] = uploaderInfo
@@ -420,17 +420,23 @@ def uploader(request):
     
         # put this in a POST
         path = 'uploaded_csvs/'
+        noError = True 
         for i, file in enumerate(filenames):
             filepath = path + file
             if i == 0:
                 columnInfo, organizedColumns = Helper.getInfo(positionInfo)
         
             if specialFlag is True:
-                Helper.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
+                noError = Helper.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
             
             else:
-                Helper.uploadToDatabase(filepath, uploaderInfo, columnInfo, organizedColumns, groupID)
-    
+                noError = Helper.uploadToDatabase(filepath, uploaderInfo, columnInfo, organizedColumns, groupID)
+                
+            if noError is False:
+                print('\nFOUND ERROR!\n')
+                return redirect(uploaderError)
+            
+            
         print('Upload Completed!')
             
     
@@ -440,6 +446,38 @@ def uploader(request):
             instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
             instance.uploadedFile.delete()
             instance.delete()
+            
+        return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
     
         
     return render(request, 'datapipeline/uploader.html', context) 
+
+
+def uploaderError(request):
+    uploaderInfo = request.session['uploaderInfo']
+    filenames = uploaderInfo.get('filenames')
+    
+    context = {
+         'myCSS': 'uploaderError.css'
+    }
+    
+    if request.method == 'POST':
+
+        return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
+    
+    elif request.method == 'GET':
+        # DELETING UPLOADED CSV FILES
+        path = 'uploaded_csvs/'
+        for name in filenames:
+            tmpPath = path + name
+            print(tmpPath)
+            if Document.objects.filter(uploadedFile=tmpPath, filename=name).exists() :
+                instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
+                instance.uploadedFile.delete()
+                instance.delete()
+    
+    
+    
+    return render(request, 'datapipeline/uploaderError.html', context) 
+            
+        

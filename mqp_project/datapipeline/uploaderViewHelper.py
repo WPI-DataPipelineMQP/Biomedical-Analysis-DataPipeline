@@ -19,7 +19,7 @@ def handleDataCategoryID(data_category_id, fields):
     
     return fields
 
-@transaction.atomic
+
 def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, otherInfo):
     error = False
     isTS = False 
@@ -47,47 +47,55 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
     
     cleanResult = getCleanFormat(myExtras)
     
-    with transaction.atomic():
-        try:
-            with transaction.atomic():
-                #transaction.on_commit(lambda: DBHandler.dataCategoryHandler(myMap, studyID))
+    try:
+        with transaction.atomic():
+            myMap, noErrors = DBHandler.dataCategoryHandler(myMap, studyID) 
                 
-                myMap, noErrors = DBHandler.dataCategoryHandler(myMap, studyID) 
+            if noErrors is False:
+                print('DC Handler')
+                raise Exception()
                 
-                if noErrors is False:
-                    raise Exception()
+            else:
+                print('passed dc')
             
-                uploaderInfo['tableName'] = myMap.get('tableName')
-                uploaderInfo['dcID'] = myMap.get('DC_ID')
+            uploaderInfo['tableName'] = myMap.get('tableName')
+            uploaderInfo['dcID'] = myMap.get('DC_ID')
             
-                if subjectRule == 'row' and isTimeSeries == 'y':
-                    columnName = myFields.get('nameOfValueMeasured')
-                    columnVal = myFields.get('datatypeOfMeasured') 
-                    cleanResult = [(columnName, columnVal)] 
-                    uploaderInfo['headerInfo'] = [columnName]
+            if subjectRule == 'row' and isTimeSeries == 'y':
+                columnName = myFields.get('nameOfValueMeasured')
+                columnVal = myFields.get('datatypeOfMeasured') 
+                cleanResult = [(columnName, columnVal)] 
+                uploaderInfo['headerInfo'] = [columnName]
         
             
-                myMap['columns'] = cleanResult
+            myMap['columns'] = cleanResult
             
-                result = DBHandler.newTableHandler(myMap)
+            result = DBHandler.newTableHandler(myMap)
                 
-                if result == -1:
-                    raise Exception()
+            if result == -1:
+                print('Creating new table')
+                raise Exception()
+                
+            else:
+                print('passed create table')
             
-                cleanAttributeFormat = seperateByName(myExtras, 4, False)
+            cleanAttributeFormat = seperateByName(myExtras, 4, False)
             
-                result = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+            result = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
 
+            if result is False:
+                print('Inserting to Attribute')
+                raise Exception()
                 
-                if result == -1:
-                    raise Exception()
+            else:
+                print('passed attribute')
                 
-                error = False
             
-        except:
-            return uploaderInfo, True
+    except:
+        print('FOUND EXCEPTION')
+        return uploaderInfo, True
     
-    print('ERROR is', error)
+    
     return uploaderInfo, False
 
 
@@ -259,6 +267,7 @@ def getInfo(positionInfo):
     
     return columnInfo, organizedColumns
 
+
 def specialUploadToDatabase(file, myMap, column_info):
     groupID = myMap.get('groupID')
     tableName = myMap.get('tableName')
@@ -272,36 +281,45 @@ def specialUploadToDatabase(file, myMap, column_info):
     
     numpyArray = df.to_numpy()
     
-    for i, row in enumerate(numpyArray):
-        subject_number = i 
+    try:
+        with transaction.atomic():
+            for i, row in enumerate(numpyArray):
+                subject_number = i 
         
-        if myMap.get('hasSubjectNames') is True:
-            subject_number = row[0]
-            row = row[1:]
+                if myMap.get('hasSubjectNames') is True:
+                    subject_number = row[0]
+                    row = row[1:]
         
-        subject_id = DBHandler.subjectHandler("", groupID, subject_number)
+                subject_id, noError = DBHandler.subjectHandler("", groupID, subject_number)
+                
+                if noError is False:
+                    raise Exception()
         
-        tmpDf = pd.DataFrame(row, columns=[columnName])
+                tmpDf = pd.DataFrame(row, columns=[columnName])
         
-        if dt == 1:
-            tmpDf[[columnName]].astype(str)
+                if dt == 1:
+                    tmpDf[[columnName]].astype(str)
 
-        elif dt == 2:
-            tmpDf[[columnName]].astype(int)
+                elif dt == 2:
+                    tmpDf[[columnName]].astype(int)
 
-        elif dt == 3:
-            tmpDf[[columnName]].astype(float)
+                elif dt == 3:
+                    tmpDf[[columnName]].astype(float)
 
-        elif dt == 4:
-            tmpDf[columnName] = pd.to_datetime(df[columnName])
-            tmpDf[columnName] = df[columnName].dt.strftime('%Y-%m-%d %H:%M:%S')
+                elif dt == 4:
+                    tmpDf[columnName] = pd.to_datetime(df[columnName])
+                    tmpDf[columnName] = df[columnName].dt.strftime('%Y-%m-%d %H:%M:%S')
             
-        else:
-            tmpDf[columnName].astype(bool)
+                else:
+                    tmpDf[columnName].astype(bool)
             
-        tmpDf['subject_id'] = subject_id
+                tmpDf['subject_id'] = subject_id
         
-        DBClient.dfInsert(tmpDf, tableName)
+                DBClient.dfInsert(tmpDf, tableName)
+    except:
+        return False
+    
+    return True
     
     
     
@@ -313,13 +331,14 @@ def uploadToDatabase(file, myMap, column_info, organizedColumns, subjectID=None)
     
     df = df[organizedColumns]
     
+    # fix error handler
     if myMap.get('hasSubjectNames') is True:
         listOfSubjects = []
         
         listOfSubjectNum = df[[df.columns[0]]].tolist()
         
         for num in listOfSubjectNum:
-            currID = DBHandler.subjectHandler("", groupID, num)
+            currID, noError = DBHandler.subjectHandler("", groupID, num)
             listOfSubjectNum.append(currID)
             
         
@@ -336,38 +355,45 @@ def uploadToDatabase(file, myMap, column_info, organizedColumns, subjectID=None)
         df['subject_id'] = subjectID
         
     
-    for col in column_info:
-        col_name = col[0]
-        dt = col[1]
+    try:
+        with transaction.atomic():
+            for col in column_info:
+                col_name = col[0]
+                dt = col[1]
         
-        if dt == 1:
-            df[[col_name]].astype(str)
+                if dt == 1:
+                    df[[col_name]].astype(str)
 
-        elif dt == 2:
-            df[[col_name]].astype(int)
+                elif dt == 2:
+                    df[[col_name]].astype(int)
 
-        elif dt == 3:
-            df[[col_name]].astype(float)
+                elif dt == 3:
+                    df[[col_name]].astype(float)
 
-        elif dt == 4:
-            df[col_name] = pd.to_datetime(df[col_name])
-            df[col_name] = df[col_name].dt.strftime('%Y-%m-%d %H:%M:%S')
+                elif dt == 4:
+                    df[col_name] = pd.to_datetime(df[col_name])
+                    df[col_name] = df[col_name].dt.strftime('%Y-%m-%d %H:%M:%S')
             
-        else:
-            df[col_name].astype(bool)
+                else:
+                    df[col_name].astype(bool)
     
-    columnHeaders = DBClient.getTableColumns(tableName)
+            columnHeaders = DBClient.getTableColumns(tableName)
     
-    if len(columnHeaders) > 0:
-        columnHeaders = columnHeaders[1:]
+            if len(columnHeaders) == 0:
+                print('FOUND ERROR IN COLUMNS')
+                raise Exception()
+            
+            
+            columnHeaders = columnHeaders[1:]
         
-        df.columns = columnHeaders
+            df.columns = columnHeaders
         
-        DBClient.dfInsert(df, tableName)
-        
-    else:
-        print('FOUND ERROR IN COLUMNS')
-        
+            DBClient.dfInsert(df, tableName)
+    
+    except:
+        return False     
+    
+    return True
         
         
     
