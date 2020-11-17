@@ -14,12 +14,10 @@ def home(request):
 def studySelection(request):
     available_studies = [
         {
-            "id": 1,
             "name": "Exercise IQP",
             "description": "Duis ultrices, velit vitae feugiat sagittis, ipsum dolor interdum risus, et pretium tellus nulla vitae quam. Nullam placerat dapibus lorem sit amet cursus. In ac mauris hendrerit, rutrum orci et, bibendum sem. Donec massa nisl, sagittis vel molestie elementum, semper sed leo. Nullam eros nulla, varius eget est quis, condimentum convallis quam. Praesent varius diam non libero ullamcorper, vel pulvinar erat commodo. Quisque tincidunt sollicitudin leo ut viverra."
         },
         {
-            "id": 2,
             "name": "Covid",
             "description": "Etiam purus libero, efficitur semper dui vitae, tempus molestie est. Fusce enim tellus, placerat et dolor rutrum, volutpat consectetur ex. In vel nulla accumsan, suscipit quam ac, varius diam. Quisque sed mauris quis nulla mattis sagittis. Etiam fringilla turpis nec nisi luctus elementum. Quisque in sodales elit, sed ornare felis. Quisque eget venenatis est, nec dictum tortor. Donec ultrices odio massa, quis vestibulum nulla blandit non. Cras ut fermentum velit. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Suspendisse auctor neque id neque bibendum sagittis. Maecenas ac nunc eu risus congue ultricies."
         },
@@ -34,25 +32,25 @@ def studySelection(request):
 
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
 
-        fields = {}
-        print("is valid: " + str(studies_form.is_valid()))
-        if studies_form.is_valid():
-            for (i, val) in studies_form.getAllFields():
-                fields[i] = val
-                print("value: " + str(val))
-        print('\nGot Study Selection Request\n')
-        print("error: ")
-        print(studies_form.errors)
+        # fields = {}
+        # print("is valid: " + str(studies_form.is_valid()))
+        # if studies_form.is_valid():
+        #     for (i, val) in studies_form.getAllFields():
+        #         fields[i] = val
+        #         print("value: " + str(val))
+        # print('\nGot Study Selection Request\n')
+        # print("error: ")
+        # print(studies_form.errors)
 
         studies_data = {}
-        print("data: ")
-        print(studies_form.data) #this shows the checkboxes that are checked as 'id': ['on']
+        # print("data: ")
+        # print(studies_form.data) #this shows the checkboxes that are checked as 'id': ['on']
+
         if studies_form.is_valid():
-            for field in studies_form.fields:
-                studies_data[field] = {
-                    'id': studies_form[field].name,
-                    'name': studies_form[field].label,
-                    'value': studies_form.cleaned_data[field]
+            for i, field in enumerate(studies_form.getAllFields()):
+                studies_data[i] = {
+                    'name': study_fields[i]['name'],
+                    'value': field[1]
                 }
 
         print(studies_data)
@@ -80,15 +78,12 @@ def dataSelection(request):
     #replace with query for data categories
     data_categories = [
         {
-            "id": 1,
             "name":"Heart Rate"
         },
         {
-            "id": 2,
             "name":"Corsi"
         },
         {
-            "id": 3,
             "name":"Flanker"
         },
     ]
@@ -96,14 +91,15 @@ def dataSelection(request):
     #reqplace with query for study groups
     study_groups = [
         {
-            "id": 1,
             "name":"Control"
         },
         {
-            "id": 2,
             "name":"Experimental"
         },
     ]
+
+    request.session['data_categories'] = data_categories
+    request.session['study_groups'] = study_groups
 
     print(request.method)
     if request.method == 'POST':
@@ -113,11 +109,10 @@ def dataSelection(request):
         #process the data
         categories_data = {}
         if categories_form.is_valid():
-            for field in categories_form.fields:
-                categories_data[field] = {
-                    'id': categories_form[field].name,
-                    'name': categories_form[field].label, 
-                    'value': categories_form.cleaned_data[field]
+            for i, field in enumerate(categories_form.getAllFields()):
+                categories_data[i] = {
+                    'name': data_categories[i]['name'],
+                    'value': field[1]
                 }
 
         category_names = ViewHelper.getNameList(categories_data)
@@ -125,12 +120,11 @@ def dataSelection(request):
 
         study_groups_data = {}
         if study_groups_form.is_valid():
-            for field in study_groups_form.fields:
-                study_groups_data[field] = {
-                        'id': study_groups_form[field].name,
-                        'name': study_groups_form[field].label, 
-                        'value': study_groups_form.cleaned_data[field]
-                    }
+            for i, field in enumerate(study_groups_form.getAllFields()):
+                study_groups_data[i] = {
+                    'name': study_groups[i]['name'],
+                    'value': field[1]
+                }
 
         study_group_names = ViewHelper.getNameList(study_groups_data)
         request.session['study_group_names'] = study_group_names
@@ -140,9 +134,6 @@ def dataSelection(request):
 
     categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
     study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
-
-    request.session['data_categories'] = data_categories
-    request.session['study_groups'] = study_groups
 
     context = {
         'myCSS': 'dataSelection.css',

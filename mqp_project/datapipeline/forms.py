@@ -20,14 +20,15 @@ class CreateChosenBooleanForm(forms.Form):
         fields = kwargs.pop('customFields')
         super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
-        for field in fields:
-            self.fields[field['id']] = forms.BooleanField(label=field['name'], required=False, help_text=field['description'])
+        for i, field in enumerate(fields):
+            self.fields['custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, help_text=field['description'])
             #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
         #print(fields)
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
-            yield (name, value)
+            if name.startswith('custom_'):
+                yield (name, value)
 
 
 class CreateChosenBooleanFormWithoutDesc(forms.Form):
@@ -35,8 +36,13 @@ class CreateChosenBooleanFormWithoutDesc(forms.Form):
         fields = kwargs.pop('customFields')
         super(CreateChosenBooleanFormWithoutDesc, self).__init__(*args, **kwargs)
 
-        for field in fields:
-            self.fields[field['id']] = forms.BooleanField(label=field['name'], required=False)
+        for i, field in enumerate(fields):
+            self.fields['custom_%s' % i] = forms.BooleanField(label=field['name'], required=False)
+
+    def getAllFields(self):
+        for name, value in self.cleaned_data.items():
+            if name.startswith('custom_'):
+                yield (name, value)
 
 
 class CreateChosenFilterForm(forms.Form):
