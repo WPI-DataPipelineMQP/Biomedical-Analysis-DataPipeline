@@ -286,7 +286,11 @@ def uploaderExtraInfo(request):
             
             
         if dcID == -1:
-            uploaderInfo = Helper.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
+            uploaderInfo, error = Helper.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
+            
+        if error is True:
+            print('\nFOUND ERROR!\n')
+            return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
             
         
         request.session['uploaderInfo'] = uploaderInfo

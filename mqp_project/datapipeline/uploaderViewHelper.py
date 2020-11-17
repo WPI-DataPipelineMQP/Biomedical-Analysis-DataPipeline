@@ -1,4 +1,5 @@
 from datetime import datetime 
+from django.db import transaction
 from .database import DBClient, DBHandler 
 import pandas as pd 
 import numpy as np
@@ -18,8 +19,9 @@ def handleDataCategoryID(data_category_id, fields):
     
     return fields
 
-
+@transaction.atomic
 def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, otherInfo):
+    error = False
     isTS = False 
     hasSubjectNames = False 
     
@@ -42,30 +44,51 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
         'hasSubjectNames': hasSubjectNames,
         'DC_description': myFields.get('dataCategoryDescription')
     }
-            
-    myMap = DBHandler.dataCategoryHandler(myMap, studyID)
-            
-    uploaderInfo['tableName'] = myMap.get('tableName')
-    uploaderInfo['dcID'] = myMap.get('DC_ID')
-            
+    
     cleanResult = getCleanFormat(myExtras)
+    
+    with transaction.atomic():
+        try:
+            with transaction.atomic():
+                #transaction.on_commit(lambda: DBHandler.dataCategoryHandler(myMap, studyID))
+                
+                myMap, noErrors = DBHandler.dataCategoryHandler(myMap, studyID) 
+                
+                if noErrors is False:
+                    raise Exception()
             
-    if subjectRule == 'row' and isTimeSeries == 'y':
-        columnName = myFields.get('nameOfValueMeasured')
-        columnVal = myFields.get('datatypeOfMeasured') 
-        cleanResult = [(columnName, columnVal)] 
-        uploaderInfo['headerInfo'] = [columnName]
+                uploaderInfo['tableName'] = myMap.get('tableName')
+                uploaderInfo['dcID'] = myMap.get('DC_ID')
+            
+                if subjectRule == 'row' and isTimeSeries == 'y':
+                    columnName = myFields.get('nameOfValueMeasured')
+                    columnVal = myFields.get('datatypeOfMeasured') 
+                    cleanResult = [(columnName, columnVal)] 
+                    uploaderInfo['headerInfo'] = [columnName]
         
             
-    myMap['columns'] = cleanResult
+                myMap['columns'] = cleanResult
             
-    DBHandler.newTableHandler(myMap)
+                result = DBHandler.newTableHandler(myMap)
+                
+                if result == -1:
+                    raise Exception()
             
-    cleanAttributeFormat = seperateByName(myExtras, 4, False)
+                cleanAttributeFormat = seperateByName(myExtras, 4, False)
             
-    DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+                result = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+
+                
+                if result == -1:
+                    raise Exception()
+                
+                error = False
+            
+        except:
+            return uploaderInfo, True
     
-    return uploaderInfo
+    print('ERROR is', error)
+    return uploaderInfo, False
 
 
 def extractName(string):

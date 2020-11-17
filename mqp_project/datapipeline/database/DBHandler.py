@@ -129,12 +129,8 @@ def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_tab
      
     new_data_category = (category_name, time_series_val, hasSubjectNames, dc_table_name, description)
      
-    result = DBClient.executeCommand(dataCategory_insert_template, new_data_category)
-    
-    if not result :
-        print('ERROR: Error Found When Attempting to Insert Data Category Name: {} to DataCategory Table'.format(category_name))
-    
-    return result 
+    return DBClient.executeCommand(dataCategory_insert_template, new_data_category)
+     
 
 
 def insertToDataCategoryXref(category_id, study_id):
@@ -145,12 +141,9 @@ def insertToDataCategoryXref(category_id, study_id):
 
     new_data_category_xref = (category_id, study_id)
     
-    result = DBClient.executeCommand(dataCategoryStudyXref_insert_template, new_data_category_xref)
+    return DBClient.executeCommand(dataCategoryStudyXref_insert_template, new_data_category_xref)
     
-    if not result :
-        print("ERROR: Error Found When Attempting to Insert Data Category ID: {} and Study ID: {} to DataCategoryXref Table".format(category_id, study_id))
     
-    return result
 
 def insertToAttribute(attributes, dcID):
     for colName in attributes:
@@ -171,6 +164,10 @@ def insertToAttribute(attributes, dcID):
         
         if not result:
             print('\nERROR during insert to Attribute\n')
+            return -1
+        
+    return 1
+
             
 def subjectHandler(filename, study_group_id, subjectNumber=None):
     
@@ -220,7 +217,10 @@ def dataCategoryHandler(myMap, study_id):
     description = myMap.get('DC_description')
     dc_table_name = data_category_name + '_' + str(study_id)
     
-    insertToDataCategory(data_category_name, time_series_int, has_subjectNames_int, dc_table_name, description)
+    result = insertToDataCategory(data_category_name, time_series_int, has_subjectNames_int, dc_table_name, description)
+
+    if result is False:
+        return myMap, False
         
     where_params = [('dc_table_name', dc_table_name, True), ('is_time_series', time_series_int, False)]
 
@@ -228,16 +228,19 @@ def dataCategoryHandler(myMap, study_id):
     
     myMap['DC_ID'] = data_category_id
         
-    insertToDataCategoryXref(data_category_id, study_id)
+    result2 = insertToDataCategoryXref(data_category_id, study_id)
+    
+    if result2 is False:
+        return myMap, False
     
     data_category_name = data_category_name.replace(" ", "_")
     myMap['tableName'] = data_category_name + '_' + str(study_id)
 
-    return myMap
+    return myMap, True
 
 
 def newTableHandler(myMap):
-    
+    result = 1
     if myMap.get('createTable') is False:
         dataTypeMap = {
             '1' : 'TEXT',
@@ -268,4 +271,6 @@ def newTableHandler(myMap):
         stmt += pk_field
         stmt += fk_field
     
-        DBClient.createTable(stmt, table_name, 1)
+        result = DBClient.createTable(stmt, table_name, 1)
+        
+    return result

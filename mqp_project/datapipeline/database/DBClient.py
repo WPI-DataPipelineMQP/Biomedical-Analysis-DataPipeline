@@ -60,7 +60,7 @@ def getTableColumns(table_name):
 
 
 def createTable(stmt, table_name, verbose=0):
-    result = -1
+    result = 1
     try:
         with connection.cursor() as cursor:
             if verbose == 1:
@@ -70,14 +70,14 @@ def createTable(stmt, table_name, verbose=0):
             
             print('\nCreated {} Table Successfully'.format(table_name))
             
-            result = 1
-            
     
     except:
         print("\nIssue Found When Creating {} Table".format(table_name))
+        result = -1
         
-            
     return result
+        
+
 
 
 
@@ -141,6 +141,11 @@ def executeCommand(template, args):
         print('ERROR IN EXECUTE COMMAND')
             
         return False
+    
+def tryExecuteCommand(template, args):
+    with connection.cursor() as cursor:
+        cursor.execute(template, args)
+        
     
 def dfInsert(df, tableName):
     db_engine = sql.create_engine(settings.DB_CONNECTION_URL)
