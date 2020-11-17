@@ -13,6 +13,47 @@ NonInteger_Symbols = [
     ('notequal', '!='),
 ]
 
+# Dynamic form that uses customFields arg to create boolean fields with given names and labels
+#taken from Django practice repo
+class CreateChosenBooleanForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('customFields')
+        super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
+
+        for i, field in enumerate(fields):
+            self.fields['custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, help_text=field['description'])
+            #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
+        #print(fields)
+
+    def getAllFields(self):
+        for name, value in self.cleaned_data.items():
+            if name.startswith('custom_'):
+                yield (name, value)
+
+
+class CreateChosenBooleanFormWithoutDesc(forms.Form):
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('customFields')
+        super(CreateChosenBooleanFormWithoutDesc, self).__init__(*args, **kwargs)
+
+        for i, field in enumerate(fields):
+            self.fields['custom_%s' % i] = forms.BooleanField(label=field['name'], required=False)
+
+    def getAllFields(self):
+        for name, value in self.cleaned_data.items():
+            if name.startswith('custom_'):
+                yield (name, value)
+
+
+class CreateChosenFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('customFields')
+        super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
+
+    #for field in fields:
+        
+
+
 class CreateHeartRateForm(forms.Form):
     viewHRDateTime = forms.BooleanField(label= 'HeartRate.date_time', required = False)
     viewHRHeartRate = forms.BooleanField(label= 'HeartRate.heart_rate', required = False)

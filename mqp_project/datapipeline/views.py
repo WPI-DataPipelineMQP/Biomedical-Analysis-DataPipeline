@@ -3,12 +3,12 @@ import json
 import pandas as pd
 import numpy as np 
 from django.shortcuts import HttpResponse
+from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
 from . import viewsHelper as ViewHelper
 from .database import DBClient
-
 from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi
 from .forms import CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 
@@ -20,33 +20,68 @@ def home(request):
 def studySelection(request):
     available_studies = [
         {
-            "study_name": "Exercise IQP",
+            "name": "Exercise IQP",
             "description": "Duis ultrices, velit vitae feugiat sagittis, ipsum dolor interdum risus, et pretium tellus nulla vitae quam. Nullam placerat dapibus lorem sit amet cursus. In ac mauris hendrerit, rutrum orci et, bibendum sem. Donec massa nisl, sagittis vel molestie elementum, semper sed leo. Nullam eros nulla, varius eget est quis, condimentum convallis quam. Praesent varius diam non libero ullamcorper, vel pulvinar erat commodo. Quisque tincidunt sollicitudin leo ut viverra."
         },
         {
-            "study_name": "Covid",
+            "name": "Covid",
             "description": "Etiam purus libero, efficitur semper dui vitae, tempus molestie est. Fusce enim tellus, placerat et dolor rutrum, volutpat consectetur ex. In vel nulla accumsan, suscipit quam ac, varius diam. Quisque sed mauris quis nulla mattis sagittis. Etiam fringilla turpis nec nisi luctus elementum. Quisque in sodales elit, sed ornare felis. Quisque eget venenatis est, nec dictum tortor. Donec ultrices odio massa, quis vestibulum nulla blandit non. Cras ut fermentum velit. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Suspendisse auctor neque id neque bibendum sagittis. Maecenas ac nunc eu risus congue ultricies."
         },
     ]
+
+    # CHANGE ONCE WE CAN QUERY THE DATABASE
+    study_fields = available_studies
+    
+    request.session['study_fields'] = study_fields
+
+    if request.method == 'POST':
+
+        studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
+
+        # fields = {}
+        # print("is valid: " + str(studies_form.is_valid()))
+        # if studies_form.is_valid():
+        #     for (i, val) in studies_form.getAllFields():
+        #         fields[i] = val
+        #         print("value: " + str(val))
+        # print('\nGot Study Selection Request\n')
+        # print("error: ")
+        # print(studies_form.errors)
+
+        studies_data = {}
+        # print("data: ")
+        # print(studies_form.data) #this shows the checkboxes that are checked as 'id': ['on']
+
+        if studies_form.is_valid():
+            for i, field in enumerate(studies_form.getAllFields()):
+                studies_data[i] = {
+                    'name': study_fields[i]['name'],
+                    'value': field[1]
+                }
+
+        print(studies_data)
+
+        #gets the names to be printed out                                
+        study_names = ViewHelper.getNameList(studies_data)
+        request.session['study_names'] = study_names
+
+        return HttpResponseRedirect('/dataSelection')
+        #return render(request, 'datapipeline/studySelection.html', context)
+
+    studies_form = CreateChosenBooleanForm(customFields=study_fields)
+
     context = {
-        'studies': available_studies,
-        'myCSS' : 'studySelection.css'
+        'studies_form': studies_form,
+        'myCSS': 'studySelection.css'
     }
-    
-    print('\nGot Study Selection Request\n')
-    
     return render(request, 'datapipeline/studySelection.html', context)
 
 
-
 def dataSelection(request):
-    raw_studies = request.POST.getlist('studies[]')
-    studies = ViewHelper.getJSONVersion(raw_studies)
+    #get information from form on previous page
+    #studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_fields'])
 
-    print("Fay-studies:")
-    print(studies)
-
-    #replace these with queries below
+    #replace with query for data categories
     data_categories = [
         {
             "name":"Heart Rate"
@@ -59,6 +94,7 @@ def dataSelection(request):
         },
     ]
 
+    #reqplace with query for study groups
     study_groups = [
         {
             "name":"Control"
@@ -67,12 +103,49 @@ def dataSelection(request):
             "name":"Experimental"
         },
     ]
-    
+
+    request.session['data_categories'] = data_categories
+    request.session['study_groups'] = study_groups
+
+    print(request.method)
+    if request.method == 'POST':
+        categories_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['data_categories'])
+        study_groups_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['study_groups'])
+
+        #process the data
+        categories_data = {}
+        if categories_form.is_valid():
+            for i, field in enumerate(categories_form.getAllFields()):
+                categories_data[i] = {
+                    'name': data_categories[i]['name'],
+                    'value': field[1]
+                }
+
+        category_names = ViewHelper.getNameList(categories_data)
+        request.session['category_names'] = category_names
+
+        study_groups_data = {}
+        if study_groups_form.is_valid():
+            for i, field in enumerate(study_groups_form.getAllFields()):
+                study_groups_data[i] = {
+                    'name': study_groups[i]['name'],
+                    'value': field[1]
+                }
+
+        study_group_names = ViewHelper.getNameList(study_groups_data)
+        request.session['study_group_names'] = study_group_names
+
+        return HttpResponseRedirect('/dataSelection-2')
+
+
+    categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
+    study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
+
     context = {
         'myCSS': 'dataSelection.css',
-        'studies': studies,
-        'categories': data_categories,
-        'sgroups': study_groups
+        'study_names': request.session['study_names'],
+        'categories_form': categories_form,
+        'study_groups_form': study_groups_form
     }
        
     print('\nGot Data Selection Request\n')
@@ -80,18 +153,18 @@ def dataSelection(request):
     return render(request, 'datapipeline/dataSelection.html', context)
 
 def dataSelectionContinued(request):
-    raw_studies = request.POST.getlist('studies[]')
-    raw_data_categories = request.POST.getlist('categories[]')
-    raw_study_groups = request.POST.getlist('studyGroups[]')
+    #raw_studies = request.POST.getlist('studies[]')
+    #raw_data_categories = request.POST.getlist('categories[]')
+    #raw_study_groups = request.POST.getlist('studyGroups[]')
 
-    studies = ViewHelper.getJSONVersion(raw_studies)
-    categories = ViewHelper.getJSONVersion(raw_data_categories)
-    sgroups = ViewHelper.getJSONVersion(raw_study_groups)
+    #studies = ViewHelper.getJSONVersion(raw_studies)
+    #categories = ViewHelper.getJSONVersion(raw_data_categories)
+    #sgroups = ViewHelper.getJSONVersion(raw_study_groups)
 
-    print("data-studies:")
-    print(studies)
-    print("data-categories:")
-    print(categories)
+    #print("data-studies:")
+    #print(studies)
+    #print("data-categories:")
+    #print(categories)    
 
     tables = ['HeartRate']  # Get this from the first data-selection screen
     #data_attributes = pickAttributesToShowUsers(tables)
@@ -169,13 +242,12 @@ def dataSelectionContinued(request):
 
     context = {
          'myCSS': 'dataSelection.css',
-         'studies': studies,
-         'categories': categories,
-         'sgroups': sgroups,
+         'study_names': request.session['study_names'],
+         'category_names': request.session['category_names'],
+         'study_group_names': request.session['study_group_names'],
          'attributes': data_attributes,
          'filters': data_attributes
     }
-
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
 
@@ -264,23 +336,23 @@ def pickAttributesToShowUsers(tables):
 
 def output(request):
     #raw_studies = request.POST.getlist('studies[]')
-    raw_data_categories = request.POST.getlist('categories[]')
-    raw_study_groups = request.POST.getlist('studyGroups[]')
-    raw_data_attributes = request.POST.getlist('attributes[]')
-    raw_data_filters = request.POST.getlist('filters[]')
+    #raw_data_categories = request.POST.getlist('categories[]')
+    #raw_study_groups = request.POST.getlist('studyGroups[]')
+    #raw_data_attributes = request.POST.getlist('attributes[]')
+    #raw_data_filters = request.POST.getlist('filters[]')
 
-    print("output-attr")
-    print(raw_data_attributes)
-    print("output-filters")
-    print(raw_data_filters)
-    print("output-cat")
-    print(raw_data_categories)
+    # print("output-attr")
+    # print(raw_data_attributes)
+    # print("output-filters")
+    # print(raw_data_filters)
+    # print("output-cat")
+    # print(raw_data_categories)
 
 
     #studies = getJSONVersion(raw_studies)
-    categories = ViewHelper.getJSONVersion(raw_data_categories)
-    sgroups = ViewHelper.getJSONVersion(raw_study_groups)
-    data_attributes = ViewHelper.getJSONVersion(raw_data_attributes)
+    #categories = ViewHelper.getJSONVersion(raw_data_categories)
+    #sgroups = ViewHelper.getJSONVersion(raw_study_groups)
+    #data_attributes = ViewHelper.getJSONVersion(raw_data_attributes)
 
     data = pd.read_csv('1_fitbit.csv')
     data_html = data.to_html()

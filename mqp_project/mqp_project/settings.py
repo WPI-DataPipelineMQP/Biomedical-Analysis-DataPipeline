@@ -86,6 +86,7 @@ DATABASES = {
     }
 }
 
+<<<<<<< HEAD
 DB_CONNECTION_URL = 'mysql://{}:{}@{}:{}/{}'.format(
     DATABASES.get('default').get('USER'),
     DATABASES.get('default').get('PASSWORD'),
@@ -93,6 +94,19 @@ DB_CONNECTION_URL = 'mysql://{}:{}@{}:{}/{}'.format(
     DATABASES.get('default').get('PORT'),
     DATABASES.get('default').get('NAME')
 )
+=======
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'DataPipeline',
+#         'USER': 'WPI',
+#         'PASSWORD': 'DataPipeline',
+#         'HOST': '127.0.0.1',
+#         'PORT': '3306',
+#     }
+# }
+
+>>>>>>> forms-refactoring
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
