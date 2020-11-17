@@ -29,24 +29,29 @@ def studySelection(request):
     study_fields = available_studies
     
     request.session['study_fields'] = study_fields
-    print(request.method)
+
     if request.method == 'POST':
+
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
 
-        #print(studies_form)
+        fields = {}
+        print("is valid: " + str(studies_form.is_valid()))
         if studies_form.is_valid():
-            for field in studies_form.fields:
-                print(field)
-                this = studies_form.cleaned_data[field]
-                print("STUDY: " + str(this))
+            for (i, val) in studies_form.getAllFields():
+                fields[i] = val
+                print("value: " + str(val))
         print('\nGot Study Selection Request\n')
+        print("error: ")
+        print(studies_form.errors)
 
         studies_data = {}
+        print("data: ")
+        print(studies_form.data) #this shows the checkboxes that are checked as 'id': ['on']
         if studies_form.is_valid():
             for field in studies_form.fields:
                 studies_data[field] = {
                     'id': studies_form[field].name,
-                    'name': studies_form[field].label, 
+                    'name': studies_form[field].label,
                     'value': studies_form.cleaned_data[field]
                 }
 

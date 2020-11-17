@@ -25,6 +25,10 @@ class CreateChosenBooleanForm(forms.Form):
             #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
         #print(fields)
 
+    def getAllFields(self):
+        for name, value in self.cleaned_data.items():
+            yield (name, value)
+
 
 class CreateChosenBooleanFormWithoutDesc(forms.Form):
     def __init__(self, *args, **kwargs):

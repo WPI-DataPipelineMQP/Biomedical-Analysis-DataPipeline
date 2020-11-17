@@ -1,15 +1,25 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<form action="{% url 'datapipeline-studySelection' %}" method="POST">
+<form method="POST" action="{% url 'datapipeline-studySelection' %}" enctype="multipart/form-data">
     {% csrf_token %}
     <ul class="study-listings">
-<!--        {{ studies_form.as_p }}-->
+
+<!--        {% for field in studies_form %}-->
+<!--            {{ field }}-->
+<!--            {{ field.label }}-->
+<!--        <p class="description">{{ field.help_text }}</p>-->
+<!--        {% endfor %}-->
+
         {% for field in studies_form %}
-            {{ field }}
-            {{ field.label }}
-        <p class="description">{{ field.help_text }}</p>
+            <div class="form-group">
+                {{ field }}
+<!--                <label>{{ field.label }} </label>-->
+                <label for="{{ field.id_for_label }}"> {{field.label}}</label>
+                {{ field.help_text }}
+            </div>
         {% endfor %}
+
         <!--{% for study in studies %}
         <li class="study-article">
             <input class="checkbox" type="checkbox" name="studies[]" value="{{study}}">
