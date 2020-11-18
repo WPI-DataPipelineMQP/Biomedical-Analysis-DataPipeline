@@ -132,7 +132,7 @@
 <!--            <button type="submit" >Submit</button>-->
 <!--        </form>-->
 <!--    </div>-->
-<form action="{% url 'datapipeline-output' %}" method="POST">
+<form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     <ul>
         {% for study in studies %}
         <li>
@@ -147,43 +147,22 @@
 {% csrf_token %}
 <h2>What attributes would you like to view?</h2>
     <ul class="study-listings">
-        {% for attr in attributes %}
-        <li class="study-article">
-            <input class="radio" type="checkbox" name="attributes[]" value="{{attr}}">
-            <label class="study-article">
-                <article class="media content-section">
-                    <div class="media-body">
-                         <p>{{ attr.name }}</p>
-                    </div>
-                </article>
-            </label>
-        </li>
-        {% endfor %}
+        {{ attributes.as_p }}
     </ul>
+
     <h2>Which attributes would you like to filter?</h2>
     {% csrf_token %}
     <ul class="study-listings">
-        {% for fil in filters %}
-        <li class="study-article">
-            <input class="radio" type="checkbox" name="filters[]" value="{{fil}}">
-            <label class="study-article">
-                <article class="media content-section">
-                    <div class="media-body">
-                         <p>{{ fil.name }}</p>
-                    </div>
-                </article>
-            </label>
-            <select name="filters[]">
-              <option value="equal">=</option>
-              <option value="notequal">!=</option>
-              <option value="less"><</option>
-              <option value="greater">></option>
-              <option value="lessorequal"><=</option>
-              <option value="greaterorequal">>=</option>
-            </select>
-            <input class="text" type="text" name="filters[]">
-        </li>
+        {% regroup filters by field.group as field_group %}
+        {% for group in field_group %}
+            <p class="study-article">
+            {{group.grouper}}
+            {% for field in group.list %}
+                {{ field }}
+            {% endfor %}
+            </p>
         {% endfor %}
+
     </ul>
     <button type="submit" >Submit</button>
 </form>

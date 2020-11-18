@@ -11,10 +11,9 @@ def getJSONVersion(raw_list):
     return dictionaries
     
 
-    def getNameList(data):
-    	res = []
-    	for item in data:
-    		if data[item]["value"]:
-    			res.append(data[item]["name"])
-    	return res    
-    
+def getNameList(data):
+    res = []
+    for item in data:
+        if data[item]["value"]:
+            res.append(data[item]["name"])
+    return res

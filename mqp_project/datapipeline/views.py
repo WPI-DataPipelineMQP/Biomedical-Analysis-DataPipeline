@@ -3,11 +3,12 @@ import json
 import pandas as pd
 import numpy as np 
 from django.shortcuts import HttpResponse
-from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
+from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateChosenFilterForm, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
 from . import viewsHelper as ViewHelper
+from django.db import connection
 from .database import DBClient
 from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi
 from .forms import CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
@@ -18,19 +19,23 @@ def home(request):
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
 
 def studySelection(request):
-    available_studies = [
-        {
-            "name": "Exercise IQP",
-            "description": "Duis ultrices, velit vitae feugiat sagittis, ipsum dolor interdum risus, et pretium tellus nulla vitae quam. Nullam placerat dapibus lorem sit amet cursus. In ac mauris hendrerit, rutrum orci et, bibendum sem. Donec massa nisl, sagittis vel molestie elementum, semper sed leo. Nullam eros nulla, varius eget est quis, condimentum convallis quam. Praesent varius diam non libero ullamcorper, vel pulvinar erat commodo. Quisque tincidunt sollicitudin leo ut viverra."
-        },
-        {
-            "name": "Covid",
-            "description": "Etiam purus libero, efficitur semper dui vitae, tempus molestie est. Fusce enim tellus, placerat et dolor rutrum, volutpat consectetur ex. In vel nulla accumsan, suscipit quam ac, varius diam. Quisque sed mauris quis nulla mattis sagittis. Etiam fringilla turpis nec nisi luctus elementum. Quisque in sodales elit, sed ornare felis. Quisque eget venenatis est, nec dictum tortor. Donec ultrices odio massa, quis vestibulum nulla blandit non. Cras ut fermentum velit. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Suspendisse auctor neque id neque bibendum sagittis. Maecenas ac nunc eu risus congue ultricies."
-        },
-    ]
-
-    # CHANGE ONCE WE CAN QUERY THE DATABASE
-    study_fields = available_studies
+    study_fields = []
+    args = {
+        'selectors': 'study_name, study_description, study_id',
+        'from': 'Study',
+        'join-type': None,
+        'join-stmt': None,
+        'where': None,
+        'group-by': None,
+        'order-by': None
+    }
+    result = DBClient.executeQuery(args, 1)
+    for (study_name, study_description, study_id) in result:  # cursor:
+        studies_dict = {}
+        studies_dict["name"] = study_name
+        studies_dict["description"] = study_description
+        studies_dict["id"] = study_id
+        study_fields.append(studies_dict)
     
     request.session['study_fields'] = study_fields
 
@@ -38,32 +43,20 @@ def studySelection(request):
 
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
 
-        # fields = {}
-        # print("is valid: " + str(studies_form.is_valid()))
-        # if studies_form.is_valid():
-        #     for (i, val) in studies_form.getAllFields():
-        #         fields[i] = val
-        #         print("value: " + str(val))
-        # print('\nGot Study Selection Request\n')
-        # print("error: ")
-        # print(studies_form.errors)
-
         studies_data = {}
-        # print("data: ")
-        # print(studies_form.data) #this shows the checkboxes that are checked as 'id': ['on']
 
         if studies_form.is_valid():
             for i, field in enumerate(studies_form.getAllFields()):
                 studies_data[i] = {
                     'name': study_fields[i]['name'],
-                    'value': field[1]
+                    'value': field[1],
+                    'id': study_fields[i]["id"]
                 }
-
-        print(studies_data)
 
         #gets the names to be printed out                                
         study_names = ViewHelper.getNameList(studies_data)
         request.session['study_names'] = study_names
+        request.session['studies_data'] = studies_data
 
         return HttpResponseRedirect('/dataSelection')
         #return render(request, 'datapipeline/studySelection.html', context)
@@ -78,36 +71,58 @@ def studySelection(request):
 
 
 def dataSelection(request):
-    #get information from form on previous page
-    #studies_form = CreateChosenBooleanForm(request.POST, customFields=request.session['study_fields'])
 
-    #replace with query for data categories
-    data_categories = [
-        {
-            "name":"Heart Rate"
-        },
-        {
-            "name":"Corsi"
-        },
-        {
-            "name":"Flanker"
-        },
-    ]
+    studies_data = []
+    if 'studies_data' in request.session:
+        studies_data = request.session['studies_data']
 
-    #reqplace with query for study groups
-    study_groups = [
-        {
-            "name":"Control"
-        },
-        {
-            "name":"Experimental"
-        },
-    ]
+    study_ids_forquery = ''
+    j  = 0
+    for key in studies_data:
+        study = studies_data[key]
+        if j == 0:
+            study_ids_forquery += 'study_id = ' + str(study['id'])
+            j =  1
+        else:
+            study_ids_forquery += "OR study_id = '" + str(study['id'])
+
+    args = {
+        'selectors': 'DataCategory.dc_table_name',
+        'from': 'DataCategory',
+        'join-type': 'JOIN',
+        'join-stmt': 'DataCategoryStudyXref ON DataCategory.data_category_id = DataCategoryStudyXref.data_category_id WHERE ' + study_ids_forquery,
+        'where': None,
+        'group-by': None,
+        'order-by': None
+    }
+    result = DBClient.executeQuery(args, 1)
+    data_categories = []
+    for table_name in result:  # cursor:
+        tables_dict = {}
+        tables_dict["name"] = table_name[0]
+        data_categories.append(tables_dict)
+
+    #study group
+    args = {
+        'selectors': 'study_group_name',
+        'from': 'StudyGroup',
+        'join-type': None,
+        'join-stmt': None,
+        'where': study_ids_forquery,
+        'group-by': None,
+        'order-by': None
+    }
+    result = DBClient.executeQuery(args, 1)
+    study_groups = []
+    for study_group_name in result:
+        studygroups_dict = {}
+        studygroups_dict["name"] = study_group_name[0]
+        study_groups.append(studygroups_dict)
+
 
     request.session['data_categories'] = data_categories
     request.session['study_groups'] = study_groups
 
-    print(request.method)
     if request.method == 'POST':
         categories_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['data_categories'])
         study_groups_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['study_groups'])
@@ -135,6 +150,7 @@ def dataSelection(request):
         study_group_names = ViewHelper.getNameList(study_groups_data)
         request.session['study_group_names'] = study_group_names
 
+
         return HttpResponseRedirect('/dataSelection-2')
 
 
@@ -153,103 +169,89 @@ def dataSelection(request):
     return render(request, 'datapipeline/dataSelection.html', context)
 
 def dataSelectionContinued(request):
-    #raw_studies = request.POST.getlist('studies[]')
-    #raw_data_categories = request.POST.getlist('categories[]')
-    #raw_study_groups = request.POST.getlist('studyGroups[]')
 
-    #studies = ViewHelper.getJSONVersion(raw_studies)
-    #categories = ViewHelper.getJSONVersion(raw_data_categories)
-    #sgroups = ViewHelper.getJSONVersion(raw_study_groups)
+    category_names = []
+    if 'category_names' in request.session:
+        category_names = request.session['category_names']
 
-    #print("data-studies:")
-    #print(studies)
-    #print("data-categories:")
-    #print(categories)    
+    columns = []
+    for table in category_names:
+        args = {
+            'selectors': '*',
+            'from': 'INFORMATION_SCHEMA.COLUMNS',
+            'join-type': None,
+            'join-stmt': None,
+            'where': "TABLE_NAME = N'"+table+"'",
+            'group-by': None,
+            'order-by': None
+        }
+        result = DBClient.executeQuery(args, 1)
+        for column_name in result:
+            if(column_name[3] == "data_id" or column_name[3] == "subject_id"):
+                pass
+            else:
+                column_dict = {}
+                column_dict["name"] = column_name[3]
+                column_dict["table"] = table
+                columns.append(column_dict)
 
-    tables = ['HeartRate']  # Get this from the first data-selection screen
-    #data_attributes = pickAttributesToShowUsers(tables)
-    data_attributes = [
-        {"name": "HeartRate.date_time"},
-        {"name": "HeartRate.heart_rate"},
-        {"name": "subject_number"},
-        {"name": "study_group_name"},
-    ]
-    print("dataattr0:")
-    print(data_attributes[0])
-    # tables = ['HeartRate'] #Get this from the first data-selection screen
-    # if request.method == 'POST':
-    #     if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
-    #         attributeForm = CreateHeartRateForm(request.POST)
-    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-    #         attributeForm = CreateCorsiForm(request.POST)
-    #     elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-    #         attributeForm = CreateFlankerForm(request.POST)
-    #     elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-    #         attributeForm = CreateHeartRateANDCorsi(request.POST)
-    #     elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-    #         attributeForm = CreateHeartRateANDFlanker(request.POST)
-    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
-    #         attributeForm = CreateCorsiANDFlanker(request.POST)
-    #     else:
-    #         attributeForm = CreateALL(request.POST)
-    #     if attributeForm.is_valid():
-    #         viewHRDateTime = attributeForm.cleaned_data['viewHRDateTime']
-    #         viewHRHeartRate = attributeForm.cleaned_data['viewHRHeartRate']
-    #         viewSubjectNumber = attributeForm.cleaned_data['viewSubjectNumber']
-    #         viewSGName = attributeForm.cleaned_data['viewSGName']
-    #         filterHRDateTime = attributeForm.cleaned_data['filterHRDateTime']
-    #         filterHRHeartRate = attributeForm.cleaned_data['filterHRHeartRate']
-    #         filterSubjectNumber = attributeForm.cleaned_data['filterSubjectNumber']
-    #         filterSGName = attributeForm.cleaned_data['filterSGName']
-    #
-    #         filterSymHRDateTime = attributeForm.cleaned_data['filterSymHRDateTime']
-    #         filterSymHRHeartRate = attributeForm.cleaned_data['filterSymHRHeartRate']
-    #         filterSymSubjectNumber = attributeForm.cleaned_data['filterSymSubjectNumber']
-    #         filterSymSGName = attributeForm.cleaned_data['filterSymSGName']
-    #
-    #         filterValueHRDateTime = attributeForm.cleaned_data['filterValueHRDateTime']
-    #         filterValueHRHeartRate = attributeForm.cleaned_data['filterValueHRHeartRate']
-    #         filterValueSubjectNumber = attributeForm.cleaned_data['filterValueSubjectNumber']
-    #         filterValueSGName = attributeForm.cleaned_data['filterValueSGName']
-    #
-    #         print("DATETIME: " + str(viewHRDateTime) + "\n")
-    #         print("HEARTREATE: " + str(viewHRHeartRate) + "\n")
-    #         print("SUBJECT: " + str(viewSubjectNumber) + "\n")
-    #         print("STUDYGROUP: " + str(viewSGName) + "\n")
-    #         print("TEXT: " + filterValueHRDateTime + "\n")
-    #
-    #         return HttpResponseRedirect('/output')
-    #     else:
-    #         print("invalid")
-    # else:
-    #     if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
-    #         attributeForm = CreateHeartRateForm(request.POST)
-    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-    #         attributeForm = CreateCorsiForm(request.POST)
-    #     elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-    #         attributeForm = CreateFlankerForm(request.POST)
-    #     elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-    #         attributeForm = CreateHeartRateANDCorsi(request.POST)
-    #     elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-    #         attributeForm = CreateHeartRateANDFlanker(request.POST)
-    #     elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
-    #         attributeForm = CreateCorsiANDFlanker(request.POST)
-    #     else:
-    #         attributeForm = CreateALL(request.POST)
-    #
-    # # assuming obj is a model instance
-    # serialized_obj = serializers.serialize('json', [attributeForm, ])
+    #add these because they are always shown by default
+    subject_num_dict = {"name": "subject_number", "table": "Subject"}
+    study_group_dict = {"name": "study_group_name", "table": "StudyGroup"}
+    columns.append(subject_num_dict)
+    columns.append(study_group_dict)
+
+    request.session['columns'] = columns
+    print(columns)
+
+    if request.method == 'POST':
+        attributes_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['columns'])
+        filters_form = CreateChosenFilterForm(request.POST, customFields=request.session['columns'])
+
+        #process the data
+        attribute_data = {}
+        if attributes_form.is_valid():
+            for i, field in enumerate(attributes_form.getAllFields()):
+                attribute_data[i] = {
+                    'name': columns[i]['name'],
+                    'value': field[1]
+                }
+        attribute_names = ViewHelper.getNameList(attribute_data)
+        request.session['attribute_names'] = attribute_names
+
+        filter_data = {}
+        if filters_form.is_valid():
+            print(columns)
+            for i, field in enumerate(filters_form.getAllFields()):
+                print("i: " + str(i))
+                print(field)
+                filter_data[i] = {
+                    #'name': columns[i]['name'],
+                    'name': field[0],
+                    'value': field[1]
+                }
+        filter_names = ViewHelper.getNameList(filter_data)
+        request.session['filter_names'] = filter_names
+
+
+        return HttpResponseRedirect('/output')
+
+    attributes_form = CreateChosenBooleanFormWithoutDesc(customFields=request.session['columns'])
+    filters_form = CreateChosenFilterForm(customFields=request.session['columns'])
 
     context = {
          'myCSS': 'dataSelection.css',
          'study_names': request.session['study_names'],
          'category_names': request.session['category_names'],
          'study_group_names': request.session['study_group_names'],
-         'attributes': data_attributes,
-         'filters': data_attributes
+         'attributes': attributes_form,
+         'filters': filters_form
     }
 
+    print('\nGot Data Selection Request\n')
+
     return render(request, 'datapipeline/dataSelection-2.html', context)
+
 
 
 def pickAttributesToShowUsers(tables):

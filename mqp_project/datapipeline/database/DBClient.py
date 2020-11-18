@@ -1,3 +1,4 @@
+import mysql.connector
 from django.db import connection
 from django.conf import settings
 import pandas as pd 
@@ -85,6 +86,7 @@ def buildQuery(args):
     stmt = "SELECT " + args['selectors'] + " "
     stmt += "FROM " + args['from'] + " "
 
+
     if args['join-type'] != None and args['join-stmt'] != None:
         stmt += args['join-type'] + " " + args['join-stmt'] + " "
 
@@ -96,6 +98,7 @@ def buildQuery(args):
 
     if args['order-by'] != None :
         stmt += "ORDER BY " + args['order-by'] + " "
+
 
     return stmt
 
@@ -110,8 +113,8 @@ def executeQuery(args, verbose=0):
             
             stmt = buildQuery(args)
         
-            if verbose == 1:
-                print(stmt)
+            # if verbose == 1:
+            #     print(stmt)
             
             cursor.execute(stmt)
             
@@ -121,9 +124,12 @@ def executeQuery(args, verbose=0):
                 return []
             
             return result
-    
-    except:
-        print('ERROR IN SELECT')
+
+    # except:
+    #     print('ERROR IN SELECT')
+    #     return []
+    except mysql.connector.Error as e:
+        print(e)
         return []
         
 # Execute an insert, update, or delete command
