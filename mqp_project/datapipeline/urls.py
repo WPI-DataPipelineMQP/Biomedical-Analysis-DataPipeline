@@ -14,4 +14,5 @@ urlpatterns = [
     path('uploaderFinalPrompt/', uploaderViews.uploaderFinalPrompt, name='datapipeline-uploaderFinalPrompt'),
     path('uploader/', uploaderViews.uploader, name='datapipeline-uploader'),
     path('uploaderError/', uploaderViews.uploaderError, name='datapipeline-uploaderError'),
+    path('uploaderSuccess/', uploaderViews.uploaderSuccess, name='datapipeline-uploaderSuccess'),
 ]

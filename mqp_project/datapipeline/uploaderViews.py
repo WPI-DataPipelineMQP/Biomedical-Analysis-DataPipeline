@@ -447,7 +447,7 @@ def uploader(request):
             instance.uploadedFile.delete()
             instance.delete()
             
-        return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
+        return redirect(uploaderSuccess)
     
         
     return render(request, 'datapipeline/uploader.html', context) 
@@ -479,5 +479,18 @@ def uploaderError(request):
     
     
     return render(request, 'datapipeline/uploaderError.html', context) 
+
+
+def uploaderSuccess(request):
+    context = {
+         'myCSS': 'uploaderSuccess.css'
+    }
+    
+    if request.method == 'POST':
+        return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
+    
+    return render(request, 'datapipeline/uploaderSuccess.html', context) 
+    
+    
             
         
