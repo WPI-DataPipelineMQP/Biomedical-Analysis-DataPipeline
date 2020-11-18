@@ -3,21 +3,22 @@
 {% block content %}
 <h1>Data Selection</h1>
 <ul>
-    {% for study in studies %}
+    {% for study in study_names %}
     <li>
         <article class="media">
             <div class="media-body">
-                <p>{{ study.study_name }}</p>
+                <p>{{ study }}</p>
             </div>
         </article>
     </li>
     {% endfor %}
 </ul>
 <h2>What data from this study would you like to view?</h2>
-<form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
+<form action="{% url 'datapipeline-dataSelection' %}" method="POST">
     {% csrf_token %}
     <ul class="study-listings">
-        {% for category in categories %}
+        {{ categories_form.as_p }}
+        <!--{% for category in categories %}
         <li class="study-article">
             <input class="checkbox" type="checkbox" name="categories[]" value="{{category}}">
             <label class="study-article">
@@ -28,12 +29,13 @@
                 </article>
             </label>
         </li>
-        {% endfor %}
+        {% endfor %}-->
     </ul>
     <h2>Which groups would you like to analyze?</h2>
     {% csrf_token %}
     <ul class="study-listings">
-        {% for sgroup in sgroups %}
+        {{ study_groups_form.as_p }}
+        <!--{% for sgroup in sgroups %}
         <li class="study-article">
             <input class="radio" type="checkbox" name="studyGroups[]" value="{{sgroup}}">
             <label class="study-article">
@@ -44,7 +46,7 @@
                 </article>
             </label>
         </li>
-        {% endfor %}
+        {% endfor %}--->
     </ul>
     <input type="submit" value="Submit">
 </form>

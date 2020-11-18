@@ -10,3 +10,9 @@ class DataCategories:
 
 class StudyGroups:
 	field = forms.BooleanField()
+
+
+class Document(models.Model):
+    uploadedFile = models.FileField(upload_to='uploaded_csvs')
+    filename = models.CharField(max_length=250)
+

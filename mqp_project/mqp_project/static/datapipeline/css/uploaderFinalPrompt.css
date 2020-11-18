@@ -1,0 +1,40 @@
+.add-bottom-margin {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#dataType-label {
+    margin-left: 50px;
+}
+
+#mySelection {
+    margin-left: 5px;
+}
+
+table.table-center {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+td {
+    padding: 20px;
+}
+
+input[type='submit'] {
+    display: block;
+    margin: 0 auto;
+    margin-top: 50px;
+    width: 100px;
+}
+
+p.finalPrompt {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2vw;
+    white-space:nowrap;
+}
+
+p.prompt {
+    text-align: center; 
+    margin-bottom: 80px;
+}

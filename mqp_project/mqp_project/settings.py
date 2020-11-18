@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_forms_bootstrap',
 ]
 
 MIDDLEWARE = [
@@ -74,17 +75,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mqp_project.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'DataPipeline',
+        'USER': 'WPI',
+        'PASSWORD': 'DataPipeline',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
     }
 }
 
+DB_CONNECTION_URL = 'mysql://{}:{}@{}:{}/{}'.format(
+    DATABASES.get('default').get('USER'),
+    DATABASES.get('default').get('PASSWORD'),
+    DATABASES.get('default').get('HOST'),
+    DATABASES.get('default').get('PORT'),
+    DATABASES.get('default').get('NAME')
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -124,7 +135,6 @@ USE_TZ = True
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_URL = '/static/'
-#STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'datapipeline-home'
 LOGIN_URL = 'users-login'
@@ -136,3 +146,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'WPI Data Pipeline Team <wpidatapipeline@gmail.com>'
+STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+

@@ -1,0 +1,11 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<h1>At Uploader!</h1>
+
+<form method="POST" action="{% url 'datapipeline-uploader' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="submit" value="Start Uploader">
+</form>
+
+{% endblock content %}

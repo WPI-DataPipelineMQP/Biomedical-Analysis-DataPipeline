@@ -1,0 +1,14 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<h1 class="header-error">Found Error During Uploading Process</h1>
+
+<div class="form">
+    <form method="POST" action="{% url 'datapipeline-uploaderError' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="submit" value="Ok">
+    </form>
+</div>
+
+
+{% endblock content %}

@@ -3,31 +3,19 @@
 {% block content %}
   <h1>Dashboard</h1>
   <div class="grid-container center">
-    <a class="none" href="{% url 'datapipeline-singleStudy' %}">
-      <div class="grid-item">
-        <ul class="icon-listings">
-          <li>
-            <img class="icons" src="{% static 'datapipeline/images/single-study.png' %}">
-          </li>
-          <li class="icon-description">
-            Single Study Selection
-          </li>
-        </ul>
-      </div>
-    </a>
-    <a class="none" href="{% url 'datapipeline-crossStudy' %}">
+    <a class="none" href="{% url 'datapipeline-studySelection' %}">
       <div class="grid-item">
         <ul class="icon-listings">
           <li>
             <img class="icons" src="{% static 'datapipeline/images/cross-study.png' %}">
           </li>
           <li class="icon-description">
-            Cross Study Selection
+            Study Analysis
           </li>
         </ul>
       </div>
     </a>
-    <a class="none" href="#">
+    <a class="none" href="{% url 'datapipeline-uploaderStudy' %}">
       <div class="grid-item">
         <ul class="icon-listings">
           <li>

@@ -1,0 +1,29 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<div class="container" style="background-color: gray;">
+    <h2>Uploader Rules/Conditions:</h2>
+</div>
+<div class="row">
+    <div class="column">
+        <h1>Enter Study</h1>
+        <form method="POST" action="{% url 'datapipeline-uploaderStudy' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+        
+            <input type="submit" value="Next">
+        </form>
+    </div>
+    <div class="column" style="background-color:#bbb;">
+        <h1 style="text-align: center;">Studies in the Database</h1>
+        {% if studies %}
+        <ul>
+            {% for study in studies %}
+            <li>{{ study }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,39 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<div class="row">
+    <div class="column">
+        {% if studyName %}
+        <h1>Enter Info for {{ studyName }}</h1>
+        {% endif %}
+        <form method="POST" action="{% url 'datapipeline-uploaderInfo' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+        
+            <input type="submit" value="Next">
+        </form>
+    </div>
+    {% if studyGroups or dataCategories%}
+    <div class="column" style="background-color:#bbb;">
+        <h3 class="uploaderInfo">Existing Study Groups for {{ studyName }}</h3>
+        <ul class="uploaderInfo">
+            {% for studyGroup in studyGroups %}
+            <li class="uploaderInfo">{{ studyGroup }}</li>
+            {% endfor %}
+        </ul>
+        <br/><br/><br/>
+        <h3 class="uploaderInfo">Existing Data Categories for {{ studyName }}</h3>
+        <ul class="uploaderInfo">
+            {% for dc in dataCategories %}
+            <li class="uploaderInfo">{{ dc }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="column" style="background-color:#bbb;">
+        <h3 class="center">No Info Found For {{ studyName }}</h3>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock content %}
