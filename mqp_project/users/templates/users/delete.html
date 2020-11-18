@@ -1,0 +1,15 @@
+{% extends "datapipeline/base.html" %}
+{% block content %}
+    <h2>Are you sure you want to delete your profile?</h2>
+
+    <p>This action will permanently remove your profile from the system.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <button class="btn btn-danger" type="submit">Delete Account</button>
+                <a class="btn btn-secondary"
+                   href="{% url 'users-profile' %}">Cancel</a>
+        </div>
+    </form>
+{% endblock content %}
