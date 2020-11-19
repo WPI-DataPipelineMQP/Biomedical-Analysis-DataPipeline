@@ -7,9 +7,9 @@ from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, 
 from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
-from . import viewsHelper as ViewHelper
+from .viewHelpers import viewsHelper as ViewHelper
 from django.db import connection
-from .database import DBClient
+from .database import DBClient, DBHandler
 from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi
 from .forms import CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 
@@ -53,12 +53,35 @@ def studySelection(request):
                     'id': study_fields[i]["id"]
                 }
                 
-        print(studies_data)
+        study_ids_forquery = ''
+    
+        # MAKING THE QUERY TO USE 
+        for i, key in enumerate(studies_data):
+            study = studies_data[key]
+        
+            if study.get('value') is True:
+                if study_ids_forquery != '':
+                    study_ids_forquery += 'OR '
+            
+                if i == (len(studies_data) - 1):
+                    study_ids_forquery += 'study_id = {}'.format(study['id'])
+                
+                else:
+                    study_ids_forquery += 'study_id = {} '.format(study['id'])
+        
+                  
+        data_categories = DBHandler.getDataCategoriesOfStudies(study_ids_forquery)
+        
+        study_groups = DBHandler.getStudyGroupsOfStudies(study_ids_forquery)
 
+    
         #gets the names to be printed out                                
-        study_names = ViewHelper.getNameList(studies_data)
+        study_names = ViewHelper.getNameList(studies_data, True)
+        
         request.session['study_names'] = study_names
-        request.session['studies_data'] = studies_data
+        request.session['studies_data'] = studies_data # NOTE: after this edit, do we still need this in the session?
+        request.session['data_categories'] = data_categories
+        request.session['study_groups'] = study_groups
 
         return HttpResponseRedirect('/dataSelection')
         #return render(request, 'datapipeline/studySelection.html', context)
@@ -75,62 +98,18 @@ def studySelection(request):
 def dataSelection(request):
 
     studies_data = []
+    data_categories = []
+    study_groups = []
+    
     if 'studies_data' in request.session:
         studies_data = request.session['studies_data']
-
-    study_ids_forquery = ''
-
-    for i, key in enumerate(studies_data):
-        study = studies_data[key]
-        
-        if study.get('value') is True:
-            if study_ids_forquery != '':
-                study_ids_forquery += 'OR '
-            
-            if i == (len(studies_data) - 1):
-                study_ids_forquery += 'study_id = {}'.format(study['id'])
-                
-            else:
-                study_ids_forquery += 'study_id = {} '.format(study['id'])
-            
-    args = {
-        'selectors': 'DataCategory.dc_table_name',
-        'from': 'DataCategory',
-        'join-type': 'JOIN',
-        'join-stmt': 'DataCategoryStudyXref ON DataCategory.data_category_id = DataCategoryStudyXref.data_category_id WHERE ' + study_ids_forquery,
-        'where': None,
-        'group-by': None,
-        'order-by': None
-    }
     
-    result = DBClient.executeQuery(args, 1)
-    data_categories = []
-    for table_name in result:  # cursor:
-        tables_dict = {}
-        tables_dict["name"] = table_name[0]
-        data_categories.append(tables_dict)
-
-    #study group
-    args = {
-        'selectors': 'study_group_name',
-        'from': 'StudyGroup',
-        'join-type': None,
-        'join-stmt': None,
-        'where': study_ids_forquery,
-        'group-by': None,
-        'order-by': None
-    }
-    result = DBClient.executeQuery(args, 1)
-    study_groups = []
-    for study_group_name in result:
-        studygroups_dict = {}
-        studygroups_dict["name"] = study_group_name[0]
-        study_groups.append(studygroups_dict)
-
-
-    request.session['data_categories'] = data_categories
-    request.session['study_groups'] = study_groups
-
+    if 'data_categories' in request.session:
+        data_categories = request.session['data_categories']
+        
+    if 'study_groups' in request.session:
+        study_groups = request.session['study_groups']
+    
     if request.method == 'POST':
         categories_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['data_categories'])
         study_groups_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['study_groups'])
@@ -143,7 +122,8 @@ def dataSelection(request):
                     'name': data_categories[i]['name'],
                     'value': field[1]
                 }
-
+                
+        print(categories_data)
         category_names = ViewHelper.getNameList(categories_data)
         request.session['category_names'] = category_names
 
@@ -161,7 +141,7 @@ def dataSelection(request):
 
         return HttpResponseRedirect('/dataSelection-2')
 
-
+        
     categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
     study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
 
@@ -184,6 +164,7 @@ def dataSelectionContinued(request):
 
     columns = []
     for table in category_names:
+        column_dict = {}
         args = {
             'selectors': '*',
             'from': 'INFORMATION_SCHEMA.COLUMNS',
@@ -199,8 +180,9 @@ def dataSelectionContinued(request):
                 pass
             else:
                 column_dict = {}
-                column_dict["name"] = column_name[3]
+                column_dict["name"] = "{}.{}".format(table, column_name[3])
                 column_dict["table"] = table
+                #column_dict["display"] = "{}.{}".format(table, column_name[3])
                 columns.append(column_dict)
 
     #add these because they are always shown by default
@@ -210,6 +192,7 @@ def dataSelectionContinued(request):
     columns.append(study_group_dict)
 
     request.session['columns'] = columns
+    print('MY COLUMNS\n')
     print(columns)
 
     if request.method == 'POST':

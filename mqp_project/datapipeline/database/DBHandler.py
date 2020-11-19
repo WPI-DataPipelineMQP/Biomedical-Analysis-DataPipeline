@@ -2,6 +2,7 @@ from . import DBClient
 import pandas as pd 
 import numpy as np
 
+
 def getSelectorFromTable(selector, table_name, where_params, join_info):
     where_stmt = ""
     
@@ -275,3 +276,52 @@ def newTableHandler(myMap):
         result = DBClient.createTable(stmt, table_name, 1)
         
     return result
+
+
+def getDataCategoriesOfStudies(study_ids_forquery):
+
+    data_categories = []
+                        
+    args = {
+        'selectors': 'DataCategory.dc_table_name',
+        'from': 'DataCategory',
+        'join-type': 'JOIN',
+        'join-stmt': 'DataCategoryStudyXref ON DataCategory.data_category_id = DataCategoryStudyXref.data_category_id WHERE ' + study_ids_forquery,
+        'where': None,
+        'group-by': None,
+        'order-by': None
+    }
+    
+    result = DBClient.executeQuery(args, 1)
+    
+    for table_name in result:  # cursor:
+        tables_dict = {}
+        tables_dict["name"] = table_name[0]
+        data_categories.append(tables_dict)
+        
+    return data_categories
+
+
+def getStudyGroupsOfStudies(study_ids_forquery):
+    study_groups = []
+    
+    args = {
+        'selectors': 'study_group_name, study_id',
+        'from': 'StudyGroup',
+        'join-type': None,
+        'join-stmt': None,
+        'where': study_ids_forquery,
+        'group-by': None,
+        'order-by': None
+    }
+    
+    studyGroups = DBClient.executeQuery(args, 1)
+
+    for studyGroup in studyGroups:
+        studygroups_dict = {}
+        groupName = studyGroup[0]
+        studyID = studyGroup[1]
+        studygroups_dict["name"] = "{} ({})".format(groupName, studyID)
+        study_groups.append(studygroups_dict)
+        
+    return study_groups

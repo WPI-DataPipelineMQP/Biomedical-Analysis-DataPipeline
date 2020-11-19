@@ -1,50 +1,54 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<h1>Data Selection</h1>
-<ul>
-    {% for study in study_names %}
-    <li>
-        <article class="media">
-            <div class="media-body">
-                <p>{{ study }}</p>
-            </div>
-        </article>
-    </li>
-    {% endfor %}
-</ul>
-<h2>What data from this study would you like to view?</h2>
-<form action="{% url 'datapipeline-dataSelection' %}" method="POST">
-    {% csrf_token %}
-    <ul class="no-bullets">
-        {% for field in categories_form %}
-        <li>
-            {{ field }}
-            <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
-        </li>
-        {% endfor %}
-    </ul>
-    <h2>Which groups would you like to analyze?</h2>
-    <ul class="no-bullets">
-        {% for field in study_groups_form %}
-        <li>
-            {{ field }}
-            <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
-        </li>
-        {% endfor %}
-        <!--{% for sgroup in sgroups %}
-        <li class="study-article">
-            <input class="radio" type="checkbox" name="studyGroups[]" value="{{sgroup}}">
-            <label class="study-article">
-                <article class="media content-section">
+<div class="row">
+    <div class="column">
+        <h1>Data Selection</h1>
+        <ul>
+            {% for study in study_names %}
+            <li>
+                <article class="media">
                     <div class="media-body">
-                         <p>{{ sgroup.name }}</p>
+                        <p>{{ study }}</p>
                     </div>
                 </article>
-            </label>
-        </li>
-        {% endfor %}--->
-    </ul>
-    <input type="submit" value="Submit">
-</form>
+            </li>
+            {% endfor %}
+        </ul>
+        <h2>What data from this study would you like to view?</h2>
+        <form action="{% url 'datapipeline-dataSelection' %}" method="POST">
+            {% csrf_token %}
+            <ul class="no-bullets">
+                {% for field in categories_form %}
+                <li>
+                    {{ field }}
+                    <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
+                </li>
+                {% endfor %}
+            </ul>
+            <h2>Which groups would you like to analyze?</h2>
+            <ul class="no-bullets">
+                {% for field in study_groups_form %}
+                <li>
+                    {{ field }}
+                    <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
+                </li>
+                {% endfor %}
+            </ul>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    <div class="column" style="background-color:#bbb;">
+        <h2 class="center">Understanding the Number Next to the Name</h2>
+        <p>
+            The number after the name is used to indicate which 
+            Study it corresponds to. When looking at the displayed
+            studies that were selected, you can see the study's id. 
+            So if we have a name like "HeartRate_1" or "Control (1)", 
+            the instance of the "1" is used to indicate that these 
+            Data Categories or Study Groups correspond to the Study 
+            with the ID of 1.
+        </p>
+    </div>
+</div>
 {% endblock content %}

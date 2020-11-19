@@ -60,6 +60,25 @@ def getTableColumns(table_name):
     return myColumns
 
 
+def performFetchAll(stmt):
+    result = []
+    foundError = False 
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(stmt)
+            
+            result = cursor.fetchall() 
+            
+    except:
+        foundError = True 
+        
+    
+    return result, foundError
+        
+            
+            
+
+
 def createTable(stmt, table_name, verbose=0):
     result = 1
     try:

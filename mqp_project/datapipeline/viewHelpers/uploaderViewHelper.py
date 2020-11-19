@@ -1,6 +1,6 @@
 from datetime import datetime 
 from django.db import transaction
-from .database import DBClient, DBHandler 
+from ..database import DBClient, DBHandler 
 import pandas as pd 
 import numpy as np
 

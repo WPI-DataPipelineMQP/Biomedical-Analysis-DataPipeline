@@ -5,7 +5,7 @@ from django.core import serializers
 from django.shortcuts import redirect
 from .models import Document 
 from .database import DBClient, DBHandler 
-from . import uploaderViewHelper as Helper
+from .viewHelpers import uploaderViewHelper as Helper
 from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm
 
 import pandas as pd
@@ -167,7 +167,8 @@ def uploaderInfo(request):
         timeSeriesVal = fields.get('isTimeSeries')
         groupName = fields.get('groupName') 
         dataCategoryName = fields.get('categoryName')
-            
+        
+        # MAKING THE NECESSARY DB QUERIES
         studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
             
         where_params = [('study_group_name', groupName, True), ('study_id', studyID, False)]
