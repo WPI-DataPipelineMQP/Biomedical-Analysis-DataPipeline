@@ -28,3 +28,19 @@ def getNameList(data, forStudy=False):
             
             res.append(studyName)
     return res
+
+def getChosenFilters(data):
+    res = []
+
+    for key in data:
+        currDict = data.get(key)
+        if currDict.get("value"):
+            newDict = {}
+            name = currDict.get('name')
+            value = currDict.get('value')
+            newDict['name'] = name
+            newDict['value'] = value
+            res.append(newDict)
+
+    return res
+

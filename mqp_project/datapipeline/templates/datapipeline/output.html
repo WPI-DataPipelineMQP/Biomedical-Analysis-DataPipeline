@@ -1,36 +1,50 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<h2>Categories Chosen:</h2>
-<ul>
-    {% for category in categories %}
-        <li>
-            <article class="media">
-                <div class="media-body">
-                    <p>{{ category.name }}</p>
-                </div>
-            </article>
-        </li>
-    {% endfor %}
-</ul>
-<h2>Study Groups Chosen:</h2>
-<ul>
-    {% for sgroup in sgroups %}
-        <li>
-            <article class="media">
-                <div class="media-body">
-                    <p>{{ sgroup.name }}</p>
-                </div>
-            </article>
-        </li>
-    {% endfor %}
-</ul>
-<h2>Study Groups Chosen:</h2>
+<!--<h2>Categories Chosen:</h2>-->
+<!--<ul>-->
+<!--    {% for category in categories %}-->
+<!--        <li>-->
+<!--            <article class="media">-->
+<!--                <div class="media-body">-->
+<!--                    <p>{{ category.name }}</p>-->
+<!--                </div>-->
+<!--            </article>-->
+<!--        </li>-->
+<!--    {% endfor %}-->
+<!--</ul>-->
+<!--<h2>Study Groups Chosen:</h2>-->
+<!--<ul>-->
+<!--    {% for sgroup in sgroups %}-->
+<!--        <li>-->
+<!--            <article class="media">-->
+<!--                <div class="media-body">-->
+<!--                    <p>{{ sgroup.name }}</p>-->
+<!--                </div>-->
+<!--            </article>-->
+<!--        </li>-->
+<!--    {% endfor %}-->
+<!--</ul>-->
+<h2>Data:</h2>
 <ul>
     <li>
         <article class="media">
             <div class="media-body">
-                <p>{{ loaded_data }}</p>
+                <table border="1px solid black">
+                    <tr>
+                        {% for label in attribute_names %}
+                            <td>{{ label }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    {% for dc in data %}
+                        <tr>
+                            {% for val in dc %}
+                                <td> {{ val }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
             </div>
         </article>
     </li>
