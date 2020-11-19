@@ -231,7 +231,7 @@ def dataSelectionContinued(request):
     filters_form = CreateChosenFilterForm(customFields=request.session['columns'])
 
     context = {
-         'myCSS': 'dataSelection.css',
+         'myCSS': 'dataSelection-2.css',
          'study_names': request.session['study_names'],
          'category_names': request.session['category_names'],
          'study_group_names': request.session['study_group_names'],

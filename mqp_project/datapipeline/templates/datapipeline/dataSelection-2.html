@@ -133,37 +133,35 @@
 <!--        </form>-->
 <!--    </div>-->
 <form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
-    <ul>
-        {% for study in studies %}
-        <li>
-            <article class="media">
-                <div class="media-body">
-                    <p>{{ study.study_name }}</p>
-                </div>
-            </article>
-        </li>
-        {% endfor %}
-    </ul>
-{% csrf_token %}
-<h2>What attributes would you like to view?</h2>
-    <ul class="study-listings">
-        {{ attributes.as_p }}
-    </ul>
-
-    <h2>Which attributes would you like to filter?</h2>
     {% csrf_token %}
-    <ul class="study-listings">
-        {% regroup filters by field.group as field_group %}
-        {% for group in field_group %}
-            <p class="study-article">
-            {{group.grouper}}
-            {% for field in group.list %}
+    <h2>What attributes would you like to view?</h2>
+        <ul class="no-bullets">
+            {% for field in attributes%}
+            <li>
                 {{ field }}
+                <label class="field-label" for="{{ attributes.field.id_for_label }}">{{ field.label }}</label>
+            </li>
             {% endfor %}
-            </p>
-        {% endfor %}
+        </ul>
 
-    </ul>
+        <h2>Which attributes would you like to filter?</h2>
+        <ul class="no-bullets">
+            {% regroup filters by field.group as field_group %}
+            {% for group in field_group %}
+                <li>
+                    {{ group.list.0 }}
+
+                    {% for field in group.list %}
+                    {% if forloop.first %}
+                    <label class="field-label" for="{{ attributes.field.id_for_label }}">{{ field.label }}</label>
+                    {% else %}
+                    {{ field }}
+                    {% endif %}
+                    {% endfor %}
+                </li>
+            {% endfor %}
+
+        </ul>
     <button type="submit" >Submit</button>
 </form>
 {% endblock content %}

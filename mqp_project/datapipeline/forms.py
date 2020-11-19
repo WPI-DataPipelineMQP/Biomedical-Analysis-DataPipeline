@@ -60,8 +60,14 @@ class CreateChosenFilterForm(forms.Form):
             self.fields[field['name'] + '_checkbox'].group = field['name']
             self.fields[field['name'] + '_dropdown'] = forms.CharField(label=field['name'], widget=forms.Select(choices=Integer_Symbols), required=False)
             self.fields[field['name'] + '_dropdown'].group = field['name']
+            self.fields[field['name'] + '_dropdown'].widget.attrs.update({
+                'class': 'left-spacing',
+            })
             self.fields[field['name'] + '_text'] = forms.CharField(label=field['name'], required=False)
             self.fields[field['name'] + '_text'].group = field['name']
+            self.fields[field['name'] + '_text'].widget.attrs.update({
+                'class': 'left-spacing',
+            })
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
