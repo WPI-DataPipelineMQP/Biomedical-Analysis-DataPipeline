@@ -135,6 +135,8 @@ def dataSelection(request):
                     'value': field[1]
                 }
 
+        print("\nSTUDY GROUPS DATA")
+        print(study_groups_data)
         study_group_names = ViewHelper.getNameList(study_groups_data)
         request.session['study_group_names'] = study_group_names
 
@@ -192,8 +194,6 @@ def dataSelectionContinued(request):
     columns.append(study_group_dict)
 
     request.session['columns'] = columns
-    print('MY COLUMNS\n')
-    print(columns)
 
     if request.method == 'POST':
         attributes_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['columns'])
@@ -214,14 +214,14 @@ def dataSelectionContinued(request):
         if filters_form.is_valid():
             print(columns)
             for i, field in enumerate(filters_form.getAllFields()):
-                print("i: " + str(i))
-                print(field)
                 filter_data[i] = {
                     #'name': columns[i]['name'],
                     'name': field[0],
                     'value': field[1]
                 }
         filter_names = ViewHelper.getNameList(filter_data)
+        filter_values = ViewHelper.getChosenFilters(filter_data)
+        request.session['filter_values'] = filter_values
         request.session['filter_names'] = filter_names
 
 
@@ -243,113 +243,109 @@ def dataSelectionContinued(request):
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
 
+def make_join(lodt):
+    str = ""
+    str += "StudyGroup JOIN Subject ON StudyGroup.study_group_id = Subject.study_group_id JOIN "
+    str += lodt[0] + " ON "+lodt[0]+".subject_id = Subject.subject_id"
+    if len(lodt) >= 2:
+        str += " JOIN "+lodt[1]+" ON "+lodt[0] + \
+            ".subject_id = "+lodt[1]+".subject_id"
+    if len(lodt) == 3:
+        str += " JOIN " + lodt[2] + " ON " + lodt[0] + \
+            ".subject_id = " + lodt[2] + ".subject_id"
+    return str
 
 
-def pickAttributesToShowUsers(tables):
-    if ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' not in tables):
-        data_attributes = [
-            {"name": "HeartRate.date_time"},
-            {"name": "HeartRate.heart_rate"},
-            {"name": "subject_number"},
-            {"name": "study_group_name"},
-        ]
-    elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-        data_attributes = [
-            {"name": "Corsi.binary_result"},
-            {"name": "Corsi.highest_corsi_span"},
-            {"name": "Corsi.num_of_items"},
-            {"name": "Corsi.sequence_number"},
-            {"name": "Corsi.trial"},
-            {"name": "subject_number"},
-            {"name": "study_group_name"},
-        ]
-    elif ('HeartRate' not in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-        data_attributes = [
-            {"name": "Flanker.response_time"},
-            {"name": "Flanker.is_congruent"},
-            {"name": "Flanker.result"},
-            {"name": "Flanker.trial"},
-            {"name": "subject_number"},
-            {"name": "study_group_name"},
-        ]
-    elif ('HeartRate' in tables) and ('Corsi' in tables) and ('Flanker' not in tables):
-        data_attributes = [
-            {"name": "HeartRate.date_time"},
-            {"name": "HeartRate.heart_rate"},
-            {"name": "Corsi.binary_result"},
-            {"name": "Corsi.highest_corsi_span"},
-            {"name": "Corsi.num_of_items"},
-            {"name": "Corsi.sequence_number"},
-            {"name": "Corsi.trial"},
-            {"name": "subject_number"},
-            {"name": "study_group_name"},
-        ]
-    elif ('HeartRate' in tables) and ('Corsi' not in tables) and ('Flanker' in tables):
-        data_attributes = [
-            {"name": "HeartRate.date_time"},
-            {"name": "HeartRate.heart_rate"},
-            {"name": "Flanker.response_time"},
-            {"name": "Flanker.is_congruent"},
-            {"name": "Flanker.result"},
-            {"name": "Flanker.trial"},
-            {"name": "subject_number"},
-            {"name": "study_group_name"},
-        ]
-    elif ('HeartRate' not in tables) and ('Corsi' in tables) and ('Flanker' in tables):
-        data_attributes = [
-            {"name": "Corsi.binary_result"},
-            {"name": "Corsi.highest_corsi_span"},
-            {"name": "Corsi.num_of_items"},
-            {"name": "Corsi.sequence_number"},
-            {"name": "Corsi.trial"},
-            {"name": "Flanker.response_time"},
-            {"name": "Flanker.is_congruent"},
-            {"name": "Flanker.result"},
-            {"name": "Flanker.trial"},
-            {"name": "subject_number"},
-            {"name": "study_group_name"},
-        ]
-    else:
-        data_attributes = [
-            {"name": "HeartRate.date_time"},
-            {"name": "HeartRate.heart_rate"},
-            {"name": "Corsi.binary_result"},
-            {"name": "Corsi.highest_corsi_span"},
-            {"name": "Corsi.num_of_items"},
-            {"name": "Corsi.sequence_number"},
-            {"name": "Corsi.trial"},
-            {"name": "Flanker.response_time"},
-            {"name": "Flanker.is_congruent"},
-            {"name": "Flanker.result"},
-            {"name": "Flanker.trial"},
-            {"name": "subject_number"},
-            {"name": "study_group_name"},
-        ]
-    return data_attributes
+def make_conds(dictOfConds, study_group_names):
+    symbols = {
+        'equal': '=',
+        'notequal': '!=',
+        'less': '<',
+        'greater': '>',
+        'lessorequal': '<=',
+        'greaterorequal': '>='
+    }
+    if not dictOfConds:
+        return None
+    stry = ""
+    first = True
+    for filter in dictOfConds:
+        if first == True:
+            if '_checkbox' in filter['name']:
+                fixedName = filter['name'].replace('_checkbox', "")
+                stry += fixedName
+            elif '_dropdown' in filter['name']:
+                stry += symbols[filter['value']]
+            elif '_text' in filter['name']:
+                stry += filter['value']
+            first = False
+        else:
+            if '_checkbox' in filter['name']:
+                fixedName = filter['name'].replace('_checkbox', "")
+                stry += " AND "
+                stry += fixedName
+            elif '_dropdown' in filter['name']:
+                stry += symbols[filter['value']]
+            elif '_text' in filter['name']:
+                stry += filter['value']
+    first = True
+    for item in study_group_names:
+        seperator = " ("
+        stripped = item.split(seperator, 1)[0]
+        if first == True:
+            stry += ' AND StudyGroup.study_group_name = "'+stripped+'"'
+            first = False
+        else:
+            stry += ' OR StudyGroup.study_group_name = "'+stripped+'"'
+    #stry += ")"
+    return stry
 
 def output(request):
-    #raw_studies = request.POST.getlist('studies[]')
-    #raw_data_categories = request.POST.getlist('categories[]')
-    #raw_study_groups = request.POST.getlist('studyGroups[]')
-    #raw_data_attributes = request.POST.getlist('attributes[]')
-    #raw_data_filters = request.POST.getlist('filters[]')
+    study_names = []
+    if 'category_names' in request.session:
+        study_names = request.session['study_names']
 
-    # print("output-attr")
-    # print(raw_data_attributes)
-    # print("output-filters")
-    # print(raw_data_filters)
-    # print("output-cat")
-    # print(raw_data_categories)
+    category_names = []
+    if 'category_names' in request.session:
+        category_names = request.session['category_names']
+
+    study_group_names = []
+    if 'study_group_names' in request.session:
+        study_group_names = request.session['study_group_names']
+
+    attribute_names = []
+    if 'attribute_names' in request.session:
+        attribute_names = request.session['attribute_names']
+
+    filter_values = []
+    if 'filter_values' in request.session:
+        filter_values = request.session['filter_values']
 
 
-    #studies = getJSONVersion(raw_studies)
-    #categories = ViewHelper.getJSONVersion(raw_data_categories)
-    #sgroups = ViewHelper.getJSONVersion(raw_study_groups)
-    #data_attributes = ViewHelper.getJSONVersion(raw_data_attributes)
+    args = {
+        'selectors': ', '.join(attribute_names),
+        'from': make_join(category_names),
+        'join-type': None,
+        'join-stmt': None,
+        'where': make_conds(filter_values, study_group_names),
+        'group-by': None,
+        'order-by': None
+    }
+    result = DBClient.executeQuery(args, 1)
 
-    data = pd.read_csv('1_fitbit.csv')
-    data_html = data.to_html()
-    return HttpResponse(data_html)
+    print("RESULTS")
+    for i in result:
+        print(i)
+
+    context = {
+        'data': result,
+        "attribute_names": attribute_names
+    }
+    return render(request, 'datapipeline/output.html', context)
+
+    # data = pd.read_csv('1_fitbit.csv')
+    # data_html = result.to_html()
+    # return HttpResponse(data_html)
 
     # context = {
     #      'myCSS': 'dataSelection.css',
