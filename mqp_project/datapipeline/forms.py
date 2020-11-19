@@ -23,6 +23,9 @@ class CreateChosenBooleanForm(forms.Form):
 
         for i, field in enumerate(fields):
             self.fields['custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, help_text=field['description'])
+            self.fields['custom_%s' % i].widget.attrs.update({
+                'class': 'checkbox',
+            })
             #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
         #print(fields)
 

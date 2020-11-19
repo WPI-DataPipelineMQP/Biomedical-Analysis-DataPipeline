@@ -3,36 +3,21 @@
 {% block content %}
 <form method="POST" action="{% url 'datapipeline-studySelection' %}" enctype="multipart/form-data">
     {% csrf_token %}
+    <br/>
     <ul class="study-listings">
-
-<!--        {% for field in studies_form %}-->
-<!--            {{ field }}-->
-<!--            {{ field.label }}-->
-<!--        <p class="description">{{ field.help_text }}</p>-->
-<!--        {% endfor %}-->
-
         {% for field in studies_form %}
-            <div class="form-group">
-                {{ field }}
-<!--                <label>{{ field.label }} </label>-->
-                <label for="{{ field.id_for_label }}"> {{field.label}}</label>
-                <p> {{ field.help_text }} </p>
-            </div>
-        {% endfor %}
-
-        <!--{% for study in studies %}
         <li class="study-article">
-            <input class="checkbox" type="checkbox" name="studies[]" value="{{study}}">
+            {{ field }}
             <label class="study-article">
                 <article class="media content-section">
                     <div class="media-body">
-                        <h2>{{ study.study_name }}</h2>
-                        <p class="article-content">{{ study.description }}</p>
+                        <h2>{{ field.label }}</h2>
+                        <p class="article-content">{{ field.help_text }}</p>
                     </div>
                 </article>
             </label>
         </li>
-        {% endfor %}-->
+        {% endfor %}
     </ul>
 
     <input type="submit" value="submit">

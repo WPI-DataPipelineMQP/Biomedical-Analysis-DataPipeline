@@ -1,5 +1,6 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
+{% load crispy_forms_tags %}
 {% block content %}
 <h1 class="header-left">Info Gathering For {{ studyName }}</h1>
 
@@ -9,7 +10,7 @@
 
 <form class="center" method="POST" action="{% url 'datapipeline-uploaderStudyInfo' %}" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form | crispy }}
 
     <input type="submit" value="Next">
 </form>

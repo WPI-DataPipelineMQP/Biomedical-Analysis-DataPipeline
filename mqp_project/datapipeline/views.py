@@ -52,6 +52,8 @@ def studySelection(request):
                     'value': field[1],
                     'id': study_fields[i]["id"]
                 }
+                
+        print(studies_data)
 
         #gets the names to be printed out                                
         study_names = ViewHelper.getNameList(studies_data)
@@ -77,15 +79,20 @@ def dataSelection(request):
         studies_data = request.session['studies_data']
 
     study_ids_forquery = ''
-    j  = 0
-    for key in studies_data:
-        study = studies_data[key]
-        if j == 0:
-            study_ids_forquery += 'study_id = ' + str(study['id'])
-            j =  1
-        else:
-            study_ids_forquery += "OR study_id = '" + str(study['id'])
 
+    for i, key in enumerate(studies_data):
+        study = studies_data[key]
+        
+        if study.get('value') is True:
+            if study_ids_forquery != '':
+                study_ids_forquery += 'OR '
+            
+            if i == (len(studies_data) - 1):
+                study_ids_forquery += 'study_id = {}'.format(study['id'])
+                
+            else:
+                study_ids_forquery += 'study_id = {} '.format(study['id'])
+            
     args = {
         'selectors': 'DataCategory.dc_table_name',
         'from': 'DataCategory',
@@ -95,6 +102,7 @@ def dataSelection(request):
         'group-by': None,
         'order-by': None
     }
+    
     result = DBClient.executeQuery(args, 1)
     data_categories = []
     for table_name in result:  # cursor:

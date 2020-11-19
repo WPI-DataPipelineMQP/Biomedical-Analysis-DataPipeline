@@ -14,7 +14,7 @@ class StudyInfoForm(forms.Form):
     startDate = forms.DateField(widget=DateInput(), label="Study Start Date", required=True)
     endDate = forms.DateField(widget=DateInput(), label="Study End Date", required=True)
     contactInfo = forms.CharField(label='Study Contact Info', required=False)
-    notes = forms.CharField(label='Study Notes', required=False) 
+    notes = forms.CharField(label='Study Notes', widget=forms.Textarea, required=False) 
     
     
 class UploaderInfoForm(forms.Form):
