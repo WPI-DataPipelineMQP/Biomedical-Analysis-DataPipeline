@@ -16,25 +16,22 @@
 <h2>What data from this study would you like to view?</h2>
 <form action="{% url 'datapipeline-dataSelection' %}" method="POST">
     {% csrf_token %}
-    <ul class="study-listings">
-        {{ categories_form.as_p }}
-        <!--{% for category in categories %}
-        <li class="study-article">
-            <input class="checkbox" type="checkbox" name="categories[]" value="{{category}}">
-            <label class="study-article">
-                <article class="media content-section">
-                    <div class="media-body">
-                         <p>{{ category.name }}</p>
-                    </div>
-                </article>
-            </label>
+    <ul class="no-bullets">
+        {% for field in categories_form %}
+        <li>
+            {{ field }}
+            <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
         </li>
-        {% endfor %}-->
+        {% endfor %}
     </ul>
     <h2>Which groups would you like to analyze?</h2>
-    {% csrf_token %}
-    <ul class="study-listings">
-        {{ study_groups_form.as_p }}
+    <ul class="no-bullets">
+        {% for field in study_groups_form %}
+        <li>
+            {{ field }}
+            <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
+        </li>
+        {% endfor %}
         <!--{% for sgroup in sgroups %}
         <li class="study-article">
             <input class="radio" type="checkbox" name="studyGroups[]" value="{{sgroup}}">

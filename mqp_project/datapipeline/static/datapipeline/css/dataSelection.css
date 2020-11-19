@@ -1,5 +1,13 @@
-  input[type='submit'] {
-      float:right; 
-      margin-top: 200px;
-      width: 100px;
-  }
+input[type="submit"] {
+  float: right;
+  margin-top: 200px;
+  width: 100px;
+}
+
+ul.no-bullets {
+  list-style-type: none;
+}
+
+label.field-label {
+  margin-left: 15px;
+}
