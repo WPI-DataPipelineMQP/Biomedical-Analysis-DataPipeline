@@ -3,6 +3,10 @@
     margin-bottom: 30px;
 }
 
+.warning {
+    color: red;
+}
+
 #dataType-label {
     margin-left: 50px;
 }

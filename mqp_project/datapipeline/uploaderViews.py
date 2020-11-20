@@ -6,6 +6,7 @@ from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
 from .models import Document 
+from . import views
 from .database import DBClient, DBHandler 
 from .viewHelpers import uploaderHelper as Helper
 from .viewHelpers import uploaderDBFunctions as DBFunctions
@@ -51,7 +52,9 @@ def uploaderStudy(request):
     elif request.method == 'GET':
         print('\nGot Uploader Study Name Request\n')
         
-        Helper.clearUploaderSessions(request.session)
+        Helper.clearStudyName(request.session)
+        Helper.clearUploadInfo(request.session)
+        
         args = {
             'selectors': 'study_name',
             'from': 'Study',
@@ -260,7 +263,7 @@ def uploaderInfo(request):
 
 def uploaderExtraInfo(request):
     
-    if Helper.pathIsBroken(request.session):
+    if Helper.pathIsBroken(request.session, True):
         return redirect(uploaderStudy)
     
     studyName = request.session['studyName']
@@ -316,10 +319,6 @@ def uploaderExtraInfo(request):
         if dcID == -1:
             uploaderInfo, errorMessage = DBFunctions.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
             
-            if errorMessage is None:
-                errorMessage = DBFunctions.createNewDataCategoryTable(uploaderInfo)
-            
-            print('Error Message', errorMessage)
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
                 return redirect(uploaderError)
@@ -374,7 +373,7 @@ def uploaderExtraInfo(request):
 
 def uploaderFinalPrompt(request):
     
-    if Helper.pathIsBroken(request.session):
+    if Helper.pathIsBroken(request.session, True):
         return redirect(uploaderStudy)
     
     studyName = request.session['studyName']
@@ -506,8 +505,8 @@ def uploaderError(request):
     
     
     if request.method == 'POST':
-        Helper.clearUploaderSessions(request.session)    
-        return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
+        Helper.clearUploadInfo(request.session)    
+        return redirect(views.home)
     
     elif request.method == 'GET':
         if request.session.get('errorMessage', None) != None:
@@ -525,7 +524,12 @@ def uploaderSuccess(request):
     }
     
     if request.method == 'POST':
-        return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
+        if 'finished' in request.POST:
+            Helper.clearStudyName(request.session)
+            return redirect(views.home)
+        
+        elif 'continue' in request.POST:
+            return redirect(uploaderInfo)
     
     return render(request, 'datapipeline/uploaderSuccess.html', context) 
     

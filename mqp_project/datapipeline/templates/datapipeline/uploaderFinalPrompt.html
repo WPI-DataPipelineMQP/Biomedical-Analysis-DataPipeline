@@ -8,7 +8,7 @@
 <form method="POST" action="{% url 'datapipeline-uploaderFinalPrompt' %}" enctype="multipart/form-data">
     {% csrf_token %}
     {% if error is True %}
-    <h1 class="add-bottom-margin">Found Duplicate Positions!</h1>
+    <h1 class="add-bottom-margin warning">Found Duplicate Positions!</h1>
     {% endif %}
     <table class="table-center">
         <tr>

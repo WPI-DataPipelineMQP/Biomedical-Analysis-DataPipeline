@@ -18,7 +18,6 @@ def handleDataCategoryID(data_category_id, fields):
     
     return fields
 
-@transaction.atomic
 def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, otherInfo):
     errorMessage = ''
     isTS = False 
@@ -67,8 +66,6 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
             myMap['columns'] = cleanResult
             
             
-                
-            
             cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
             
             noErrors = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
@@ -76,8 +73,14 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
             if noErrors is False:
                 errorMessage = "Error found when inserting to Attribute table!"
                 raise IntegrityError()
-                
             
+            noErrors = DBHandler.newTableHandler(myMap)
+            
+            print(noErrors)
+            if noErrors is False:
+                errorMessage = "Error found when creating the new table!"
+                raise IntegrityError()
+                
     except IntegrityError:
         print('SHOULD ROLLBACK')
 
@@ -85,18 +88,6 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
     
     
     return uploaderInfo, None
-
-
-def createNewDataCategoryTable(uploaderInfo):
-    errorMessage = ''
-    noErrors = DBHandler.newTableHandler(uploaderInfo)
-            
-    print(noErrors)
-    if noErrors is False:
-        errorMessage = "Error found when creating the new table!"
-        return errorMessage
-    
-    return None
 
 
 def getTableSchema(tableName):

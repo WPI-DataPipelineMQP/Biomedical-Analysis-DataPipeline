@@ -4,11 +4,22 @@ import csv
 
 import random
 
-def pathIsBroken(session):
+def pathIsBroken(session, uploadInfoFlag=False):
+ 
     if session.get('studyName', None) != None:
-        return False 
+        if uploadInfoFlag is True:
+            if session.get('uploaderInfo', None) != None:
+                return False 
+            
+            else:
+                return True 
+            
+        else:
+            return False 
+
     
     return True
+
 
 def deleteAllDocuments():
     filenames = Document.objects.all()
@@ -17,17 +28,16 @@ def deleteAllDocuments():
         name.uploadedFile.delete()
         name.delete()
 
-def clearUploaderSessions(session):
+def clearUploadInfo(session):
     if session.get('studyName', None) != None:
         del session['studyName']
 
     if session.get('uploaderInfo', None) != None:
         del session['uploaderInfo']
-    
-    '''
-    if session.get('errorMessage', None) != None:
-        del session['errorMessage']
-    ''' 
+
+def clearStudyName(session):
+    if session.get('studyName', None) != None:
+        del session['studyName']
         
 def extractName(string):
     indexPos = string.find('_')

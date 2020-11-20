@@ -274,9 +274,10 @@ def newTableHandler(myMap):
         stmt += subjectID_field
         stmt += pk_field
         stmt += fk_field
-    
+        
         result = DBClient.createTable(stmt, table_name, 1)
         
+
     return result
 
 
