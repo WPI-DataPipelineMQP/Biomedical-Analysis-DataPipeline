@@ -3,6 +3,7 @@ from django.db import transaction
 from ..database import DBClient, DBHandler 
 import pandas as pd 
 import numpy as np
+import csv
 
 import random
 
@@ -267,6 +268,22 @@ def getInfo(positionInfo):
     
     return columnInfo, organizedColumns
 
+def modifyFileName(name):
+    modifiedResult = name
+    
+    underLineIndex = name.find('_')
+    
+    if underLineIndex != -1:
+        latterHalf = name[underLineIndex:]
+        
+        subject_number = name[:underLineIndex]
+        
+        subject_number = subject_number.upper() 
+        
+        modifiedResult = subject_number + latterHalf
+        
+    return modifiedResult
+        
 
 def specialUploadToDatabase(file, myMap, column_info):
     groupID = myMap.get('groupID')
@@ -323,10 +340,11 @@ def specialUploadToDatabase(file, myMap, column_info):
     
     
     
-def uploadToDatabase(file, myMap, column_info, organizedColumns, subjectID=None):
+def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subjectID=None):
     df = pd.read_csv(file)
-    
+    filename = modifyFileName(filename)
     groupID = myMap.get('groupID')
+    
     tableName = myMap.get('tableName')
     
     df = df[organizedColumns]
@@ -335,23 +353,24 @@ def uploadToDatabase(file, myMap, column_info, organizedColumns, subjectID=None)
     if myMap.get('hasSubjectNames') is True:
         listOfSubjects = []
         
-        listOfSubjectNum = df[[df.columns[0]]].tolist()
+        listOfSubjectNum = list(df.iloc[:,0])
         
         for num in listOfSubjectNum:
+            if isinstance(num, str):
+                num = num.upper()
+                
             currID, noError = DBHandler.subjectHandler("", groupID, num)
-            listOfSubjectNum.append(currID)
-            
+            listOfSubjects.append(currID)
         
-        df['subject_id'] = listOfSubjectNum
+        
+        
+        df['subject_id'] = listOfSubjects
         
     else:
-        numOfRows = len(df.index)
-        
-        subject_number = random.sample(range(numOfRows), 1)[0]
         
         if subjectID is None:
-            subjectID = DBHandler.subjectHandler("", groupID, subject_number)
-            
+            subjectID, noError = DBHandler.subjectHandler(filename, groupID)
+        
         df['subject_id'] = subjectID
         
     
@@ -394,7 +413,17 @@ def uploadToDatabase(file, myMap, column_info, organizedColumns, subjectID=None)
         return False     
     
     return True
+
+def hasHeaders(filepath):
+    hasHeaders = False 
+    with open(filepath, 'r') as csvfile:
+        sniffer = csv.Sniffer()
+        hasHeaders = sniffer.has_header(csvfile.read(2048))
         
+
+    
+    print(hasHeaders)
+    return hasHeaders   
         
     
     

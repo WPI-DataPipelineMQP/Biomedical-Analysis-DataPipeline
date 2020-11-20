@@ -158,7 +158,13 @@ def uploaderInfo(request):
         # READING THE CSV FILE
         firstFile = filenames[0]
         path = 'uploaded_csvs/{}'.format(firstFile)
+        
+        if Helper.hasHeaders(path) is False:
+            return redirect(uploaderError)
+            
+            
         df = pd.read_csv(path) 
+        
         headers = list(df.columns)
             
         fields['headerInfo'] = headers
@@ -270,12 +276,13 @@ def uploaderExtraInfo(request):
             for (name, val) in form.getExtraFields():
                 myExtras.append((name, val))
         
+        print(myFields)
         if subjectRule == 'row' and isTimeSeries == 'y':
             colName = myFields.get('nameOfValueMeasured')
             dataType = myFields.get('datatypeOfMeasured')
             dataType = Helper.getActualDataType(dataType)
             uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
-             
+            
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
             DBHandler.insertToStudyGroup(groupName, description, studyID) 
@@ -309,21 +316,26 @@ def uploaderExtraInfo(request):
             case1 = True
             form = UploadInfoCreationForm(None, dynamicFields=[])
             
+        elif subjectRule == 'row':
+            print('FOUND CASE 2 ')
+            form.fields['hasSubjectID'].required = True
+            context['case2'] = True
+            
         if groupID == -1:
-            print('FOUND CASE 2')
+            print('FOUND CASE 3')
             form.fields['studyGroupDescription'].required = True 
-            context['case2'] = True 
+            context['case3'] = True 
             
         if dcID == -1 and case1 is False:
-            print('FOUND CASE 3')
-            form.fields['dataCategoryDescription'].required = True
-            filenames = uploaderInfo.get('filenames')
-            context['case3'] = True
-            
-        elif dcID == -1 and case1 is True: 
             print('FOUND CASE 4')
             form.fields['dataCategoryDescription'].required = True
+            filenames = uploaderInfo.get('filenames')
             context['case4'] = True
+            
+        elif dcID == -1 and case1 is True: 
+            print('FOUND CASE 5')
+            form.fields['dataCategoryDescription'].required = True
+            context['case5'] = True
             #form = UploadInfoCreationForm(None, dynamicFields=[])
                  
         print('\nGot Uploader Extra Info Request\n')
@@ -431,7 +443,7 @@ def uploader(request):
                 noError = Helper.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
             
             else:
-                noError = Helper.uploadToDatabase(filepath, uploaderInfo, columnInfo, organizedColumns, groupID)
+                noError = Helper.uploadToDatabase(filepath, file, uploaderInfo, columnInfo, organizedColumns)
                 
             if noError is False:
                 print('\nFOUND ERROR!\n')
