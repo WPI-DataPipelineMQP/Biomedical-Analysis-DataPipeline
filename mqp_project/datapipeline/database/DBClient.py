@@ -80,7 +80,7 @@ def performFetchAll(stmt):
 
 
 def createTable(stmt, table_name, verbose=0):
-    result = 1
+    result = True
     try:
         with connection.cursor() as cursor:
             if verbose == 1:
@@ -93,7 +93,7 @@ def createTable(stmt, table_name, verbose=0):
     
     except:
         print("\nIssue Found When Creating {} Table".format(table_name))
-        result = -1
+        result = False
         
     return result
         

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import os
 from decouple import config
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -96,6 +97,10 @@ DB_CONNECTION_URL = 'mysql://{}:{}@{}:{}/{}'.format(
     DATABASES.get('default').get('PORT'),
     DATABASES.get('default').get('NAME')
 )
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

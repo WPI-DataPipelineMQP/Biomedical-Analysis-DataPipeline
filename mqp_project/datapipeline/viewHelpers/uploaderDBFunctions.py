@@ -1,11 +1,9 @@
-from datetime import datetime 
-from django.db import transaction
-from ..database import DBClient, DBHandler 
+from django.db import IntegrityError, transaction
+from ..database import DBClient, DBHandler
+from . import uploaderHelper as Helper 
 import pandas as pd 
 import numpy as np
-import csv
 
-import random
 
 def handleDataCategoryID(data_category_id, fields):
     where_params = [('data_category_id', data_category_id, False)]
@@ -20,9 +18,9 @@ def handleDataCategoryID(data_category_id, fields):
     
     return fields
 
-
+@transaction.atomic
 def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, otherInfo):
-    error = False
+    errorMessage = ''
     isTS = False 
     hasSubjectNames = False 
     
@@ -46,18 +44,15 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
         'DC_description': myFields.get('dataCategoryDescription')
     }
     
-    cleanResult = getCleanFormat(myExtras)
+    cleanResult = Helper.getCleanFormat(myExtras)
     
     try:
         with transaction.atomic():
             myMap, noErrors = DBHandler.dataCategoryHandler(myMap, studyID) 
                 
             if noErrors is False:
-                print('DC Handler')
-                raise Exception()
-                
-            else:
-                print('passed dc')
+                errorMessage = "Error found when updating the DataCategory Table!"
+                raise IntegrityError()
             
             uploaderInfo['tableName'] = myMap.get('tableName')
             uploaderInfo['dcID'] = myMap.get('DC_ID')
@@ -71,164 +66,29 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
             
             myMap['columns'] = cleanResult
             
-            result = DBHandler.newTableHandler(myMap)
+            noErrors = DBHandler.newTableHandler(myMap)
                 
-            if result == -1:
-                print('Creating new table')
-                raise Exception()
-                
-            else:
-                print('passed create table')
-            
-            cleanAttributeFormat = seperateByName(myExtras, 4, False)
-            
-            result = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
-
-            if result is False:
-                print('Inserting to Attribute')
-                raise Exception()
-                
-            else:
-                print('passed attribute')
+            if noErrors is False:
+                errorMessage = "Error found when creating the new table!"
+                raise IntegrityError()
                 
             
-    except:
-        print('FOUND EXCEPTION')
-        return uploaderInfo, True
-    
-    
-    return uploaderInfo, False
-
-
-def extractName(string):
-    indexPos = string.find('_')
-    
-    name = string[:indexPos]
-    
-    return name 
-
-
-def getFieldName(string):
-    indexPos = string.rfind('_')
-    
-    name = string[(indexPos+1):]
-    
-    return name
-
-
-def getCleanFormat(myList):
-    clean = []
-    for (name, val) in myList:
-        if '_custom_dataType' in name:
-            colName = extractName(name)
-            colName = colName.replace(" ", "")
-            clean.append((colName, val))
-    
-    return clean
-
-def getActualDataType(string):
-    dataTypeMap = {
-        '1' : 'TEXT',
-        '2' : 'INT',
-        '3' : 'FLOAT(10,5)',
-        '4' : 'DATETIME',
-        '5' : 'BOOLEAN'
-    }
-    
-    return dataTypeMap.get(string)
-
-def convertToIntValue(string):
-    dataTypeMap = {
-        'TEXT': 1,
-        'INT': 2,
-        'FLOAT(10,5)': 3,
-        'DATETIME': 4,
-        'BOOLEAN': 5
-    }
-    
-    return dataTypeMap.get(string)
-
-def clean(columns, keepOriginal):
-    myMap = {}
-    dataTypeMap = {
-        '1' : 'TEXT',
-        '2' : 'INT',
-        '3' : 'FLOAT(10,5)',
-        '4' : 'DATETIME',
-        '5' : 'BOOLEAN'
-    }
-    
-    for column in columns:
-        columnName = extractName(column[0][0])
-        
-        if keepOriginal is False:
-            columnName = columnName.replace(" ", "")
+            cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
             
-        currMap = {}
-        for field in column:
-            fieldName = getFieldName(field[0])
-            value = field[1]
-            
-            if fieldName == 'dataType':
-                value = dataTypeMap.get(field[1])
-            
-            currMap[fieldName] = value
-            
-        myMap[columnName] = currMap
-    
-    return myMap 
+            noErrors = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
 
+            if noErrors is False:
+                errorMessage = "Error found when inserting to Attribute table!"
+                raise IntegrityError()
+                
             
-def seperateByName(myList, flag, keepOriginal):
-    index = 0
-    i = 0
-    
-    columns = []
-    currentList = []
-    while index < len(myList):
-        if i < flag:
-            currentList.append(myList[index])
-            i += 1
-            
-        if i == flag:
-            columns.append(currentList)
-            currentList = [] 
-            i = 0
-        
-        index += 1
-    
-    result = clean(columns, keepOriginal)
-    
-    return result         
-       
-            
-def foundDuplicatePositions(myMap):
-    foundPositions = {}
-    
-    for key in myMap:
-        currDict = myMap.get(key)
-        currPos = currDict.get('position')
-        
-        if currPos in foundPositions.keys():
-            return True
-        
-        else:
-            foundPositions[currPos] = 0
-            
-    return False
+    except IntegrityError:
+        print('SHOULD ROLLBACK')
 
-
-def getDatetime(string):
-    dateObj = datetime.strptime(string, '%Y-%m-%d').date()
+        return uploaderInfo, errorMessage
     
-    return dateObj
-
-
-def validDates(start, end):
-    if start <= end:
-        return True 
     
-    return False
+    return uploaderInfo, None
 
 
 def getTableSchema(tableName):
@@ -248,42 +108,7 @@ def getTableSchema(tableName):
             
         string += position
         
-    return string 
-            
-    
-def getInfo(positionInfo):
-    organizedColumns = [''] * len(positionInfo)
-    columnInfo = []
-    
-    for key in positionInfo.keys():
-        currDict = positionInfo.get(key)
-        
-        position = int(currDict.get('position'))
-        tmpDT = currDict.get('dataType')
-        dataType = convertToIntValue(tmpDT)
-        
-        organizedColumns[position] = key 
-        columnInfo.append( (key, dataType) )
-        
-    
-    return columnInfo, organizedColumns
-
-def modifyFileName(name):
-    modifiedResult = name
-    
-    underLineIndex = name.find('_')
-    
-    if underLineIndex != -1:
-        latterHalf = name[underLineIndex:]
-        
-        subject_number = name[:underLineIndex]
-        
-        subject_number = subject_number.upper() 
-        
-        modifiedResult = subject_number + latterHalf
-        
-    return modifiedResult
-        
+    return string
 
 def specialUploadToDatabase(file, myMap, column_info):
     groupID = myMap.get('groupID')
@@ -341,8 +166,10 @@ def specialUploadToDatabase(file, myMap, column_info):
     
     
 def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subjectID=None):
+    errorMessage = None
+    
     df = pd.read_csv(file)
-    filename = modifyFileName(filename)
+    filename = Helper.modifyFileName(filename)
     groupID = myMap.get('groupID')
     
     tableName = myMap.get('tableName')
@@ -359,7 +186,7 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subje
             if isinstance(num, str):
                 num = num.upper()
                 
-            currID, noError = DBHandler.subjectHandler("", groupID, num)
+            currID, errorMessage = DBHandler.subjectHandler("", groupID, num)
             listOfSubjects.append(currID)
         
         
@@ -369,7 +196,7 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subje
     else:
         
         if subjectID is None:
-            subjectID, noError = DBHandler.subjectHandler(filename, groupID)
+            subjectID, errorMessage = DBHandler.subjectHandler(filename, groupID)
         
         df['subject_id'] = subjectID
         
@@ -399,7 +226,7 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subje
             columnHeaders = DBClient.getTableColumns(tableName)
     
             if len(columnHeaders) == 0:
-                print('FOUND ERROR IN COLUMNS')
+                errorMessage = "ERROR: found no column headers for {} table".format(tableName)
                 raise Exception()
             
             
@@ -410,20 +237,9 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subje
             DBClient.dfInsert(df, tableName)
     
     except:
-        return False     
+        if errorMessage is None:
+            errorMessage = "Error found when trying to insert to the {} table. Most likely an incorrect data type was specified for one of the columns.".format(tableName)
+            
+        return False, errorMessage     
     
-    return True
-
-def hasHeaders(filepath):
-    hasHeaders = False 
-    with open(filepath, 'r') as csvfile:
-        sniffer = csv.Sniffer()
-        hasHeaders = sniffer.has_header(csvfile.read(2048))
-        
-
-    
-    print(hasHeaders)
-    return hasHeaders   
-        
-    
-    
+    return True, None

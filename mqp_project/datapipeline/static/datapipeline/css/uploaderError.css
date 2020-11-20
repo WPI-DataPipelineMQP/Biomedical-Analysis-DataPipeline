@@ -1,4 +1,4 @@
-h1.header-error {
+h1, h3.header-error {
     text-align: center;
     color: red;
 }

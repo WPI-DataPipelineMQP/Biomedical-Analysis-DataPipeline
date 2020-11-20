@@ -2,7 +2,10 @@
 {% load static %}
 {% block content %}
 <h1 class="header-error">Found Error During Uploading Process</h1>
-
+<br/>
+{% if errorMessage %}
+<h3 class="header-error">ERROR MESSAGE: {{ errorMessage }}</h3>
+{% endif %}
 <div class="form">
     <form method="POST" action="{% url 'datapipeline-uploaderError' %}" enctype="multipart/form-data">
         {% csrf_token %}

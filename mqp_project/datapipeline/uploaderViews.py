@@ -1,11 +1,14 @@
 from django.shortcuts import render
 from django.shortcuts import HttpResponse
+from django.contrib import messages
+from django.contrib.messages import get_messages
 from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
 from .models import Document 
 from .database import DBClient, DBHandler 
-from .viewHelpers import uploaderViewHelper as Helper
+from .viewHelpers import uploaderHelper as Helper
+from .viewHelpers import uploaderDBFunctions as DBFunctions
 from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm
 
 import pandas as pd
@@ -13,7 +16,6 @@ import numpy as np
 
 # FIRST PAGE
 def uploaderStudy(request):
-    
     context = {
          'myCSS': 'uploaderStudy.css',
     }
@@ -49,6 +51,7 @@ def uploaderStudy(request):
     elif request.method == 'GET':
         print('\nGot Uploader Study Name Request\n')
         
+        Helper.clearUploaderSessions(request.session)
         args = {
             'selectors': 'study_name',
             'from': 'Study',
@@ -80,6 +83,11 @@ def uploaderStudy(request):
 
 # PAGE IF STUDY DOESN'T EXIST IN STUDY TABLE
 def uploaderStudyInfo(request):
+    
+    if Helper.pathIsBroken(request.session):
+        return redirect(uploaderStudy)
+    
+    
     studyName = request.session['studyName']
     
     context = {
@@ -108,6 +116,7 @@ def uploaderStudyInfo(request):
         contactInfo = fields.get('contactInfo', '')
         notes = fields.get('notes', '')
         
+        # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
         if Helper.validDates(startDate, endDate):
             values = [studyName, studyDescription, hasIRB, institutions, startDate, endDate, contactInfo, notes]
             
@@ -128,6 +137,10 @@ def uploaderStudyInfo(request):
 
 # PAGE THAT GETS THE UPLOADED CSV FILES
 def uploaderInfo(request):
+    
+    if Helper.pathIsBroken(request.session):
+        return redirect(uploaderStudy)
+    
     studyName = request.session['studyName']
     
     context = {
@@ -160,8 +173,8 @@ def uploaderInfo(request):
         path = 'uploaded_csvs/{}'.format(firstFile)
         
         if Helper.hasHeaders(path) is False:
+            request.session['errorMessage'] = "No Headers Were Included in the CSV File"
             return redirect(uploaderError)
-            
             
         df = pd.read_csv(path) 
         
@@ -193,9 +206,9 @@ def uploaderInfo(request):
         data_category_id = DBHandler.getSelectorFromTable('dc.data_category_id', 'DataCategory dc', where_params, joinInfo)
             
         if data_category_id != -1:
-            fields = Helper.handleDataCategoryID(data_category_id, fields)
+            fields = DBFunctions.handleDataCategoryID(data_category_id, fields)
             
-            
+        # UPDATING THE FIELDS
         fields['studyID'] = studyID
         fields['filenames'] = filenames
         fields['studyName'] = studyName
@@ -204,11 +217,12 @@ def uploaderInfo(request):
         fields['dcID'] = data_category_id
         fields['hasSubjectNames'] = False 
             
-        # do any table creations or db lookups here
+        # ALLOWING FIELDS TO BE PASSED AROUND
         request.session['uploaderInfo'] = fields 
-            
+        
+        # CONDITIONS IF EXTRA INFORMATION IS NEEDED
         if (subjectOrgVal == 'row' and timeSeriesVal == 'y') or (groupID == -1) or (data_category_id == -1):
-            print('\nFound Special Handler\n')
+
             return redirect(uploaderExtraInfo)
             
         else:
@@ -218,6 +232,8 @@ def uploaderInfo(request):
           
     elif request.method == 'GET':
         print('\nGot Uploader Info Request\n')
+        
+        # get all the Study Groups and Data Categories for the Study and add to context
         
         studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
         
@@ -233,7 +249,7 @@ def uploaderInfo(request):
         context['dataCategories'] = dataCategories
     
     #############################################################################################################
-    # get all the Study Groups and Data Categories for the Study and add to context
+    
     
     form = UploaderInfoForm()
     
@@ -243,6 +259,10 @@ def uploaderInfo(request):
 
 
 def uploaderExtraInfo(request):
+    
+    if Helper.pathIsBroken(request.session):
+        return redirect(uploaderStudy)
+    
     studyName = request.session['studyName']
     uploaderInfo = request.session['uploaderInfo']
     
@@ -294,10 +314,10 @@ def uploaderExtraInfo(request):
             
             
         if dcID == -1:
-            uploaderInfo, error = Helper.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
+            uploaderInfo, errorMessage = DBFunctions.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
             
-        if error is True:
-            print('\nFOUND ERROR!\n')
+        if errorMessage is not None:
+            request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
             return redirect(uploaderError)
             
         
@@ -336,7 +356,7 @@ def uploaderExtraInfo(request):
             print('FOUND CASE 5')
             form.fields['dataCategoryDescription'].required = True
             context['case5'] = True
-            #form = UploadInfoCreationForm(None, dynamicFields=[])
+
                  
         print('\nGot Uploader Extra Info Request\n')
         
@@ -349,6 +369,10 @@ def uploaderExtraInfo(request):
 
 
 def uploaderFinalPrompt(request):
+    
+    if Helper.pathIsBroken(request.session):
+        return redirect(uploaderStudy)
+    
     studyName = request.session['studyName']
     uploaderInfo = request.session['uploaderInfo']
     
@@ -396,7 +420,7 @@ def uploaderFinalPrompt(request):
         
     #############################################################################################################
     
-    tableSchema = Helper.getTableSchema(tableName)
+    tableSchema = DBFunctions.getTableSchema(tableName)
     
     context['schema'] = tableSchema
     context['form'] = form
@@ -405,6 +429,10 @@ def uploaderFinalPrompt(request):
 
 
 def uploader(request):
+    
+    if Helper.pathIsBroken(request.session):
+        return redirect(uploaderStudy)
+    
     studyName = request.session['studyName']
     
     context = {
@@ -434,19 +462,20 @@ def uploader(request):
         # put this in a POST
         path = 'uploaded_csvs/'
         noError = True 
+        errorMessage = None
         for i, file in enumerate(filenames):
             filepath = path + file
             if i == 0:
                 columnInfo, organizedColumns = Helper.getInfo(positionInfo)
         
             if specialFlag is True:
-                noError = Helper.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
+                noError, errorMessage = DBFunctions.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
             
             else:
-                noError = Helper.uploadToDatabase(filepath, file, uploaderInfo, columnInfo, organizedColumns)
+                noError, errorMessage = DBFunctions.uploadToDatabase(filepath, file, uploaderInfo, columnInfo, organizedColumns)
                 
             if noError is False:
-                print('\nFOUND ERROR!\n')
+                request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure you did not make any mistakes during the uploader process."
                 return redirect(uploaderError)
             
             
@@ -467,29 +496,21 @@ def uploader(request):
 
 
 def uploaderError(request):
-    uploaderInfo = request.session['uploaderInfo']
-    filenames = uploaderInfo.get('filenames')
-    
     context = {
          'myCSS': 'uploaderError.css'
     }
     
+    
     if request.method == 'POST':
-
+        Helper.clearUploaderSessions(request.session)    
         return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
     
     elif request.method == 'GET':
-        # DELETING UPLOADED CSV FILES
-        path = 'uploaded_csvs/'
-        for name in filenames:
-            tmpPath = path + name
-            print(tmpPath)
-            if Document.objects.filter(uploadedFile=tmpPath, filename=name).exists() :
-                instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
-                instance.uploadedFile.delete()
-                instance.delete()
-    
-    
+        if request.session.get('errorMessage', None) != None:
+            context['errorMessage'] = request.session['errorMessage']
+            
+        Helper.deleteAllDocuments()
+        
     
     return render(request, 'datapipeline/uploaderError.html', context) 
 

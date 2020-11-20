@@ -156,7 +156,7 @@ def insertToAttribute(attributes, dcID):
         device = currDict.get('deviceUsed')
         
         attribute_insert_template = ("INSERT INTO Attribute "
-                                        "(attr_name, attr_description, data_type, unit, device_name, data_category_id) "
+                                        "(attr_name, attr_description, data_types, unit, device_name, data_category_id) "
                                              "VALUES (%s, %s, %s, %s, %s, %s)")
 
         new_attribute = (name, description, dataType, unit, device, dcID) 
@@ -192,12 +192,13 @@ def subjectHandler(filename, study_group_id, subjectNumber=None):
         insertResult = DBClient.executeCommand(subject_insert_template, new_subject)
         
         if not result :
-            print('ERROR: Error Found When Attempting to Insert Subject_Number: {} and Study Group ID: {} to Subject Table'.format(subject_number, study_group_id))
+            errorMessage = 'ERROR: Error Found When Attempting to Insert Subject_Number: {} and Study Group ID: {} to Subject Table'.format(subject_number, study_group_id)
             
-            return -1, False
+            return -1, errorMessage
         
-        
-    return getSelectorFromTable('subject_id', 'Subject', where_params, [None, None]), True 
+    subjectID = getSelectorFromTable('subject_id', 'Subject', where_params, [None, None])
+    
+    return subjectID, None 
 
 
 def dataCategoryHandler(myMap, study_id):
