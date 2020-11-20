@@ -305,7 +305,7 @@ def make_conds(dictOfConds, study_group_names):
             first = False
         else:
             stry += ' OR StudyGroup.study_group_name = "'+stripped+'"'
-    stry += ")"
+    #stry += ")"
     return stry
 
 def output(request):
