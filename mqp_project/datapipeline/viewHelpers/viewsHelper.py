@@ -44,3 +44,15 @@ def getChosenFilters(data):
 
     return res
 
+def returnProperType(val):
+    if val.isdigit():
+        return val
+    
+    elif val.replace('.', '', 1).isdigit():
+        return val
+    
+    else:
+        stringVal = '"{}"'.format(val)
+        return stringVal
+        
+

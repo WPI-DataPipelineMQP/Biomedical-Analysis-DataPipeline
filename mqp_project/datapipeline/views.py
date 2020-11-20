@@ -269,6 +269,9 @@ def make_conds(dictOfConds, study_group_names):
         return None
     stry = ""
     first = True
+    print()
+    print(dictOfConds)
+    print()
     for filter in dictOfConds:
         if first == True:
             if '_checkbox' in filter['name']:
@@ -287,8 +290,10 @@ def make_conds(dictOfConds, study_group_names):
             elif '_dropdown' in filter['name']:
                 stry += symbols[filter['value']]
             elif '_text' in filter['name']:
-                stry += filter['value']
+                properDataTypeVal = ViewHelper.returnProperType(filter['value'])
+                stry += properDataTypeVal
     first = True
+    print('HERE', stry)
     for item in study_group_names:
         seperator = " ("
         stripped = item.split(seperator, 1)[0]

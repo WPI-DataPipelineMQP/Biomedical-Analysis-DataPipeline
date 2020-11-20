@@ -162,7 +162,7 @@ def uploaderInfo(request):
                 if uploaderForm.cleaned_data[field]:
                     if field == 'uploadedFiles':
                         files = request.FILES.getlist(field)
-                        count = len(files)
+                        
                         for file in files:
                             filenames.append(file.name)
                             newdoc = Document(uploadedFile = file, filename=file.name)
