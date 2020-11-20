@@ -324,7 +324,7 @@ def getStudyGroupsOfStudies(study_ids_forquery):
         studygroups_dict = {}
         groupName = studyGroup[0]
         studyID = studyGroup[1]
-        studygroups_dict["name"] = "{} ({})".format(groupName, studyID)
+        studygroups_dict["name"] = "{} (Study ID = {})".format(groupName, studyID)
         study_groups.append(studygroups_dict)
         
     return study_groups

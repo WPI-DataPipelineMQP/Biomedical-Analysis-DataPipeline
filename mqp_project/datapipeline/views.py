@@ -337,11 +337,12 @@ def output(request):
         'order-by': None
     }
     result = DBClient.executeQuery(args, 1)
-
+    
+    '''
     print("RESULTS")
     for i in result:
         print(i)
-
+    '''
     context = {
         'data': result,
         "attribute_names": attribute_names
