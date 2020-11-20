@@ -301,11 +301,11 @@ def make_conds(dictOfConds, study_group_names):
         seperator = " ("
         stripped = item.split(seperator, 1)[0]
         if first == True:
-            stry += ' AND StudyGroup.study_group_name = "'+stripped+'"'
+            stry += ' AND (StudyGroup.study_group_name = "'+stripped+'"'
             first = False
         else:
             stry += ' OR StudyGroup.study_group_name = "'+stripped+'"'
-    #stry += ")"
+    stry += ")"
     return stry
 
 def output(request):
@@ -341,9 +341,9 @@ def output(request):
     }
     result = DBClient.executeQuery(args, 1)
 
-    print("RESULTS")
-    for i in result:
-        print(i)
+    # print("RESULTS")
+    # for i in result:
+    #     print(i)
 
     context = {
         'data': result,
