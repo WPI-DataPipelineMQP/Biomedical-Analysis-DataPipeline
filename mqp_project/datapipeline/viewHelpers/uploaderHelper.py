@@ -7,15 +7,16 @@ import random
 def pathIsBroken(session, uploadInfoFlag=False):
  
     if session.get('studyName', None) != None:
+        print('Found StudyName')
         if uploadInfoFlag is True:
+            print('Testing uploadInfoFlag')
             if session.get('uploaderInfo', None) != None:
                 return False 
             
             else:
                 return True 
             
-        else:
-            return False 
+        return False 
 
     
     return True
@@ -28,16 +29,16 @@ def deleteAllDocuments():
         name.uploadedFile.delete()
         name.delete()
 
-def clearUploadInfo(session):
-    if session.get('studyName', None) != None:
-        del session['studyName']
 
+def clearUploadInfo(session):
     if session.get('uploaderInfo', None) != None:
         del session['uploaderInfo']
+
 
 def clearStudyName(session):
     if session.get('studyName', None) != None:
         del session['studyName']
+       
         
 def extractName(string):
     indexPos = string.find('_')
@@ -65,6 +66,7 @@ def getCleanFormat(myList):
     
     return clean
 
+
 def getActualDataType(string):
     dataTypeMap = {
         '1' : 'TEXT',
@@ -76,6 +78,7 @@ def getActualDataType(string):
     
     return dataTypeMap.get(string)
 
+
 def convertToIntValue(string):
     dataTypeMap = {
         'TEXT': 1,
@@ -86,6 +89,7 @@ def convertToIntValue(string):
     }
     
     return dataTypeMap.get(string)
+
 
 def clean(columns, keepOriginal):
     myMap = {}
@@ -158,6 +162,7 @@ def foundDuplicatePositions(myMap):
 
 
 def getDatetime(string):
+    print(string)
     dateObj = datetime.strptime(string, '%Y-%m-%d').date()
     
     return dateObj

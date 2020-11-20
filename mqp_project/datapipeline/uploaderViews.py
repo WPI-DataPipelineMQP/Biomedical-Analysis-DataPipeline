@@ -87,7 +87,7 @@ def uploaderStudy(request):
 # PAGE IF STUDY DOESN'T EXIST IN STUDY TABLE
 def uploaderStudyInfo(request):
     
-    if Helper.pathIsBroken(request.session):
+    if Helper.pathIsBroken(request.session, False):
         return redirect(uploaderStudy)
     
     
@@ -111,24 +111,25 @@ def uploaderStudyInfo(request):
                     fields[field] = form[field].data 
         
         
-        studyDescription = fields.get('studyDescription')
-        hasIRB = fields.get('isIRB_Approved')
-        institutions = fields.get('institutions', '') 
-        startDate = Helper.getDatetime(fields.get('startDate')) 
-        endDate = Helper.getDatetime(fields.get('endDate')) 
-        contactInfo = fields.get('contactInfo', '')
-        notes = fields.get('notes', '')
         
-        # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
-        if Helper.validDates(startDate, endDate):
-            values = [studyName, studyDescription, hasIRB, institutions, startDate, endDate, contactInfo, notes]
+            studyDescription = fields.get('studyDescription')
+            hasIRB = fields.get('isIRB_Approved')
+            institutions = fields.get('institutions', '') 
+            startDate = Helper.getDatetime(fields.get('startDate')) 
+            endDate = Helper.getDatetime(fields.get('endDate')) 
+            contactInfo = fields.get('contactInfo', '')
+            notes = fields.get('notes', '')
+        
+            # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
+            if Helper.validDates(startDate, endDate):
+                values = [studyName, studyDescription, hasIRB, institutions, startDate, endDate, contactInfo, notes]
             
-            DBHandler.insertToStudy(values)
+                DBHandler.insertToStudy(values)
             
-            return redirect(uploaderInfo)
+                return redirect(uploaderInfo)
             
-        else:
-            context['error'] = True
+            else:
+                context['error'] = True
             
         #############################################################################################################
         
@@ -529,6 +530,7 @@ def uploaderSuccess(request):
             return redirect(views.home)
         
         elif 'continue' in request.POST:
+            Helper.clearUploadInfo(request.session) 
             return redirect(uploaderInfo)
     
     return render(request, 'datapipeline/uploaderSuccess.html', context) 

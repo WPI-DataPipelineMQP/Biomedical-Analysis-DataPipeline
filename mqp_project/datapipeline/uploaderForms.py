@@ -9,7 +9,7 @@ class StudyInfoForm(forms.Form):
     YES_NO_CHOICES = [(1, 'Yes'), (0, 'No')]
     DateInput = partial(forms.DateInput, {'class': 'datepicker'})
     studyDescription = forms.CharField(label='Study Description', required=True)
-    isIRB_Approved = forms.ChoiceField(choices=YES_NO_CHOICES, widget=forms.RadioSelect, label="Is study IRB approved?", required=True)
+    isIRB_Approved = forms.ChoiceField(choices=YES_NO_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is study IRB approved?")
     institutions = forms.CharField(label="Institutions Involved (separate by comma if multiple)", required=False)
     startDate = forms.DateField(widget=DateInput(), label="Study Start Date", required=True)
     endDate = forms.DateField(widget=DateInput(), label="Study End Date", required=True)
@@ -23,11 +23,11 @@ class UploaderInfoForm(forms.Form):
     
     SUBJECT_CHOICES = [('file', ('Subject per File')), ('row', 'Subject per Row')]
     
-    subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES, widget=forms.RadioSelect, label="What Format Does this Data Category Follow?", required=True)
+    subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="What Format Does this Data Category Follow?")
     
     TIME_SERIES_CHOICES = [('y', 'Yes'), ('n', 'No')]
     
-    isTimeSeries = forms.ChoiceField(choices=TIME_SERIES_CHOICES, widget=forms.RadioSelect, label="Is this Data Category Time Series?", required=True)
+    isTimeSeries = forms.ChoiceField(choices=TIME_SERIES_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is this Data Category Time Series?")
     
     uploadedFiles = forms.FileField(label="Select Files", required=True, widget=forms.ClearableFileInput(attrs={'multiple': True}))
     
