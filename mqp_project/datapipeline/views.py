@@ -164,7 +164,8 @@ def dataSelectionContinued(request):
     if 'category_names' in request.session:
         category_names = request.session['category_names']
 
-    columns = []
+    columnsForAttributeList = []
+    columnsForFiltersList = []
     for table in category_names:
         column_dict = {}
         args = {
@@ -185,26 +186,29 @@ def dataSelectionContinued(request):
                 column_dict["name"] = "{}.{}".format(table, column_name[3])
                 column_dict["table"] = table
                 #column_dict["display"] = "{}.{}".format(table, column_name[3])
-                columns.append(column_dict)
+                columnsForAttributeList.append(column_dict)
+                columnsForFiltersList.append(column_dict)
 
     #add these because they are always shown by default
     subject_num_dict = {"name": "subject_number", "table": "Subject"}
     study_group_dict = {"name": "study_group_name", "table": "StudyGroup"}
-    columns.append(subject_num_dict)
-    columns.append(study_group_dict)
+    columnsForAttributeList.append(subject_num_dict)
+    columnsForAttributeList.append(study_group_dict)
+    columnsForFiltersList.append(subject_num_dict)
 
-    request.session['columns'] = columns
+    request.session['columnsForAttributeList'] = columnsForAttributeList
+    request.session['columnsForFiltersList'] = columnsForFiltersList
 
     if request.method == 'POST':
-        attributes_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['columns'])
-        filters_form = CreateChosenFilterForm(request.POST, customFields=request.session['columns'])
+        attributes_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['columnsForAttributeList'])
+        filters_form = CreateChosenFilterForm(request.POST, customFields=request.session['columnsForFiltersList'])
 
         #process the data
         attribute_data = {}
         if attributes_form.is_valid():
             for i, field in enumerate(attributes_form.getAllFields()):
                 attribute_data[i] = {
-                    'name': columns[i]['name'],
+                    'name': columnsForAttributeList[i]['name'],
                     'value': field[1]
                 }
         attribute_names = ViewHelper.getNameList(attribute_data)
@@ -212,7 +216,6 @@ def dataSelectionContinued(request):
 
         filter_data = {}
         if filters_form.is_valid():
-            print(columns)
             for i, field in enumerate(filters_form.getAllFields()):
                 filter_data[i] = {
                     #'name': columns[i]['name'],
@@ -227,8 +230,8 @@ def dataSelectionContinued(request):
 
         return HttpResponseRedirect('/output')
 
-    attributes_form = CreateChosenBooleanFormWithoutDesc(customFields=request.session['columns'])
-    filters_form = CreateChosenFilterForm(customFields=request.session['columns'])
+    attributes_form = CreateChosenBooleanFormWithoutDesc(customFields=request.session['columnsForAttributeList'])
+    filters_form = CreateChosenFilterForm(customFields=request.session['columnsForFiltersList'])
 
     context = {
          'myCSS': 'dataSelection-2.css',
