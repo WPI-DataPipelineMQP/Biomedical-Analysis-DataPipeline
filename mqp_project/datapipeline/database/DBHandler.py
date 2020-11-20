@@ -156,7 +156,7 @@ def insertToAttribute(attributes, dcID):
         device = currDict.get('deviceUsed')
         
         attribute_insert_template = ("INSERT INTO Attribute "
-                                        "(attr_name, attr_description, data_types, unit, device_name, data_category_id) "
+                                        "(attr_name, attr_description, data_type, unit, device_name, data_category_id) "
                                              "VALUES (%s, %s, %s, %s, %s, %s)")
 
         new_attribute = (name, description, dataType, unit, device, dcID) 
@@ -243,7 +243,8 @@ def dataCategoryHandler(myMap, study_id):
 
 
 def newTableHandler(myMap):
-    result = 1
+    result = False 
+    
     if myMap.get('createTable') is False:
         dataTypeMap = {
             '1' : 'TEXT',

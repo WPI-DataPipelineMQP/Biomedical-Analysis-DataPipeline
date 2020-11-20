@@ -316,9 +316,13 @@ def uploaderExtraInfo(request):
         if dcID == -1:
             uploaderInfo, errorMessage = DBFunctions.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
             
-        if errorMessage is not None:
-            request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
-            return redirect(uploaderError)
+            if errorMessage is None:
+                errorMessage = DBFunctions.createNewDataCategoryTable(uploaderInfo)
+            
+            print('Error Message', errorMessage)
+            if errorMessage is not None:
+                request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
+                return redirect(uploaderError)
             
         
         request.session['uploaderInfo'] = uploaderInfo

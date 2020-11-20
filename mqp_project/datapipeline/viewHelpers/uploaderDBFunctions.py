@@ -66,11 +66,7 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
             
             myMap['columns'] = cleanResult
             
-            noErrors = DBHandler.newTableHandler(myMap)
-                
-            if noErrors is False:
-                errorMessage = "Error found when creating the new table!"
-                raise IntegrityError()
+            
                 
             
             cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
@@ -89,6 +85,18 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
     
     
     return uploaderInfo, None
+
+
+def createNewDataCategoryTable(uploaderInfo):
+    errorMessage = ''
+    noErrors = DBHandler.newTableHandler(uploaderInfo)
+            
+    print(noErrors)
+    if noErrors is False:
+        errorMessage = "Error found when creating the new table!"
+        return errorMessage
+    
+    return None
 
 
 def getTableSchema(tableName):
