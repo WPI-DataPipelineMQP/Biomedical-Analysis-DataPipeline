@@ -305,7 +305,7 @@ def make_conds(dictOfConds, study_group_names):
             first = False
         else:
             stry += ' OR StudyGroup.study_group_name = "'+stripped+'"'
-    #stry += ")"
+    stry += ")"
     return stry
 
 def output(request):
@@ -328,7 +328,12 @@ def output(request):
     filter_values = []
     if 'filter_values' in request.session:
         filter_values = request.session['filter_values']
-
+        
+    if "study_group_name" not in attribute_names:
+        attribute_names.append("StudyGroup.study_group_name")
+        
+    if "subject_number" not in attribute_names:
+        attribute_names.append("Subject.subject_number")
 
     args = {
         'selectors': ', '.join(attribute_names),
