@@ -15,6 +15,10 @@
     <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
     <script src="http://code.jquery.com/ui/1.11.0/jquery-ui.js"></script>
 
+    <script src="{% static 'celery_progress/celery_progress.js' %}"></script>
+
+    {% block progress_bar_js %}{% endblock progress_bar_js %}
+
     <link rel="stylesheet" type="text/css" href="{% static 'datapipeline/css/base.css' %}">
     
 
@@ -91,7 +95,6 @@
         changeYear: true,
         yearRange: "1900:2021",
         // You can put more options here.
-  
       });
     });
     </script>

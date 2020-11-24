@@ -121,6 +121,12 @@ class UploadPositionForm(forms.Form) :
     def getColumnFields(self):
         for name, value in self.cleaned_data.items():
             yield (name, value)
+            
+class DisabledInputForm(forms.Form):
+    files = forms.CharField(widget=forms.TextInput({
+        'class': 'form-control',
+        'readonly': True
+    }))
         
         
         

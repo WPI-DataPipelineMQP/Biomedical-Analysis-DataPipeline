@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.shortcuts import HttpResponse
 from django.contrib import messages
 from django.contrib.messages import get_messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.core import serializers
 from django.shortcuts import redirect
 from .models import Document 
@@ -10,8 +10,11 @@ from . import views
 from .database import DBClient, DBHandler 
 from .viewHelpers import uploaderHelper as Helper
 from .viewHelpers import uploaderDBFunctions as DBFunctions
-from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm
+from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
+from .tasks import ProcessUpload
+import celery
 
+import json
 import pandas as pd
 import numpy as np 
 
@@ -438,15 +441,34 @@ def uploader(request):
         return redirect(uploaderStudy)
     
     studyName = request.session['studyName']
+    positionInfo = request.session['positionInfo']
+    uploaderInfo = request.session['uploaderInfo']
+    filenames = uploaderInfo.get('filenames')
+    
+    form = DisabledInputForm()
     
     context = {
          'myCSS': 'uploader.css',
-         'studyName': studyName
+         'studyName': studyName,
+         'form': form,
     }
     
-    if request.method == 'POST':
-        positionInfo = request.session['positionInfo']
-        uploaderInfo = request.session['uploaderInfo']
+    if request.is_ajax() and request.method == 'POST':
+
+        status = request.POST['status']
+        message = request.POST['message']
+        
+        if status == 'FAILED':
+            request.session['errorMessage'] = message + " Please review the guidelines carefully and make sure you did not make any mistakes during the uploader process."
+            return HttpResponse(status=400)
+        
+        else:
+            uploaderInfo['uploadedSuccessfully'] = True
+            return HttpResponse(status=200)
+        
+        
+    elif request.method == 'POST':
+        
         specialFlag = False 
     
         key = 'specialInsert'
@@ -454,47 +476,29 @@ def uploader(request):
             positionInfo = uploaderInfo.get(key)
             specialFlag = True
         
-           
-        filenames = uploaderInfo.get('filenames')
         groupID = uploaderInfo.get('groupID')
         hasSubjectNames = uploaderInfo.get('hasSubjectNames')
         tableName = uploaderInfo.get('tableName')
-    
-        columnInfo = []
-        organizedColumns = []
-    
-        # put this in a POST
-        path = 'uploaded_csvs/'
-        noError = True 
-        errorMessage = None
-        for i, file in enumerate(filenames):
-            filepath = path + file
-            if i == 0:
-                columnInfo, organizedColumns = Helper.getInfo(positionInfo)
         
-            if specialFlag is True:
-                noError, errorMessage = DBFunctions.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
+        task = ProcessUpload.delay(filenames, uploaderInfo, positionInfo, specialFlag)
+        
+        print (f'Celery Task ID: {task.task_id}')
             
-            else:
-                noError, errorMessage = DBFunctions.uploadToDatabase(filepath, file, uploaderInfo, columnInfo, organizedColumns)
-                
-            if noError is False:
-                request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure you did not make any mistakes during the uploader process."
-                return redirect(uploaderError)
-            
-            
-        print('Upload Completed!')
-            
+        context['task_id'] = task.task_id
+        
+        return render(request, 'datapipeline/uploaderProgress.html', context)
     
-        # DELETING UPLOADED CSV FILES
-        for name in filenames:
-            tmpPath = path + name
-            instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
-            instance.uploadedFile.delete()
-            instance.delete()
-            
-        return redirect(uploaderSuccess)
+    elif request.method == 'GET':
+        files_to_be_uploaded = "Files to be uploaded: "
+        
+        for file in filenames:
+            files_to_be_uploaded += f"{file} "
     
+        form.fields['files'].widget.attrs['placeholder'] = files_to_be_uploaded
+    
+        context['form'] = form
+        
+
         
     return render(request, 'datapipeline/uploader.html', context) 
 

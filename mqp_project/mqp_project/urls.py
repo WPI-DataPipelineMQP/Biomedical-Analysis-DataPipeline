@@ -21,4 +21,6 @@ urlpatterns = [
     path('datapipeline/', include('datapipeline.urls')),
     path('users/', include('users.urls')),
     path('', include('datapipeline.urls')),
+    # Celery progress
+	path('celery-progress/', include('celery_progress.urls')),
 ]
