@@ -4,7 +4,7 @@
 <h1>At Uploader!</h1>
 
 <div class="container text-center" style="padding-top: 20px; width: 100%;">
-    <form method="POST" action="{% url 'datapipeline-uploader' %}" enctype="multipart/form-data">
+    <form method="POST" action="{% url 'uploader-uploading' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="form-group">
             <div class="input-group mb-3" align="center" style="margin:0 auto;">

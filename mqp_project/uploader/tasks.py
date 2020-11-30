@@ -1,15 +1,10 @@
-# Celery
 from celery import shared_task
-# Celery-progress
 from celery_progress.backend import ProgressRecorder
-# Task imports
 import time
 
-import os.path
 from django.conf import settings
 
-from .viewHelpers import uploaderHelper as Helper
-from .viewHelpers import uploaderDBFunctions as DBFunctions 
+from .viewHelpers import Helper, DBFunctions
 from .models import Document
 
 @shared_task(bind=True)

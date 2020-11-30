@@ -4,7 +4,7 @@
 <h1 class="header-error">Uploaded Successfully!</h1>
 
 <div class="form">
-    <form method="POST" action="{% url 'datapipeline-uploaderSuccess' %}" enctype="multipart/form-data">
+    <form method="POST" action="{% url 'uploader-uploaderSuccess' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="submit" value="Go Back to Home" name="finished">
         <input class="left-space" type="submit" value="Add More to Study" name="continue">

@@ -5,21 +5,23 @@ from django.contrib.messages import get_messages
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core import serializers
 from django.shortcuts import redirect
-from .models import Document 
-from . import views
-from .database import DBClient, DBHandler 
-from .viewHelpers import uploaderHelper as Helper
-from .viewHelpers import uploaderDBFunctions as DBFunctions
-from .uploaderForms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
-from .tasks import ProcessUpload
-import celery
 
+from datapipeline.views import home
+from datapipeline.database import DBClient, DBHandler
+
+from .viewHelpers import Helper, DBFunctions
+from .models import Document
+from . import views
+from .forms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
+from .tasks import ProcessUpload
+
+import celery
 import json
 import pandas as pd
 import numpy as np 
 
 # FIRST PAGE
-def uploaderStudy(request):
+def study(request):
     context = {
          'myCSS': 'uploaderStudy.css',
     }
@@ -46,10 +48,10 @@ def uploaderStudy(request):
         
             if studyID == -1:
                 # redirect to another page
-                return redirect(uploaderStudyInfo)
+                return redirect(studyInfo)
             
             else:
-                return redirect(uploaderInfo)
+                return redirect(info)
             
     #############################################################################################################           
     elif request.method == 'GET':
@@ -84,14 +86,14 @@ def uploaderStudy(request):
     
     context['form'] = form 
     
-    return render(request, 'datapipeline/uploaderStudy.html', context)
+    return render(request, 'uploader/studyName.html', context)
 
 
 # PAGE IF STUDY DOESN'T EXIST IN STUDY TABLE
-def uploaderStudyInfo(request):
+def studyInfo(request):
     
     if Helper.pathIsBroken(request.session, False):
-        return redirect(uploaderStudy)
+        return redirect(study)
     
     
     studyName = request.session['studyName']
@@ -129,7 +131,7 @@ def uploaderStudyInfo(request):
             
                 DBHandler.insertToStudy(values)
             
-                return redirect(uploaderInfo)
+                return redirect(info)
             
             else:
                 context['error'] = True
@@ -139,14 +141,14 @@ def uploaderStudyInfo(request):
     
     context['form'] = StudyInfoForm()
     
-    return render(request, 'datapipeline/uploaderStudyInfo.html', context)
+    return render(request, 'uploader/studyInfo.html', context)
 
 
 # PAGE THAT GETS THE UPLOADED CSV FILES
-def uploaderInfo(request):
+def info(request):
     
     if Helper.pathIsBroken(request.session):
-        return redirect(uploaderStudy)
+        return redirect(study)
     
     studyName = request.session['studyName']
     
@@ -181,7 +183,7 @@ def uploaderInfo(request):
         
         if Helper.hasHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Included in the CSV File"
-            return redirect(uploaderError)
+            return redirect(error)
             
         df = pd.read_csv(path) 
         
@@ -230,10 +232,10 @@ def uploaderInfo(request):
         # CONDITIONS IF EXTRA INFORMATION IS NEEDED
         if (subjectOrgVal == 'row' and timeSeriesVal == 'y') or (groupID == -1) or (data_category_id == -1):
 
-            return redirect(uploaderExtraInfo)
+            return redirect(extraInfo)
             
         else:
-            return redirect(uploaderFinalPrompt)
+            return redirect(finalPrompt)
     
     #############################################################################################################
           
@@ -262,13 +264,13 @@ def uploaderInfo(request):
     
     context['form'] = form
     
-    return render(request, 'datapipeline/uploaderInfo.html', context)
+    return render(request, 'uploader/info.html', context)
 
 
-def uploaderExtraInfo(request):
+def extraInfo(request):
     
     if Helper.pathIsBroken(request.session, True):
-        return redirect(uploaderStudy)
+        return redirect(study)
     
     studyName = request.session['studyName']
     uploaderInfo = request.session['uploaderInfo']
@@ -325,12 +327,12 @@ def uploaderExtraInfo(request):
             
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
-                return redirect(uploaderError)
+                return redirect(error)
             
         
         request.session['uploaderInfo'] = uploaderInfo
         
-        return redirect(uploaderFinalPrompt)
+        return redirect(finalPrompt)
     
     #############################################################################################################     
     elif request.method == 'GET':
@@ -371,14 +373,14 @@ def uploaderExtraInfo(request):
         
     context['form'] = form
     
-    return render(request, 'datapipeline/uploaderExtraInfo.html', context)
+    return render(request, 'uploader/extraInfo.html', context)
 
 
 
-def uploaderFinalPrompt(request):
+def finalPrompt(request):
     
     if Helper.pathIsBroken(request.session, True):
-        return redirect(uploaderStudy)
+        return redirect(study)
     
     studyName = request.session['studyName']
     uploaderInfo = request.session['uploaderInfo']
@@ -415,13 +417,13 @@ def uploaderFinalPrompt(request):
         else:
             request.session['positionInfo'] = clean 
             
-            return redirect(uploader)
+            return redirect(upload)
             
     #############################################################################################################
     elif request.method == 'GET':
         if isTimeSeries and subjectOrg == 'row':
             print(uploaderInfo)
-            return redirect(uploader)
+            return redirect(upload)
             
         print('\nGot Uploader Extra Info Request\n')
         
@@ -432,13 +434,13 @@ def uploaderFinalPrompt(request):
     context['schema'] = tableSchema
     context['form'] = form
     
-    return render(request, 'datapipeline/uploaderFinalPrompt.html', context)
+    return render(request, 'uploader/finalPrompt.html', context)
 
 
-def uploader(request):
+def upload(request):
     
     if Helper.pathIsBroken(request.session):
-        return redirect(uploaderStudy)
+        return redirect(study)
     
     studyName = request.session['studyName']
     positionInfo = request.session['positionInfo']
@@ -486,7 +488,7 @@ def uploader(request):
             
         context['task_id'] = task.task_id
         
-        return render(request, 'datapipeline/uploaderProgress.html', context)
+        return render(request, 'uploader/progress.html', context)
     
     elif request.method == 'GET':
         files_to_be_uploaded = "Files to be uploaded: "
@@ -500,10 +502,10 @@ def uploader(request):
         
 
         
-    return render(request, 'datapipeline/uploader.html', context) 
+    return render(request, 'uploader/uploading.html', context) 
 
 
-def uploaderError(request):
+def error(request):
     context = {
          'myCSS': 'uploaderError.css'
     }
@@ -511,7 +513,7 @@ def uploaderError(request):
     
     if request.method == 'POST':
         Helper.clearUploadInfo(request.session)    
-        return redirect(views.home)
+        return redirect(home)
     
     elif request.method == 'GET':
         if request.session.get('errorMessage', None) != None:
@@ -520,10 +522,10 @@ def uploaderError(request):
         Helper.deleteAllDocuments()
         
     
-    return render(request, 'datapipeline/uploaderError.html', context) 
+    return render(request, 'uploader/errorPage.html', context) 
 
 
-def uploaderSuccess(request):
+def success(request):
     context = {
          'myCSS': 'uploaderSuccess.css'
     }
@@ -531,13 +533,13 @@ def uploaderSuccess(request):
     if request.method == 'POST':
         if 'finished' in request.POST:
             Helper.clearStudyName(request.session)
-            return redirect(views.home)
+            return redirect(home)
         
         elif 'continue' in request.POST:
             Helper.clearUploadInfo(request.session) 
-            return redirect(uploaderInfo)
+            return redirect(info)
     
-    return render(request, 'datapipeline/uploaderSuccess.html', context) 
+    return render(request, 'uploader/successPage.html', context) 
     
     
             

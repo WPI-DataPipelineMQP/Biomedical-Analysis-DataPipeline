@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'datapipeline.apps.DatapipelineConfig',
     'users.apps.UsersConfig',
+    'uploader.apps.UploaderConfig',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',

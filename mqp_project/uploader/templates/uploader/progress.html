@@ -1,4 +1,4 @@
-{% extends "datapipeline/uploader.html" %}
+{% extends "uploader/uploading.html" %}
 {% load static %}
 {% block progress %}
 <div class="text-center" style="font-size: 14px">
@@ -34,7 +34,7 @@
                 //$('<button id="uploadFinish">').text('Done')
             );
 
-            setTimeout("location.href = \"{% url 'datapipeline-uploaderSuccess' %}\"", 1500)
+            setTimeout("location.href = \"{% url 'uploader-uploaderSuccess' %}\"", 1500)
             
 		}
 
@@ -67,17 +67,17 @@
       let myStatus = event.data.param1
       $.ajax({
         type: "POST",
-        url: "{% url 'datapipeline-uploader' %}",
+        url: "{% url 'uploader-uploading' %}",
         data: {
           status: event.data.param1,
           message: event.data.param2,
           csrfmiddlewaretoken: $("input[name='csrfmiddlewaretoken']").val(),
         },
         success: function(resp) {
-            location.href = "{% url 'datapipeline-uploaderSuccess' %}" 
+            location.href = "{% url 'uploader-uploaderSuccess' %}" 
         },
         error: function(resp) {
-            location.href = "{% url 'datapipeline-uploaderError' %}" 
+            location.href = "{% url 'uploader-uploaderError' %}" 
         }
       })
     }

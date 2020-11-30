@@ -6,7 +6,7 @@
         {% if studyName %}
         <h1>Enter Info for {{ studyName }}</h1>
         {% endif %}
-        <form method="POST" action="{% url 'datapipeline-uploaderInfo' %}" enctype="multipart/form-data">
+        <form method="POST" action="{% url 'uploader-uploaderInfo' %}" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
         

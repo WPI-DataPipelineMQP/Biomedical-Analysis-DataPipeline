@@ -2,7 +2,7 @@
 {% load static %}
 {% block content %}
 
-<form method="POST" action="{% url 'datapipeline-uploaderExtraInfo' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'uploader-uploaderExtraInfo' %}" enctype="multipart/form-data">
     {% csrf_token %}
     {% if case1 is True %}
     <p>

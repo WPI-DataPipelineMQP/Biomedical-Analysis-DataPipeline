@@ -19,7 +19,7 @@
 <div class="row">
     <div class="column">
         <h1>Enter Study</h1>
-        <form method="POST" action="{% url 'datapipeline-uploaderStudy' %}">
+        <form method="POST" action="{% url 'uploader-uploaderStudy' %}">
             {% csrf_token %}
             {{ form | crispy }}
         

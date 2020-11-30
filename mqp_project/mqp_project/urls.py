@@ -20,7 +20,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('datapipeline/', include('datapipeline.urls')),
     path('users/', include('users.urls')),
+    path('uploader/', include('uploader.urls')),
     path('', include('datapipeline.urls')),
-    # Celery progress
 	path('celery-progress/', include('celery_progress.urls')),
 ]

@@ -7,7 +7,7 @@
 <h3 class="header-error">ERROR MESSAGE: {{ errorMessage }}</h3>
 {% endif %}
 <div class="form">
-    <form method="POST" action="{% url 'datapipeline-uploaderError' %}" enctype="multipart/form-data">
+    <form method="POST" action="{% url 'uploader-uploaderError' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="submit" value="Ok">
     </form>

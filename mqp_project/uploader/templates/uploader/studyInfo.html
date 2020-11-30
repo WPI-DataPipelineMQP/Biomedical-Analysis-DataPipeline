@@ -8,7 +8,7 @@
 <h2 class="header-error">Found Start Date After End Date!</h2>
 {% endif %}
 
-<form class="center" method="POST" action="{% url 'datapipeline-uploaderStudyInfo' %}" enctype="multipart/form-data">
+<form class="center" method="POST" action="{% url 'uploader-uploaderStudyInfo' %}" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form | crispy }}
 
