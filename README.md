@@ -21,18 +21,42 @@ $ python manage.py runserver
 
 ## Run the Progress Bar
 
-- first run the requirements to install the necessary modules and software
-- in a separate terminal run the redis server 
+### Linux Instructions
+- In a separate terminal run the redis server 
 
 ```console
 $ redis-server
 ```
 
-- after the redis server is running successfully, navigate to the mqp_project directory in the project in a seperate terminal 
-- once you completed the above step, run the following command 
+- After the redis server is running successfully, navigate to the mqp_project directory in the project in a seperate terminal 
+- Once you completed the above step, run the following command 
 
 ```console
-celery -A mqp_project worker --loglevel=info
+$ celery -A mqp_project worker --loglevel=info
 ```
 
-- after running the command, you can now run the project normally
+- After running the command, you can now run the project normally
+
+
+### Windows Instructions
+- Install redis. This is easier to do through the Windows subsystem for linux by running ```$ sudo apt-get install redis-server```. Otherwise, there are a large amount of unofficial windows versions of redis that can be found online and should work as well.
+
+- In a separate terminal run the redis server 
+
+```console
+$ redis-server
+```
+
+- Celery is not officially supported on Windows but can be run via another another library called gevent (source for solution: https://stackoverflow.com/questions/37255548/how-to-run-celery-on-windows). Install gevent with the following command:
+
+```console
+$ pip install gevent
+```
+
+- In a terminal separate from the redis server, run the following command 
+
+```console
+$ python -m celery -A mqp_project worker --loglevel=info
+```
+
+- After running the command, you can now run the project normally
