@@ -2,10 +2,11 @@
 {% load static %}
 {% block content %}
 <h2>Data:</h2>
+<button class="export-button">TODO: Export Data to CSV</button>
 <article class="media">
     <div class="media-body">
         <div class="output-scroll">
-            <table border="1px solid black">
+            <table class="table-bordered">
                 <thead>
                     <tr>
                         {% for label in attribute_names %}

@@ -1,4 +1,10 @@
 .output-scroll{
-	height: 300px;
+	position: relative;
+	height: 500px;
 	overflow: scroll;
+}
+
+.export-button{
+  margin-bottom: 30px;
+  width: 200px;
 }
