@@ -1,34 +1,10 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<!--<h2>Categories Chosen:</h2>-->
-<!--<ul>-->
-<!--    {% for category in categories %}-->
-<!--        <li>-->
-<!--            <article class="media">-->
-<!--                <div class="media-body">-->
-<!--                    <p>{{ category.name }}</p>-->
-<!--                </div>-->
-<!--            </article>-->
-<!--        </li>-->
-<!--    {% endfor %}-->
-<!--</ul>-->
-<!--<h2>Study Groups Chosen:</h2>-->
-<!--<ul>-->
-<!--    {% for sgroup in sgroups %}-->
-<!--        <li>-->
-<!--            <article class="media">-->
-<!--                <div class="media-body">-->
-<!--                    <p>{{ sgroup.name }}</p>-->
-<!--                </div>-->
-<!--            </article>-->
-<!--        </li>-->
-<!--    {% endfor %}-->
-<!--</ul>-->
 <h2>Data:</h2>
 <article class="media">
     <div class="media-body">
-        <div class="table-wrapper-scroll-y">
+        <div class="output-scroll">
             <table border="1px solid black">
                 <thead>
                     <tr>
