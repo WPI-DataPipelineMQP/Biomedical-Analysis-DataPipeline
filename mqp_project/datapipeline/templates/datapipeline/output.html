@@ -26,17 +26,18 @@
 <!--    {% endfor %}-->
 <!--</ul>-->
 <h2>Data:</h2>
-<ul>
-    <li>
-        <article class="media">
-            <div class="media-body">
-                <table border="1px solid black">
+<article class="media">
+    <div class="media-body">
+        <div class="table-wrapper-scroll-y">
+            <table border="1px solid black">
+                <thead>
                     <tr>
                         {% for label in attribute_names %}
-                            <td>{{ label }}</td>
+                            <th scope="col">{{ label }}</th>
                         {% endfor %}
                     </tr>
-
+                </thead>
+                <tbody>
                     {% for dc in data %}
                         <tr>
                             {% for val in dc %}
@@ -44,10 +45,10 @@
                             {% endfor %}
                         </tr>
                     {% endfor %}
-                </table>
-            </div>
-        </article>
-    </li>
-</ul>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</article>
 
 {% endblock content %}
