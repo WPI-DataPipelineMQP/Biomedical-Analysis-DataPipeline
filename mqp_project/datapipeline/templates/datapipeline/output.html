@@ -1,42 +1,20 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<!--<h2>Categories Chosen:</h2>-->
-<!--<ul>-->
-<!--    {% for category in categories %}-->
-<!--        <li>-->
-<!--            <article class="media">-->
-<!--                <div class="media-body">-->
-<!--                    <p>{{ category.name }}</p>-->
-<!--                </div>-->
-<!--            </article>-->
-<!--        </li>-->
-<!--    {% endfor %}-->
-<!--</ul>-->
-<!--<h2>Study Groups Chosen:</h2>-->
-<!--<ul>-->
-<!--    {% for sgroup in sgroups %}-->
-<!--        <li>-->
-<!--            <article class="media">-->
-<!--                <div class="media-body">-->
-<!--                    <p>{{ sgroup.name }}</p>-->
-<!--                </div>-->
-<!--            </article>-->
-<!--        </li>-->
-<!--    {% endfor %}-->
-<!--</ul>-->
 <h2>Data:</h2>
-<ul>
-    <li>
-        <article class="media">
-            <div class="media-body">
-                <table border="1px solid black">
+<button class="export-button">TODO: Export Data to CSV</button>
+<article class="media">
+    <div class="media-body">
+        <div class="output-scroll">
+            <table class="table-bordered">
+                <thead>
                     <tr>
                         {% for label in attribute_names %}
-                            <td>{{ label }}</td>
+                            <th scope="col">{{ label }}</th>
                         {% endfor %}
                     </tr>
-
+                </thead>
+                <tbody>
                     {% for dc in data %}
                         <tr>
                             {% for val in dc %}
@@ -44,10 +22,10 @@
                             {% endfor %}
                         </tr>
                     {% endfor %}
-                </table>
-            </div>
-        </article>
-    </li>
-</ul>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</article>
 
 {% endblock content %}

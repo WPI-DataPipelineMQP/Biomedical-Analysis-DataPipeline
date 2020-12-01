@@ -353,7 +353,8 @@ def output(request):
     '''
     context = {
         'data': result,
-        "attribute_names": attribute_names
+        "attribute_names": attribute_names,
+        'myCSS': 'output.css',
     }
     return render(request, 'datapipeline/output.html', context)
 
