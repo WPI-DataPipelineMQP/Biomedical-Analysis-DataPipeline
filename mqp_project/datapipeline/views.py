@@ -2,6 +2,7 @@ from django.shortcuts import render
 import json
 import pandas as pd
 import numpy as np 
+import csv
 from django.shortcuts import HttpResponse
 from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateChosenFilterForm, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
@@ -308,6 +309,22 @@ def make_conds(dictOfConds, study_group_names):
     stry += ")"
     return stry
 
+def export_data(request):
+    print('Exporting data')
+
+    response = HttpResponse(content_type='text/csv')
+
+    response['Content-Disposition'] = 'attachment; filename="study_data.csv"'
+
+    result = DBClient.executeQuery(request.session['args'], 1)
+
+    writer = csv.writer(response)
+    writer.writerow(request.session['attribute_names'])
+    for row in result:
+        writer.writerow(row)
+
+    return response
+
 def output(request):
     study_names = []
     if 'category_names' in request.session:
@@ -346,6 +363,9 @@ def output(request):
     }
     result = DBClient.executeQuery(args, 1)
     
+    request.session['args'] = args
+    request.session['attribute-names'] = attribute_names
+
     '''
     print("RESULTS")
     for i in result:
