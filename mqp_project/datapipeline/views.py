@@ -316,18 +316,12 @@ def export_data(request):
 
     response['Content-Disposition'] = 'attachment; filename="study_data.csv"'
 
+    result = DBClient.executeQuery(request.session['args'], 1)
+
     writer = csv.writer(response)
-    writer.writerow(['first_name', 'last_name', 'phone_number', 'country'])
-    writer.writerow(['Huzaif', 'Sayyed', '+919954465169', 'India'])
-    writer.writerow(['Adil', 'Shaikh', '+91545454169', 'India'])
-    writer.writerow(['Ahtesham', 'Shah', '+917554554169', 'India'])
-    # # turn queried data into a dataframe
-    # engine = create_engine(
-    #     'mysql+mysqlconnector://WPI:DataPipeline@localhost:3306/DataPipeline')
-
-    # df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
-
-    # df.to_csv(filename)
+    writer.writerow(request.session['attribute_names'])
+    for row in result:
+        writer.writerow(row)
 
     return response
 
@@ -370,6 +364,7 @@ def output(request):
     result = DBClient.executeQuery(args, 1)
     
     request.session['args'] = args
+    request.session['attribute-names'] = attribute_names
 
     '''
     print("RESULTS")
