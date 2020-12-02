@@ -26,12 +26,12 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     print('Start')
     for i, file in enumerate(filenames):
         filepath = directory_path + file
-        
+        print(filepath)
         if i == 0:
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
         
         if specialFlag is True:
-            noError, errorMessage = DBFunctions.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
+            DBFunctions.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
             
         else:
             noError, errorMessage = DBFunctions.uploadToDatabase(filepath, file, uploaderInfo, columnInfo, organizedColumns)

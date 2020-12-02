@@ -104,6 +104,8 @@ def studyInfo(request):
          'error': False
     }
     
+    context['form'] = StudyInfoForm()
+    
     #############################################################################################################
     if request.method == 'POST':
         form = StudyInfoForm(request.POST)
@@ -134,12 +136,10 @@ def studyInfo(request):
                 return redirect(info)
             
             else:
+                context['form'] = form
                 context['error'] = True
             
         #############################################################################################################
-        
-    
-    context['form'] = StudyInfoForm()
     
     return render(request, 'uploader/studyInfo.html', context)
 
@@ -177,24 +177,33 @@ def info(request):
                     else:
                         fields[field] = uploaderForm[field].data
         
+        
+        subjectOrgVal = fields.get('subjectOrganization')
+        timeSeriesVal = fields.get('isTimeSeries')
+        groupName = fields.get('groupName') 
+        dataCategoryName = fields.get('categoryName')
+        
+        
         # READING THE CSV FILE
         firstFile = filenames[0]
         path = 'uploaded_csvs/{}'.format(firstFile)
         
         if Helper.hasHeaders(path) is False:
-            request.session['errorMessage'] = "No Headers Were Included in the CSV File"
+            request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
             return redirect(error)
             
         df = pd.read_csv(path) 
         
+        hasSubjectNames = False 
+        subjectPerCol = False 
+        if subjectOrgVal == 'column':
+            subjectPerCol = True 
+            hasSubjectNames = True
+            df = Helper.transposeDataFrame(df, False)
+        
         headers = list(df.columns)
             
         fields['headerInfo'] = headers
-            
-        subjectOrgVal = fields.get('subjectOrganization')
-        timeSeriesVal = fields.get('isTimeSeries')
-        groupName = fields.get('groupName') 
-        dataCategoryName = fields.get('categoryName')
         
         # MAKING THE NECESSARY DB QUERIES
         studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
@@ -224,8 +233,10 @@ def info(request):
         fields['groupName'] = groupName
         fields['groupID'] = groupID
         fields['dcID'] = data_category_id
-        fields['hasSubjectNames'] = False 
-            
+        fields['hasSubjectNames'] = hasSubjectNames 
+        fields['subjectPerCol'] = subjectPerCol
+         
+        print(fields)
         # ALLOWING FIELDS TO BE PASSED AROUND
         request.session['uploaderInfo'] = fields 
         
@@ -306,7 +317,7 @@ def extraInfo(request):
                 myExtras.append((name, val))
         
         print(myFields)
-        if subjectRule == 'row' and isTimeSeries == 'y':
+        if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
             colName = myFields.get('nameOfValueMeasured')
             dataType = myFields.get('datatypeOfMeasured')
             dataType = Helper.getActualDataType(dataType)
@@ -328,7 +339,9 @@ def extraInfo(request):
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
                 return redirect(error)
-            
+        
+        if uploaderInfo.get('subjectPerCol') is True:
+            uploaderInfo['hasSubjectNames'] = True
         
         request.session['uploaderInfo'] = uploaderInfo
         
@@ -337,7 +350,7 @@ def extraInfo(request):
     #############################################################################################################     
     elif request.method == 'GET':
         case1 = False
-        if subjectRule == 'row' and isTimeSeries == 'y':
+        if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
             print('FOUND CASE 1')
             form.fields['hasSubjectID'].required = True
             form.fields['nameOfValueMeasured'].required = True 
@@ -398,7 +411,7 @@ def finalPrompt(request):
     tableName = uploaderInfo.get('tableName')
     
     form = UploadPositionForm(None, columns=headers)
-    
+    context['form'] = form
     #############################################################################################################
     if request.method == 'POST':
         form = UploadPositionForm(request.POST, columns=headers)
@@ -411,8 +424,8 @@ def finalPrompt(request):
         clean = Helper.seperateByName(myFields, 2, True)       
         
         if Helper.foundDuplicatePositions(clean) is True:
-            print('Found Duplicate!')
             context['error'] = True
+            context['form'] = form
             
         else:
             request.session['positionInfo'] = clean 
@@ -421,8 +434,7 @@ def finalPrompt(request):
             
     #############################################################################################################
     elif request.method == 'GET':
-        if isTimeSeries and subjectOrg == 'row':
-            print(uploaderInfo)
+        if isTimeSeries and (subjectOrg == 'row' or subjectOrg == 'column'):
             return redirect(upload)
             
         print('\nGot Uploader Extra Info Request\n')
@@ -432,7 +444,7 @@ def finalPrompt(request):
     tableSchema = DBFunctions.getTableSchema(tableName)
     
     context['schema'] = tableSchema
-    context['form'] = form
+    
     
     return render(request, 'uploader/finalPrompt.html', context)
 
@@ -446,7 +458,8 @@ def upload(request):
     positionInfo = request.session['positionInfo']
     uploaderInfo = request.session['uploaderInfo']
     filenames = uploaderInfo.get('filenames')
-    
+    hasSubjectNames = uploaderInfo.get('hasSubjectNames')
+    print('Has Subject Names', hasSubjectNames)
     form = DisabledInputForm()
     
     context = {
@@ -479,8 +492,9 @@ def upload(request):
             specialFlag = True
         
         groupID = uploaderInfo.get('groupID')
-        hasSubjectNames = uploaderInfo.get('hasSubjectNames')
+        
         tableName = uploaderInfo.get('tableName')
+        
         
         task = ProcessUpload.delay(filenames, uploaderInfo, positionInfo, specialFlag)
         

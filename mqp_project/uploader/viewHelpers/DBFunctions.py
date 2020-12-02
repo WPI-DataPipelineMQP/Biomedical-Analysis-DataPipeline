@@ -56,7 +56,7 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
             uploaderInfo['tableName'] = myMap.get('tableName')
             uploaderInfo['dcID'] = myMap.get('DC_ID')
             
-            if subjectRule == 'row' and isTimeSeries == 'y':
+            if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
                 columnName = myFields.get('nameOfValueMeasured')
                 columnVal = myFields.get('datatypeOfMeasured') 
                 cleanResult = [(columnName, columnVal)] 
@@ -120,11 +120,27 @@ def specialUploadToDatabase(file, myMap, column_info):
     
     df = pd.read_csv(file)
     
-    numpyArray = df.to_numpy()
+    if myMap.get('subjectPerCol') is True:
+        df = Helper.transposeDataFrame(df, True)
     
+    numpyArray = df.to_numpy()
+    print(numpyArray)
+    print('YO WHY')
+    print(columnName)
     try:
+        print('IN TRY')
+        myDf = pd.DataFrame(columns=[columnName, 'subject_id']) 
+        print('PAST MY DF')
+        print(myDf)
         with transaction.atomic():
-            for i, row in enumerate(numpyArray):
+            print('IN ATOMIC!')
+            
+            i = 0
+            for row in numpyArray:
+                print('IN ARRAY')
+                print('Row', end=" ")
+                print(row)
+                
                 subject_number = i 
         
                 if myMap.get('hasSubjectNames') is True:
@@ -133,10 +149,13 @@ def specialUploadToDatabase(file, myMap, column_info):
         
                 subject_id, noError = DBHandler.subjectHandler("", groupID, subject_number)
                 
+                print(subject_id)
                 if noError is False:
                     raise Exception()
         
                 tmpDf = pd.DataFrame(row, columns=[columnName])
+                
+                print(tmpDf.head())
         
                 if dt == 1:
                     tmpDf[[columnName]].astype(str)
@@ -155,8 +174,18 @@ def specialUploadToDatabase(file, myMap, column_info):
                     tmpDf[columnName].astype(bool)
             
                 tmpDf['subject_id'] = subject_id
-        
-                DBClient.dfInsert(tmpDf, tableName)
+                
+                print(tmpDf.head())
+                print('appending after adjusting')
+                myDf = myDf.append(tmpDf, ignore_index=True)
+                print(myDf.head())
+                
+                i += 1
+                
+            print('Done')
+            print(myDf.head())
+            DBClient.dfInsert(myDf, tableName)
+            print('ALL DONE')
     except:
         return False
     
@@ -164,22 +193,30 @@ def specialUploadToDatabase(file, myMap, column_info):
     
     
     
-def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subjectID=None):
+def uploadToDatabase(file, filename, myMap, column_info, organizedColumns):
     errorMessage = None
-    
+    columnFlag = False 
     df = pd.read_csv(file)
+    
+    if myMap.get('subjectPerCol') is True:
+        columnFlag = True
+        df = Helper.transposeDataFrame(df, True)
+        
+    
     filename = Helper.modifyFileName(filename)
     groupID = myMap.get('groupID')
     
     tableName = myMap.get('tableName')
-    
-    df = df[organizedColumns]
-    
+        
     # fix error handler
     if myMap.get('hasSubjectNames') is True:
         listOfSubjects = []
+        listOfSubjectNum = []
         
-        listOfSubjectNum = list(df.iloc[:,0])
+        if columnFlag is True:
+            listOfSubjectNum = list(df.index)
+        else:
+            listOfSubjectNum = list(df.iloc[:,0])
         
         for num in listOfSubjectNum:
             if isinstance(num, str):
@@ -189,17 +226,17 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subje
             listOfSubjects.append(currID)
         
         
+        df = df.drop(df.columns[0], axis=1) # deleting the subjects column
         
+        df = df[organizedColumns]
         df['subject_id'] = listOfSubjects
         
     else:
+        subjectID, errorMessage = DBHandler.subjectHandler(filename, groupID)
         
-        if subjectID is None:
-            subjectID, errorMessage = DBHandler.subjectHandler(filename, groupID)
-        
+        df = df[organizedColumns]
         df['subject_id'] = subjectID
         
-    
     try:
         with transaction.atomic():
             for col in column_info:
@@ -235,10 +272,10 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns, subje
         
             DBClient.dfInsert(df, tableName)
     
-    except:
+    except Exception as e:
         if errorMessage is None:
-            errorMessage = "Error found when trying to insert to the {} table. Most likely an incorrect data type was specified for one of the columns.".format(tableName)
-            
+            #errorMessage = "Error found when trying to insert to the {} table. Most likely an incorrect data type was specified for one of the columns.".format(tableName)
+            errorMessage = str(e)
         return False, errorMessage     
     
     return True, None

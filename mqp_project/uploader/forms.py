@@ -21,7 +21,7 @@ class UploaderInfoForm(forms.Form):
     groupName = forms.CharField(label='Study Group Name', required=False)
     categoryName = forms.CharField(label='Data Category Name', required=True)
     
-    SUBJECT_CHOICES = [('file', ('Subject per File')), ('row', 'Subject per Row')]
+    SUBJECT_CHOICES = [('file', ('Subject per File')), ('row', 'Subject per Row'), ('column', 'Subject per Column')]
     
     subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="What Format Does this Data Category Follow?")
     

@@ -219,7 +219,18 @@ def hasHeaders(filepath):
 
     
     print(hasHeaders)
-    return hasHeaders   
+    return hasHeaders 
+
+def transposeDataFrame(df, withSubjects=True):
+    indexVal = df.columns[0] # used to maintain labels after transposing
+    
+    df_t = df.set_index(indexVal).T # transposing the matrix 
+    
+    subjects = list(df_t.index) 
+    
+    if withSubjects is True:
+        df_t.insert(loc=0, column='Subjects', value=subjects)
+
+    
+    return df_t   
         
-    
-    
