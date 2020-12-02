@@ -308,6 +308,25 @@ def make_conds(dictOfConds, study_group_names):
     stry += ")"
     return stry
 
+def export_data(request):
+    print('Exporting data')
+
+    response = HttpResponse(content_type='text/csv')
+
+    filename = "study_data.csv"
+
+    response['Content-Disposition'] = 'attachment; filename=filename'
+
+    # turn queried data into a dataframe
+    engine = create_engine(
+        'mysql+mysqlconnector://WPI:DataPipeline@localhost:3306/DataPipeline')
+
+    df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
+
+    df.to_csv(filename)
+
+    return response
+
 def output(request):
     study_names = []
     if 'category_names' in request.session:
@@ -346,6 +365,8 @@ def output(request):
     }
     result = DBClient.executeQuery(args, 1)
     
+    request.session['args'] = args
+
     '''
     print("RESULTS")
     for i in result:
