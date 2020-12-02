@@ -11,6 +11,8 @@ $ pip3 install -r requirements.txt
 
 ## Run Website
 
+Navigate to the mqp_project directory and run the following command.
+
 ```console
 $ python manage.py runserver
 ```
@@ -53,10 +55,11 @@ $ redis-server
 $ pip install gevent
 ```
 
-- In a terminal separate from the redis server, run the following command 
+- After the redis server is running successfully, navigate to the mqp_project directory in a terminal separate from the redis server. Run the following command 
 
 ```console
 $ python -m celery -A mqp_project worker --loglevel=info
 ```
 
-- After running the command, you can now run the project normally
+- This should eventually show ```celery@<your device> ready.``` and then hang. If the redis server is not running, it will have an appropriate error message. After running the command sucessfully, you can now run the project normally in another terminal.
+> NOTE: You will have 3 terminals in total. One to run redis, one to run celery, and another to run the django server.
