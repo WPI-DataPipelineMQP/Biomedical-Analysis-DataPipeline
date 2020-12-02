@@ -2,6 +2,7 @@ from django.shortcuts import render
 import json
 import pandas as pd
 import numpy as np 
+import csv
 from django.shortcuts import HttpResponse
 from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateChosenFilterForm, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
@@ -313,17 +314,20 @@ def export_data(request):
 
     response = HttpResponse(content_type='text/csv')
 
-    filename = "study_data.csv"
+    response['Content-Disposition'] = 'attachment; filename="study_data.csv"'
 
-    response['Content-Disposition'] = 'attachment; filename=filename'
+    writer = csv.writer(response)
+    writer.writerow(['first_name', 'last_name', 'phone_number', 'country'])
+    writer.writerow(['Huzaif', 'Sayyed', '+919954465169', 'India'])
+    writer.writerow(['Adil', 'Shaikh', '+91545454169', 'India'])
+    writer.writerow(['Ahtesham', 'Shah', '+917554554169', 'India'])
+    # # turn queried data into a dataframe
+    # engine = create_engine(
+    #     'mysql+mysqlconnector://WPI:DataPipeline@localhost:3306/DataPipeline')
 
-    # turn queried data into a dataframe
-    engine = create_engine(
-        'mysql+mysqlconnector://WPI:DataPipeline@localhost:3306/DataPipeline')
+    # df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
 
-    df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
-
-    df.to_csv(filename)
+    # df.to_csv(filename)
 
     return response
 
