@@ -1,7 +1,30 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
-<h1 class="header-error">Uploaded Successfully!</h1>
+<h1 id="success-header">Uploaded Successfully!</h1>
+
+{% if uploaded and notUploaded %}
+<h1 class="upload-status">Status of Uploaded Files:</h1>
+<div class="scrollable container">
+    <div class="column">
+        <h2>Files that were uploaded</h2>
+        <ul>
+            {% for file in uploaded %}
+            <li>{{ file }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="column">
+        <h2>Files that were not uploaded</h2>
+        <ul>
+            {% for file in notUploaded %}
+            <li>{{ file }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
 
 <div class="form">
     <form method="POST" action="{% url 'uploader-uploaderSuccess' %}" enctype="multipart/form-data">

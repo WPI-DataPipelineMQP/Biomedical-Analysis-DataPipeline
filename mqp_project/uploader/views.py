@@ -183,13 +183,14 @@ def info(request):
         groupName = fields.get('groupName') 
         dataCategoryName = fields.get('categoryName')
         
-        
         # READING THE CSV FILE
         firstFile = filenames[0]
         path = 'uploaded_csvs/{}'.format(firstFile)
         
         if Helper.hasHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
+            uploaderInfo = {'filenames': filenames}
+            request.session['uploaderInfo'] = uploaderInfo
             return redirect(error)
             
         df = pd.read_csv(path) 
@@ -537,15 +538,23 @@ def error(request):
     
     if request.method == 'POST':
         Helper.clearUploadInfo(request.session)    
+        Helper.deleteAllDocuments()
         return redirect(home)
     
     elif request.method == 'GET':
         if request.session.get('errorMessage', None) != None:
             context['errorMessage'] = request.session['errorMessage']
             
-        Helper.deleteAllDocuments()
+        if request.session.get('uploaderInfo', None) != None:
+            uploaderInfo = request.session['uploaderInfo']
+            filenames = uploaderInfo.get('filenames')
+
+            uploaded, notUploaded = Helper.getUploadResults(filenames)
+            
+            context['uploaded'] = uploaded 
+            context['notUploaded'] = notUploaded
+            
         
-    
     return render(request, 'uploader/errorPage.html', context) 
 
 
@@ -562,6 +571,17 @@ def success(request):
         elif 'continue' in request.POST:
             Helper.clearUploadInfo(request.session) 
             return redirect(info)
+        
+    elif request.method == 'GET':
+        if request.session.get('uploaderInfo', None) != None:
+            uploaderInfo = request.session['uploaderInfo']
+            filenames = uploaderInfo.get('filenames')
+
+            uploaded, notUploaded = Helper.getUploadResults(filenames)
+            
+            context['uploaded'] = uploaded 
+            context['notUploaded'] = notUploaded
+        
     
     return render(request, 'uploader/successPage.html', context) 
     

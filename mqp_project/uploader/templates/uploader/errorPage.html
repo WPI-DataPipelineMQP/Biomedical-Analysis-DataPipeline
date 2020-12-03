@@ -6,6 +6,29 @@
 {% if errorMessage %}
 <h3 class="header-error">ERROR MESSAGE: {{ errorMessage }}</h3>
 {% endif %}
+
+{% if uploaded and notUploaded %}
+<h1 class="upload-status">Status of Uploaded Files:</h1>
+<div class="scrollable container">
+    <div class="column">
+        <h2>Files that were uploaded</h2>
+        <ul>
+            {% for file in uploaded %}
+            <li>{{ file }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="column">
+        <h2>Files that were not uploaded</h2>
+        <ul>
+            {% for file in notUploaded %}
+            <li>{{ file }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
 <div class="form">
     <form method="POST" action="{% url 'uploader-uploaderError' %}" enctype="multipart/form-data">
         {% csrf_token %}

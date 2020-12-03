@@ -28,15 +28,10 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
         filepath = directory_path + file
         print(filepath)
         if i == 0:
-            print('I is 0')
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
             i += 0.5
-            print('preparing to update')
             progress_recorder.set_progress(i, numOfFiles, description="Uploading")
-            print('updated')
-        
-        print('I am here now')
-        print('Special Flag:', specialFlag)
+
         if specialFlag is True: 
             print('Starting...')
             DBFunctions.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
@@ -47,22 +42,17 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
         if noError is False:
             raise Exception(errorMessage)
         
+        else:
+            instance = Document.objects.get(uploadedFile__contains=filepath, filename__contains=file)
+            instance.uploadedFile.delete()
+            instance.delete()
         # Sleep for 1 second
         time.sleep(0.1)
         
         progress_recorder.set_progress(i, numOfFiles, description="Uploading")
         
-    # DELETING UPLOADED CSV FILES
-    try:
-        for name in filenames:
-            tmpPath = directory_path + name
-            instance = Document.objects.get(uploadedFile=tmpPath, filename=name)
-            instance.uploadedFile.delete()
-            instance.delete()
-            
-            return 'Upload was successful'
-            
-    except:
-        raise Exception('No Filenames!')
+        
+    return 'Upload was successful'
+
         
     

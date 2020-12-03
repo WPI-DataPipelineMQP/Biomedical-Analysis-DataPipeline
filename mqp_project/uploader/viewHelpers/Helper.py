@@ -1,6 +1,6 @@
 from datetime import datetime 
 from ..models import Document  
-import csv
+import csv, os
 
 import random
 
@@ -243,4 +243,29 @@ def replaceWithNameOfValue(extras, name):
         newExtras.append( (newName, itemValue) )
         
     return newExtras
+
+
+def getUploadResults(filenames):
+    directory_path = 'uploaded_csvs/'
+    
+    filesLeft = os.listdir(directory_path)
+    
+    print(filesLeft)
+    if len(filesLeft) == 0:
+        return filenames, ['none'] 
+    
+    filesUploaded = []
+    
+    for file in filenames:
+        if file in filesLeft:
+            continue 
+        
+        filesUploaded.append(file)
+        
+    if len(filesUploaded) == 0:
+        filesUploaded.append('none')
+        
+    return filesUploaded, filesLeft 
+    
+    
         
