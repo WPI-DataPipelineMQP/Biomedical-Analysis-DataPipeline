@@ -30,7 +30,7 @@ def getSelectorFromTable(selector, table_name, where_params, join_info):
     
     result = DBClient.executeQuery(args)
     
-    #print('Result:', result)
+    print('Result:', result)
     if result:
         return result[0][0]
     
@@ -73,6 +73,17 @@ def getInfoOnStudy(selector, table_name, where_params, join_info):
         return result[0][0]
     
     return []
+
+def getAttributeOfTable(tableName):
+    where_params = [('dc_table_name', tableName, True)]
+    
+    dc_ID = getSelectorFromTable('data_category_id', 'DataCategory', where_params, [None, None])
+    
+    where_params = [('data_category_id', dc_ID, False)]
+    attributeName = getSelectorFromTable('attr_name', 'Attribute', where_params, [None, None])
+    attributeType = getSelectorFromTable('data_type', 'Attribute', where_params, [None, None])
+    
+    return attributeName, attributeType
 
 def convertToList(data):
     result = []

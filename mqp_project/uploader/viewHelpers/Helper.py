@@ -233,4 +233,14 @@ def transposeDataFrame(df, withSubjects=True):
 
     
     return df_t   
+
+def replaceWithNameOfValue(extras, name):
+    newExtras = []
+    for i, item in enumerate(extras):
+        itemName = item[0]
+        itemValue = item[1]
+        newName = itemName.replace('Entered Name', name)
+        newExtras.append( (newName, itemValue) )
+        
+    return newExtras
         

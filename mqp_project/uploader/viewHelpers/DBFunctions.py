@@ -56,17 +56,12 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
             uploaderInfo['tableName'] = myMap.get('tableName')
             uploaderInfo['dcID'] = myMap.get('DC_ID')
             
-            if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
-                columnName = myFields.get('nameOfValueMeasured')
-                columnVal = myFields.get('datatypeOfMeasured') 
-                cleanResult = [(columnName, columnVal)] 
-                uploaderInfo['headerInfo'] = [columnName]
-        
-            
             myMap['columns'] = cleanResult
             
-            
+            print(myExtras)
             cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
+            
+            print(cleanAttributeFormat)
             
             noErrors = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
 
@@ -109,6 +104,7 @@ def getTableSchema(tableName):
         
     return string
 
+         
 def specialUploadToDatabase(file, myMap, column_info):
     groupID = myMap.get('groupID')
     tableName = myMap.get('tableName')

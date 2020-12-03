@@ -241,7 +241,7 @@ def info(request):
         request.session['uploaderInfo'] = fields 
         
         # CONDITIONS IF EXTRA INFORMATION IS NEEDED
-        if (subjectOrgVal == 'row' and timeSeriesVal == 'y') or (groupID == -1) or (data_category_id == -1):
+        if (groupID == -1) or (data_category_id == -1):
 
             return redirect(extraInfo)
             
@@ -299,6 +299,9 @@ def extraInfo(request):
     groupName = uploaderInfo.get('groupName')
     dcID = uploaderInfo.get('dcID')
     
+    if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
+        headers = ['Entered Name']
+        
     form = UploadInfoCreationForm(None, dynamicFields=headers)
     
     ############################################################################################################# 
@@ -317,12 +320,15 @@ def extraInfo(request):
                 myExtras.append((name, val))
         
         print(myFields)
+        
         if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
             colName = myFields.get('nameOfValueMeasured')
-            dataType = myFields.get('datatypeOfMeasured')
+            dataType = myExtras[0][1]
             dataType = Helper.getActualDataType(dataType)
             uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
+            myExtras = Helper.replaceWithNameOfValue(myExtras, colName)
             
+
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
             DBHandler.insertToStudyGroup(groupName, description, studyID) 
@@ -356,7 +362,6 @@ def extraInfo(request):
             form.fields['nameOfValueMeasured'].required = True 
             context['case1'] = True
             case1 = True
-            form = UploadInfoCreationForm(None, dynamicFields=[])
             
         elif subjectRule == 'row':
             print('FOUND CASE 2 ')
@@ -368,7 +373,7 @@ def extraInfo(request):
             form.fields['studyGroupDescription'].required = True 
             context['case3'] = True 
             
-        if dcID == -1 and case1 is False:
+        if dcID == -1:
             print('FOUND CASE 4')
             form.fields['dataCategoryDescription'].required = True
             filenames = uploaderInfo.get('filenames')
@@ -435,6 +440,11 @@ def finalPrompt(request):
     #############################################################################################################
     elif request.method == 'GET':
         if isTimeSeries and (subjectOrg == 'row' or subjectOrg == 'column'):
+            colName, dataType = DBHandler.getAttributeOfTable(tableName)
+            print(colName)
+            print(dataType)
+            uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
+            request.session['uploaderInfo'] = uploaderInfo
             return redirect(upload)
             
         print('\nGot Uploader Extra Info Request\n')

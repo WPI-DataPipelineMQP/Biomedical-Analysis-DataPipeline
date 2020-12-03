@@ -49,7 +49,7 @@ class UploadInfoCreationForm(forms.Form):
         (5, 'Boolean')
     ]
     
-    datatypeOfMeasured = forms.CharField(label='What is the Data Type?', widget=forms.Select(choices=allowed_datatypes), required=False)
+    #datatypeOfMeasured = forms.CharField(label='What is the Data Type?', widget=forms.Select(choices=allowed_datatypes), required=False)
     
     studyGroupDescription = forms.CharField(label='Study Group Descrption', required=False)
     

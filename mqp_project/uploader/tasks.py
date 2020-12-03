@@ -18,7 +18,7 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     noError = True 
     errorMessage = None
         
-    numOfFiles = len(filenames)
+    numOfFiles = len(filenames) + 0.5
     directory_path = 'uploaded_csvs/'
 
     print('Task started')
@@ -28,9 +28,17 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
         filepath = directory_path + file
         print(filepath)
         if i == 0:
+            print('I is 0')
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
+            i += 0.5
+            print('preparing to update')
+            progress_recorder.set_progress(i, numOfFiles, description="Uploading")
+            print('updated')
         
-        if specialFlag is True:
+        print('I am here now')
+        print('Special Flag:', specialFlag)
+        if specialFlag is True: 
+            print('Starting...')
             DBFunctions.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
             
         else:
