@@ -2,24 +2,26 @@
 
 ## Installing Python Dependencies
 
-Install the python dependencies that this program requires. The dependencies are defined in the requirements.txt file so just follow the command below. 
+- Install the python dependencies that this program requires. The dependencies are defined in the requirements.txt file so just follow the command below. 
 
 ```console
 $ pip3 install -r requirements.txt
 ```
 
+## Config Environment Variables
+
+- Obtain the most up-to-date .env file for running this program. It contains sensitive information and other development specific environment settings. Ensure the file is saved as a .env file and not .txt.
+
+- Move this file to be within the Biomedical-Analysis-DataPipeline (root) directory
 
 ## Run Website
 
-Navigate to the mqp_project directory and run the following command.
+- Navigate to the mqp_project directory and run the following command.
 
 ```console
 $ python manage.py runserver
 ```
-
-## Helpful Link to Playlist of Django Tutorials
-
-[Youtube Link](https://www.youtube.com/watch?v=UmljXZIypDc&feature=youtu.be&list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p)
+> NOTE: If you want to use the uploader feature, you need to follow the "Run the Progress Bar" instructions below
 
 ## Run the Progress Bar
 
@@ -63,3 +65,7 @@ $ python -m celery -A mqp_project worker --loglevel=info
 
 - This should eventually show ```celery@<your device> ready.``` and then hang. If the redis server is not running, it will have an appropriate error message. After running the command sucessfully, you can now run the project normally in another terminal.
 > NOTE: You will have 3 terminals in total. One to run redis, one to run celery, and another to run the django server.
+
+## Helpful Link to Playlist of Django Tutorials
+
+[Youtube Link](https://www.youtube.com/watch?v=UmljXZIypDc&feature=youtu.be&list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p)
