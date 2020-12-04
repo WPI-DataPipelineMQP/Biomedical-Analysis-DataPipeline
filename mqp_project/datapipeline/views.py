@@ -4,6 +4,9 @@ import pandas as pd
 import numpy as np 
 import csv
 from django.shortcuts import HttpResponse
+from sqlalchemy import create_engine
+from django.conf import settings
+
 from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateChosenFilterForm, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 from django.http import HttpResponseRedirect
 from django.core import serializers
@@ -346,10 +349,10 @@ def output(request):
     if 'filter_values' in request.session:
         filter_values = request.session['filter_values']
         
-    if "study_group_name" not in attribute_names:
+    if "StudyGroup.study_group_name" not in attribute_names:
         attribute_names.append("StudyGroup.study_group_name")
         
-    if "subject_number" not in attribute_names:
+    if "Subject.subject_number" not in attribute_names:
         attribute_names.append("Subject.subject_number")
 
     args = {
@@ -371,9 +374,22 @@ def output(request):
     for i in result:
         print(i)
     '''
+
+
+    # Set up stats summary
+    engine = create_engine(settings.DB_CONNECTION_URL)
+    df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
+    stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
+    print(stat_summary)
+    records = stat_summary.to_records(index=True)
+    print(records)
+    record_list = list(records)
+    print(record_list)
+
     context = {
         'data': result,
         "attribute_names": attribute_names,
+        'stat_summary': record_list,
         'myCSS': 'output.css',
     }
     return render(request, 'datapipeline/output.html', context)

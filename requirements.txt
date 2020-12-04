@@ -6,3 +6,11 @@ redis
 celery
 django-celery-results
 celery-progress
+matplotlib
+sqlalchemy
+seaborn
+pandas
+numpy
+scipy
+stats
+tqdm
