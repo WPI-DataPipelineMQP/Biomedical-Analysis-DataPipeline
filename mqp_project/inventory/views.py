@@ -1,6 +1,87 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from datapipeline.database import DBClient, DBHandler
+from datapipeline.forms import CreateChosenBooleanForm
+from datapipeline.viewHelpers import viewsHelper as ViewHelper
 
+# 1st screen: Show list of studies and allow user to start selection on them or use links to study page
+def listStudies(request):
+    study_fields = []
+    study_ids = {}
+    args = {
+        'selectors': 'study_name, study_description, study_id',
+        'from': 'Study',
+        'join-type': None,
+        'join-stmt': None,
+        'where': None,
+        'group-by': None,
+        'order-by': None
+    }
+    result = DBClient.executeQuery(args, 1)
+    for (study_name, study_description, study_id) in result:  # cursor:
+        studies_dict = {}
+        studies_dict["name"] = study_name
+        studies_dict["description"] = study_description
+        studies_dict["id"] = study_id
+        study_fields.append(studies_dict)
+        study_ids[study_name] = study_id
+
+    request.session['study_fields'] = study_fields
+
+    if request.method == 'POST':
+
+        studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
+
+        studies_data = {}
+
+        if studies_form.is_valid():
+            for i, field in enumerate(studies_form.getAllFields()):
+                studies_data[i] = {
+                    'name': study_fields[i]['name'],
+                    'value': field[1],
+                    'id': study_fields[i]["id"]
+                }
+
+        study_ids_forquery = ''
+
+        # MAKING THE QUERY TO USE
+        for i, key in enumerate(studies_data):
+            study = studies_data[key]
+
+            if study.get('value') is True:
+                if study_ids_forquery != '':
+                    study_ids_forquery += 'OR '
+
+                if i == (len(studies_data) - 1):
+                    study_ids_forquery += 'study_id = {}'.format(study['id'])
+
+                else:
+                    study_ids_forquery += 'study_id = {} '.format(study['id'])
+
+        data_categories = DBHandler.getDataCategoriesOfStudies(study_ids_forquery)
+
+        study_groups = DBHandler.getStudyGroupsOfStudies(study_ids_forquery)
+
+        # gets the names to be printed out
+        study_names = ViewHelper.getNameList(studies_data, True)
+
+        request.session['study_names'] = study_names
+        request.session[
+            'studies_data'] = studies_data  # NOTE: after this edit, do we still need this in the session?
+        request.session['data_categories'] = data_categories
+        request.session['study_groups'] = study_groups
+
+        return HttpResponseRedirect('/dataSelection')
+        # return render(request, 'datapipeline/studySelection.html', context)
+
+    studies_form = CreateChosenBooleanForm(customFields=study_fields)
+
+    context = {
+        'studies_form': studies_form,
+        'study_ids': study_ids,
+        'myCSS': 'studySelection.css'
+    }
+    return render(request, 'inventory/listStudies.html', context)
 
 # 2nd Screen: Show metadata on study, study groups, data categories, attributes
 def studySummary(request, id):
@@ -126,6 +207,7 @@ def getDataCategories(study):
         data_category_dict['time_series'] = 'True' if data_category[1] else 'False'
         data_category_dict['description'] = data_category[3]
         data_category_dict['attributes'] = getAttributes(data_category[4])
+        data_category_dict['total_attributes'] = len(data_category_dict['attributes'])
         data_categories.append(data_category_dict)
 
     return data_categories

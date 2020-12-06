@@ -1,0 +1,26 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% load inventory_extras %}
+{% block content %}
+<form method="POST" action="{% url 'datapipeline-studySelection' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <br/>
+    <ul class="study-listings">
+        {% for field in studies_form %}
+        <li class="study-article">
+            {{ field }}
+            <label class="study-article">
+                <article class="media content-section">
+                    <div class="media-body">
+                        <a href="{% url 'inventory-study' study_ids|get_item:field.label %}"><h2>{{ field.label }}</h2></a>
+                        <p class="article-content">{{ field.help_text }}</p>
+                    </div>
+                </article>
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <input type="submit" value="Submit">
+</form>
+{% endblock content %}

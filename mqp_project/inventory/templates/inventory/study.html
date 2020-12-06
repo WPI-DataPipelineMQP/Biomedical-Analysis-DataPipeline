@@ -27,7 +27,7 @@
     <p><b>Total Rows of Data: </b>{{ datacategory.total_records }}</p>
     <p><b>Time Series: </b>{{ datacategory.time_series }}</p>
 
-    <h4>Attributes</h4>
+    <h4>Attributes ({{ datacategory.total_attributes }})</h4>
     {% for attribute in datacategory.attributes %}
         <h5>{{ attribute.name }}</h5>
         <p><b>Description: </b>{{ attribute.description }}</p>

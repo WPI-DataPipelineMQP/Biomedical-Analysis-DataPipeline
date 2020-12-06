@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'uploader.apps.UploaderConfig',
     'inventory.apps.InventoryConfig',
+    'inventory.templatetags.inventory_extras',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',
