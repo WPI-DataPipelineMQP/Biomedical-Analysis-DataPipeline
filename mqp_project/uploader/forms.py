@@ -6,7 +6,7 @@ class StudyNameForm(forms.Form):
     
     
 class StudyInfoForm(forms.Form):
-    YES_NO_CHOICES = [(1, 'Yes'), (0, 'No')]
+    YES_NO_CHOICES = [(True, 'Yes'), (False, 'No')]
     DateInput = partial(forms.DateInput, {'class': 'datepicker'})
     studyDescription = forms.CharField(label='Study Description', required=True)
     isIRB_Approved = forms.ChoiceField(choices=YES_NO_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is study IRB approved?")
@@ -25,7 +25,7 @@ class UploaderInfoForm(forms.Form):
     
     subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="What Format Does this Data Category Follow?")
     
-    TIME_SERIES_CHOICES = [('y', 'Yes'), ('n', 'No')]
+    TIME_SERIES_CHOICES = [(True, 'Yes'), (False, 'No')]
     
     isTimeSeries = forms.ChoiceField(choices=TIME_SERIES_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is this Data Category Time Series?")
     
@@ -33,7 +33,7 @@ class UploaderInfoForm(forms.Form):
     
 
 class UploadInfoCreationForm(forms.Form):
-    YES_NO_CHOICES = [('y', 'Yes'), ('n', 'No')]
+    YES_NO_CHOICES = [(True, 'Yes'), (False, 'No')]
     
     
     subjectLabel = "Is the subject name or ID included in the file? Note that it must be the first column"

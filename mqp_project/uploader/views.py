@@ -8,8 +8,9 @@ from django.shortcuts import redirect
 
 from datapipeline.views import home
 from datapipeline.database import DBClient, DBHandler
+from datapipeline.models import Study, StudyGroup, DataCategory, DataCategoryStudyXref
 
-from .viewHelpers import Helper, DBFunctions
+from .viewHelpers import Helper, DBFunctions, DBFunctions2, DBHandler2
 from .models import Document
 from . import views
 from .forms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
@@ -37,51 +38,33 @@ def study(request):
                     fields.append(
                         {
                             'name': field,
-                            'label': studyNameForm[field].label,
                             'value': studyNameForm[field].data
                         }
                     )
             studyName = fields[0].get('value')
             request.session['studyName'] = studyName
             
-            studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
-        
-            if studyID == -1:
-                # redirect to another page
+            studyExists = Study.objects.filter(study_name=studyName).exists()
+            
+            if studyExists is False:
                 return redirect(studyInfo)
             
-            else:
-                return redirect(info)
+            return redirect(info)
             
     #############################################################################################################           
     elif request.method == 'GET':
-        print('\nGot Uploader Study Name Request\n')
         
         Helper.clearStudyName(request.session)
         Helper.clearUploadInfo(request.session)
         
-        args = {
-            'selectors': 'study_name',
-            'from': 'Study',
-            'join-type': None,
-            'join-stmt': None,
-            'where': None,
-            'group-by': None,
-            'order-by': None,
-        }
-    
-        result = DBClient.executeQuery(args)
-        cleanResult = []
-        for item in result:
-            study = item[0]
-            cleanResult.append(study)
-            
+        allStudies = Study.objects.all()
         
-        context['studies'] = cleanResult
+        studyNames = [ study.study_name for study in allStudies ]
+            
+        context['studies'] = studyNames
         
     #############################################################################################################
         
-    
     form = StudyNameForm()
     
     context['form'] = form 
@@ -129,9 +112,14 @@ def studyInfo(request):
         
             # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
             if Helper.validDates(startDate, endDate):
-                values = [studyName, studyDescription, hasIRB, institutions, startDate, endDate, contactInfo, notes]
-            
-                DBHandler.insertToStudy(values)
+                newStudy = Study.objects.create(study_name=studyName, 
+                                                study_description=studyDescription, 
+                                                is_irb_approved=hasIRB, 
+                                                institutions_involved=institutions, 
+                                                study_start_date=startDate, 
+                                                study_end_date=endDate, 
+                                                study_contact=contactInfo, 
+                                                study_notes=notes)
             
                 return redirect(info)
             
@@ -157,6 +145,7 @@ def info(request):
          'studyName': studyName
     }
     
+    studyID = (Study.objects.get(study_name=studyName)).study_id
     #############################################################################################################
     if request.method == 'POST':
         uploaderForm = UploaderInfoForm(request.POST, request.FILES)
@@ -206,26 +195,30 @@ def info(request):
             
         fields['headerInfo'] = headers
         
-        # MAKING THE NECESSARY DB QUERIES
-        studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
-            
-        where_params = [('study_group_name', groupName, True), ('study_id', studyID, False)]
-        groupID = DBHandler.getSelectorFromTable('study_group_id', 'StudyGroup', where_params, [None, None])
-            
-        time_series_int = 0
-            
-        if timeSeriesVal == 'y':
-            time_series_int = 1
-                
-        where_params = [('study_id', studyID, False), ('is_time_series', time_series_int, False), ('data_category_name', dataCategoryName, True)]
+        groupID = -1 
+        
+        groupExists = StudyGroup.objects.filter(study_group_name=groupName, study=studyID)
+        
+        if groupExists:
+            groupID = (StudyGroup.objects.get(study_group_name=groupName, study=studyID)).study_group_id 
 
-        join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
-        joinInfo = ['INNER JOIN', join_stmt]
-    
-        data_category_id = DBHandler.getSelectorFromTable('dc.data_category_id', 'DataCategory dc', where_params, joinInfo)
+        
+        data_category_id = -1
+        categoryExists = DataCategory.objects.filter(data_category_name=dataCategoryName, is_time_series=timeSeriesVal).exists()
+        
+        if categoryExists:
+            potentialInstances = DataCategory.objects.filter(data_category_name=dataCategoryName, is_time_series=timeSeriesVal)
             
+            for dc in potentialInstances:
+                xrefExists = DataCategoryStudyXref.objects.filter(data_category=dc, study=studyID).exists()
+                
+                if xrefExists:
+                    data_category_id = (DataCategoryStudyXref.objects.get(data_category=dc, study=studyID)).data_category.data_category_id
+                    break
+        
+        
         if data_category_id != -1:
-            fields = DBFunctions.handleDataCategoryID(data_category_id, fields)
+            fields = DBFunctions2.updateFieldsFromDataCategory(data_category_id, fields)
             
         # UPDATING THE FIELDS
         fields['studyID'] = studyID
@@ -236,8 +229,8 @@ def info(request):
         fields['dcID'] = data_category_id
         fields['hasSubjectNames'] = hasSubjectNames 
         fields['subjectPerCol'] = subjectPerCol
-         
-        print(fields)
+        
+        
         # ALLOWING FIELDS TO BE PASSED AROUND
         request.session['uploaderInfo'] = fields 
         
@@ -256,9 +249,15 @@ def info(request):
         
         # get all the Study Groups and Data Categories for the Study and add to context
         
-        studyID = DBHandler.getSelectorFromTable('study_id', 'Study', [('study_name', studyName, True)], [None, None])
+        groupsExist = StudyGroup.objects.filter(study=studyID)
         
-        studyGroups = DBHandler.getInfoOnStudy('study_group_name', 'StudyGroup', [('study_id', studyID, False)], [None, None])
+        studyGroups = []
+        
+        if groupsExist:
+            groupObjs = StudyGroup.objects.filter(study=studyID)
+            
+            studyGroups = [obj.study_group_name for obj in groupObjs]
+            
         
         where_params = [('study_id', studyID, False)]
         join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
@@ -332,16 +331,16 @@ def extraInfo(request):
 
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
-            DBHandler.insertToStudyGroup(groupName, description, studyID) 
             
-            where_params = [('study_group_name', groupName, True), ('study_id', studyID, False)]
-            groupID = DBHandler.getSelectorFromTable('study_group_id', 'StudyGroup', where_params, [None, None])
+            DBHandler2.insertToStudyGroup(groupName, description, studyID)
+            
+            groupID = DBHandler2.getGroupID(groupName, studyID)
             
             uploaderInfo['groupID'] = groupID
             
             
         if dcID == -1:
-            uploaderInfo, errorMessage = DBFunctions.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
+            uploaderInfo, errorMessage = DBFunctions2.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
             
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
