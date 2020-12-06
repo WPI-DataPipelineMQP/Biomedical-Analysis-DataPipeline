@@ -5,7 +5,36 @@
 <form action="{% url 'datapipeline-export_data' %}">
     <button id="export-button" href=>Export Data to CSV</button>
 </form>
-<p>{{ stat_summary }}</p>
+<table class="table-bordered">
+    <thead>
+        {% for stat in stat_summary %}
+            <th> {{ stat.0 }} </th>
+        {% endfor %}
+    </thead>
+    <tbody>
+        {% for stat in stat_summary %}
+                {% for val in stat %}
+                    {% if not forloop.first %}
+                        <td> {{ val }} </td>
+                    {% endif %}
+                {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+<p> </p>
+
+<!--WE COULD DO THIS TO MAKE THE COLUMN NAMES STAY AT THE TOP, NEEDS FORMATTING THO-->
+<!--<table class="table-bordered">-->
+<!--    <thead>-->
+<!--        <tr>-->
+<!--            {% for label in attribute_names %}-->
+<!--                <th scope="col">{{ label }}</th>-->
+<!--            {% endfor %}-->
+<!--        </tr>-->
+<!--    </thead>-->
+<!--</table>-->
+
+
 <article class="media">
     <div class="media-body">
         <div class="output-scroll">
