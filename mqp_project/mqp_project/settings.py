@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'datapipeline.apps.DatapipelineConfig',
     'users.apps.UsersConfig',
     'uploader.apps.UploaderConfig',
+    'inventory.apps.InventoryConfig',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',

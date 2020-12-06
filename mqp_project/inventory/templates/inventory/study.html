@@ -1,0 +1,43 @@
+{% extends "datapipeline/base.html" %}
+{% block content %}
+
+<h1>{{ study.name }}</h1>
+
+<p><b>Description: </b> {{ study.description}}</p>
+<p><b>Total Participants: </b>{{ study.total_subjects }}</p>
+<p><b>IRB Status: </b>{{ study.irb }}</p>
+<p><b>Institutions Involved: </b>{{ study.inst }}</p>
+<p><b>Study Start Date: </b>{{ study.start }}</p>
+<p><b>Study End Date: </b>{{ study.end }}</p>
+<p><b>Contact: </b>{{ study.contact }}</p>
+<p><b>Notes: </b>{{ study.notes }}</p>
+
+<h2>Study Groups ({{study.total_groups }})</h2>
+{% for studygroup in studygroups %}
+    <h3>{{ studygroup.name }}</h3>
+    <p><b>Description: </b>{{ studygroup.description }}</p>
+    <p><b>Total Participants: </b>{{ studygroup.total_subjects }}</p>
+
+{% endfor %}
+
+<h2>Data Categories ({{ study.total_data_categories }})</h2>
+{% for datacategory in datacategories %}
+    <h3>{{ datacategory.name }}</h3>
+    <p><b>Description: </b>{{ datacategory.description }}</p>
+    <p><b>Total Rows of Data: </b>{{ datacategory.total_records }}</p>
+    <p><b>Time Series: </b>{{ datacategory.time_series }}</p>
+
+    <h4>Attributes</h4>
+    {% for attribute in datacategory.attributes %}
+        <h5>{{ attribute.name }}</h5>
+        <p><b>Description: </b>{{ attribute.description }}</p>
+        <p><b>Data Type: </b>{{ attribute.data_type }}</p>
+        <p><b>Unit: </b>{{ attribute.unit }}</p>
+        <p><b>Device used: </b>{{ attribute.device_name }}</p>
+    {% endfor %}
+
+{% endfor %}
+
+
+
+{% endblock content %}
