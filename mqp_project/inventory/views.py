@@ -1,34 +1,19 @@
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from datapipeline.database import DBClient, DBHandler
 from datapipeline.forms import CreateChosenBooleanForm
 from datapipeline.viewHelpers import viewsHelper as ViewHelper
+from .forms import DataCategorySearchForm
+from django.contrib import messages
 
 # 1st screen: Show list of studies and allow user to start selection on them or use links to study page
 def listStudies(request):
-    study_fields = []
-    study_ids = {}
-    args = {
-        'selectors': 'study_name, study_description, study_id',
-        'from': 'Study',
-        'join-type': None,
-        'join-stmt': None,
-        'where': None,
-        'group-by': None,
-        'order-by': None
-    }
-    result = DBClient.executeQuery(args, 1)
-    for (study_name, study_description, study_id) in result:  # cursor:
-        studies_dict = {}
-        studies_dict["name"] = study_name
-        studies_dict["description"] = study_description
-        studies_dict["id"] = study_id
-        study_fields.append(studies_dict)
-        study_ids[study_name] = study_id
 
-    request.session['study_fields'] = study_fields
+    dc_searchTerm = None
 
-    if request.method == 'POST':
+    # If submit button was clicked to go to selection
+    if request.method == 'POST' and 'selection-btn' in request.POST:
+        study_fields = request.session['study_fields']
 
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
 
@@ -58,6 +43,10 @@ def listStudies(request):
                 else:
                     study_ids_forquery += 'study_id = {} '.format(study['id'])
 
+        if study_ids_forquery == '':
+            messages.error(request, 'Please select at least one study to start selection analysis')
+            return redirect('inventory-listStudies')
+
         data_categories = DBHandler.getDataCategoriesOfStudies(study_ids_forquery)
 
         study_groups = DBHandler.getStudyGroupsOfStudies(study_ids_forquery)
@@ -71,15 +60,70 @@ def listStudies(request):
         request.session['data_categories'] = data_categories
         request.session['study_groups'] = study_groups
 
-        return HttpResponseRedirect('/dataSelection')
-        # return render(request, 'datapipeline/studySelection.html', context)
+        return redirect('datapipeline-dataSelection')
+
+    # if searching for studies with a data category
+    elif request.method == 'POST' and 'searchTerm' in request.POST:
+        dc_search_form = DataCategorySearchForm(request.POST)
+        dc_searchTerm = ""
+        if dc_search_form.is_valid():
+            dc_searchTerm = dc_search_form.cleaned_data['searchTerm']
+
+        # If search term is blank, reset search
+        if dc_searchTerm == "":
+            return redirect('inventory-listStudies')
+
+    # Get request
+    study_fields = []
+    study_ids = {}
+    if dc_searchTerm is None:
+        args = {
+            'selectors': 'study_name, study_description, study_id',
+            'from': 'Study',
+            'join-type': None,
+            'join-stmt': None,
+            'where': None,
+            'group-by': None,
+            'order-by': None
+        }
+
+    # If using a search term, query for specific studies that contain a data category with a name similar to the search term
+    else:
+        args = {
+            'selectors': 'DISTINCT s.study_name, s.study_description, s.study_id',
+            'from': 'Study s, datacategorystudyxref x, datacategory dc',
+            'join-type': None,
+            'join-stmt': None,
+            'where': 's.study_id = x.study_id AND x.data_category_id = dc.data_category_id AND dc.data_category_name LIKE \'%'+dc_searchTerm+'%\'',
+            'group-by': None,
+            'order-by': None
+        }
+
+    result = DBClient.executeQuery(args, 1)
+    for (study_name, study_description, study_id) in result:  # cursor:
+        studies_dict = {}
+        studies_dict["name"] = study_name
+        studies_dict["description"] = study_description
+        studies_dict["id"] = study_id
+        study_fields.append(studies_dict)
+        study_ids[study_name] = study_id
+
+    request.session['study_fields'] = study_fields
+
 
     studies_form = CreateChosenBooleanForm(customFields=study_fields)
 
+    # Fill in search bar with search term if searching
+    if dc_searchTerm is None:
+        dc_search_form = DataCategorySearchForm()
+    else:
+        dc_search_form = DataCategorySearchForm(request.POST)
+
     context = {
         'studies_form': studies_form,
+        'dc_search_form': dc_search_form,
         'study_ids': study_ids,
-        'myCSS': 'studySelection.css'
+        'myCSS': 'inventoryListStudies.css'
     }
     return render(request, 'inventory/listStudies.html', context)
 
@@ -162,7 +206,7 @@ def getStudyGroups(study):
 def getStudySubjects(study):
     args = {
             'selectors': '*',
-            'from': 'Subject Join Demographics on Subject.subject_id = Demographics.subject_id ',
+            'from': 'Subject',
             'join-type': 'Join',
             'join-stmt': 'StudyGroup on Subject.study_group_id = StudyGroup.study_group_id WHERE StudyGroup.study_id = ' + study,
             'where': None,
@@ -175,7 +219,7 @@ def getStudySubjects(study):
 def getStudyGroupSubjects(study_group):
     args = {
             'selectors': '*',
-            'from': 'Subject Join Demographics on Subject.subject_id = Demographics.subject_id ',
+            'from': 'Subject',
             'join-type': 'Join',
             'join-stmt': 'StudyGroup on Subject.study_group_id = StudyGroup.study_group_id WHERE StudyGroup.study_group_id = ' + str(study_group),
             'where': None,
