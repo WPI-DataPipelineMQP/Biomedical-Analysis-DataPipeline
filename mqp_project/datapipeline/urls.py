@@ -7,5 +7,6 @@ urlpatterns = [
     path('dataSelection/', views.dataSelection, name='datapipeline-dataSelection'),
     path('dataSelection-2/', views.dataSelectionContinued, name='datapipeline-dataSelection-2'),
     path('output', views.output, name='datapipeline-output'),
-    path('export_data', views.export_data, name='datapipeline-export_data')
+    path('export_data', views.export_data, name='datapipeline-export_data'),
+    path('export_summary', views.export_summary, name='datapipeline-export_summary')
 ]

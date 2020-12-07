@@ -2,9 +2,7 @@
 {% load static %}
 {% block content %}
 <h2>Data:</h2>
-<form action="{% url 'datapipeline-export_data' %}">
-    <button id="export-button" href=>Export Data to CSV</button>
-</form>
+<h3>Summary:</h3>
 <table class="table-bordered">
     <thead>
         {% for stat in stat_summary %}
@@ -22,6 +20,9 @@
     </tbody>
 </table>
 <p> </p>
+<form action="{% url 'datapipeline-export_summary' %}">
+    <button id="export-button" href=>Export Summary to CSV</button>
+</form>
 
 <!--WE COULD DO THIS TO MAKE THE COLUMN NAMES STAY AT THE TOP, NEEDS FORMATTING THO-->
 <!--<table class="table-bordered">-->
@@ -59,5 +60,9 @@
         </div>
     </div>
 </article>
+<p></p>
+<form action="{% url 'datapipeline-export_data' %}">
+    <button id="export-button" href=>Export Data to CSV</button>
+</form>
 
 {% endblock content %}
