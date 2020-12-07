@@ -328,6 +328,19 @@ def export_data(request):
 
     return response
 
+def export_summary(request):
+    print('Exporting summary')
+
+    response = HttpResponse(content_type='text/csv')
+
+    # Set up stats summary
+    engine = create_engine(settings.DB_CONNECTION_URL)
+    df = pd.read_sql_query(sql=DBClient.buildQuery(request.session['args']), con=engine)
+    stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
+    stat_summary.to_csv(path_or_buf=response)
+
+    return response
+
 def output(request):
     study_names = []
     if 'category_names' in request.session:
@@ -349,10 +362,10 @@ def output(request):
     if 'filter_values' in request.session:
         filter_values = request.session['filter_values']
         
-    if "StudyGroup.study_group_name" not in attribute_names:
+    if "StudyGroup.study_group_name" not in attribute_names and "study_group_name" not in attribute_names:
         attribute_names.append("StudyGroup.study_group_name")
         
-    if "Subject.subject_number" not in attribute_names:
+    if "Subject.subject_number" not in attribute_names and "subject_number" not in attribute_names:
         attribute_names.append("Subject.subject_number")
 
     args = {
@@ -365,16 +378,6 @@ def output(request):
         'order-by': None
     }
     result = DBClient.executeQuery(args, 1)
-    
-    request.session['args'] = args
-    request.session['attribute-names'] = attribute_names
-
-    '''
-    print("RESULTS")
-    for i in result:
-        print(i)
-    '''
-
 
     # Set up stats summary
     engine = create_engine(settings.DB_CONNECTION_URL)
@@ -386,6 +389,10 @@ def output(request):
     record_list = list(records)
     print(record_list)
 
+    #saved to session for exporting
+    request.session['args'] = args
+    request.session['attribute-names'] = attribute_names
+
     context = {
         'data': result,
         "attribute_names": attribute_names,
@@ -393,22 +400,3 @@ def output(request):
         'myCSS': 'output.css',
     }
     return render(request, 'datapipeline/output.html', context)
-
-    # data = pd.read_csv('1_fitbit.csv')
-    # data_html = result.to_html()
-    # return HttpResponse(data_html)
-
-    # context = {
-    #      'myCSS': 'dataSelection.css',
-    #      #'studies': studies,
-    #      'categories': categories,
-    #      'sgroups': sgroups,
-    #      #'form': attributeForm,
-    #      'attributes': data_attributes,
-    # #     'filters': data_attributes,
-    # }
-    #
-    # return render(request, 'datapipeline/output.html', context)
-
-
-    
