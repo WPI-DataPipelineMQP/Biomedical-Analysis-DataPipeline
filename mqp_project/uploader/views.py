@@ -5,12 +5,13 @@ from django.contrib.messages import get_messages
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core import serializers
 from django.shortcuts import redirect
+from django.core.files.storage import default_storage
 
 from datapipeline.views import home
-from datapipeline.database import DBClient, DBHandler
+from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, DataCategory, DataCategoryStudyXref
 
-from .viewHelpers import Helper, DBFunctions, DBFunctions2, DBHandler2
+from .viewHelpers import Helper, DBFunctions, Handler
 from .models import Document
 from . import views
 from .forms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
@@ -56,6 +57,7 @@ def study(request):
         
         Helper.clearStudyName(request.session)
         Helper.clearUploadInfo(request.session)
+        Helper.deleteAllDocuments()
         
         allStudies = Study.objects.all()
         
@@ -157,11 +159,12 @@ def info(request):
                 if uploaderForm.cleaned_data[field]:
                     if field == 'uploadedFiles':
                         files = request.FILES.getlist(field)
-                        
+                        path = 'uploaded_csvs/'
                         for file in files:
+                            filepath = path + file.name
                             filenames.append(file.name)
-                            newdoc = Document(uploadedFile = file, filename=file.name)
-                            newdoc.save()
+                            default_storage.save(filepath, file)
+                            
                         
                     else:
                         fields[field] = uploaderForm[field].data
@@ -203,12 +206,12 @@ def info(request):
             
         fields['headerInfo'] = headers
         
-        groupID = DBHandler2.getGroupID(groupName, studyID)
+        groupID = DBFunctions.getGroupID(groupName, studyID)
         
-        data_category_id = DBHandler2.getDataCategoryIDIfExists(dataCategoryName, fields.get('isTimeSeries'), studyID)
+        data_category_id = DBFunctions.getDataCategoryIDIfExists(dataCategoryName, fields.get('isTimeSeries'), studyID)
         
         if data_category_id != -1:
-            fields = DBFunctions2.updateFieldsFromDataCategory(data_category_id, fields)
+            fields = Handler.updateFieldsFromDataCategory(data_category_id, fields)
             
         # UPDATING THE FIELDS
         fields['studyID'] = studyID
@@ -237,7 +240,7 @@ def info(request):
     elif request.method == 'GET':
         print('\nGot Uploader Info Request\n')
         
-        
+        Helper.deleteAllDocuments()
         groupsExist = StudyGroup.objects.filter(study=studyID)
         
         studyGroups = []
@@ -247,7 +250,7 @@ def info(request):
             
             studyGroups = [obj.study_group_name for obj in groupObjs]
             
-        dataCategories = DBHandler2.getAllDataCategoriesOfStudy(studyID)
+        dataCategories = DBFunctions.getAllDataCategoriesOfStudy(studyID)
         
         context['studyGroups'] = studyGroups
         context['dataCategories'] = dataCategories
@@ -314,15 +317,15 @@ def extraInfo(request):
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
             
-            DBHandler2.insertToStudyGroup(groupName, description, studyID)
+            DBFunctions.insertToStudyGroup(groupName, description, studyID)
             
-            groupID = DBHandler2.getGroupID(groupName, studyID)
+            groupID = DBFunctions.getGroupID(groupName, studyID)
             
             uploaderInfo['groupID'] = groupID
             
             
         if dcID == -1:
-            uploaderInfo, errorMessage = DBFunctions2.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
+            uploaderInfo, errorMessage = Handler.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
             
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
@@ -423,7 +426,7 @@ def finalPrompt(request):
     elif request.method == 'GET':
         print('RESULT', Helper.checkForSpecialCase(request.session))
         if Helper.checkForSpecialCase(request.session):
-            colName, dataType = DBHandler2.getAttributeOfTable(tableName)
+            colName, dataType = DBFunctions.getAttributeOfTable(tableName)
             uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
             request.session['uploaderInfo'] = uploaderInfo
             return redirect(upload)
@@ -432,7 +435,7 @@ def finalPrompt(request):
         
     #############################################################################################################
     
-    tableSchema = DBHandler2.getTableSchema(tableName)
+    tableSchema = DBFunctions.getTableSchema(tableName)
     
     context['schema'] = tableSchema
     

@@ -1,95 +1,165 @@
-from django.db import IntegrityError, transaction
-from datapipeline.database import DBClient, DBHandler
-from . import Helper 
-import pandas as pd 
-import numpy as np
+from datapipeline.database import DBClient
+from datapipeline.models import Study, StudyGroup, Subject, DataCategory, DataCategoryStudyXref, Attribute
 
 
-def handleDataCategoryID(data_category_id, fields):
-    where_params = [('data_category_id', data_category_id, False)]
-                
-    tableName = DBHandler.getSelectorFromTable('dc_table_name', 'DataCategory', where_params, [None, None])
-    isTimeSeries = DBHandler.getSelectorFromTable('is_time_series', 'DataCategory', where_params, [None, None])
-    hasSubjectNames = DBHandler.getSelectorFromTable('has_subject_name', 'DataCategory', where_params, [None, None])
-                
-    fields['tableName'] = tableName
-    fields['isTimeSeries'] = isTimeSeries
-    fields['hasSubjectNames'] = hasSubjectNames
+def insertToStudyGroup(groupName, description, studyID):
+    studyObj = Study.objects.get(study_id=studyID)
+    newStudyGroup = StudyGroup.objects.create(study_group_name=groupName,
+                                              study_group_description=description,
+                                              study=studyObj)
     
-    return fields
+    
+def getGroupID(groupName, studyID):
+    
+    groupExists = StudyGroup.objects.filter(study_group_name=groupName, study=studyID).exists()
+    
+    if groupExists:
+        return (StudyGroup.objects.get(study_group_name=groupName, study=studyID)).study_group_id 
+    
+    return -1
 
-def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, otherInfo):
-    errorMessage = ''
-    isTS = False 
-    hasSubjectNames = False 
+
+def getDataCategoryIDIfExists(category_name, timeSeries, studyID):
+    data_category_id = -1
     
-    myFields, myExtras = otherInfo[0], otherInfo[1]
+    categoryExists = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries).exists()
+        
+    if categoryExists:
+        potentialInstances = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries)
             
-    subjectVal = myFields.get('hasSubjectID')
-            
-    if subjectVal == 'y':
-        hasSubjectNames = True 
-            
-    if isTimeSeries == 'y':
-        isTS = True 
+        for dc in potentialInstances:
+            xrefExists = DataCategoryStudyXref.objects.filter(data_category=dc, study=studyID).exists()
                 
-    uploaderInfo['hasSubjectNames'] = hasSubjectNames 
-    uploaderInfo['isTimeSeries'] = isTS
-                       
-    myMap = {
-        'categoryName': uploaderInfo.get('categoryName'),
-        'isTimeSeries': isTS,
-        'hasSubjectNames': hasSubjectNames,
-        'DC_description': myFields.get('dataCategoryDescription')
-    }
-    
-    cleanResult = Helper.getCleanFormat(myExtras)
+            if xrefExists:
+                data_category_id = (DataCategoryStudyXref.objects.get(data_category=dc, study=studyID)).data_category.data_category_id
+                break
+            
+    return data_category_id
+
+
+
+def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_table_name, description):
     
     try:
-        with transaction.atomic():
-            myMap, noErrors = DBHandler.dataCategoryHandler(myMap, studyID) 
-                
-            if noErrors is False:
-                errorMessage = "Error found when updating the DataCategory Table!"
-                raise IntegrityError()
-            
-            uploaderInfo['tableName'] = myMap.get('tableName')
-            uploaderInfo['dcID'] = myMap.get('DC_ID')
-            
-            myMap['columns'] = cleanResult
-            
-            print(myExtras)
-            cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
-            
-            print(cleanAttributeFormat)
-            
-            noErrors = DBHandler.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+        newDataCategory = DataCategory.objects.create(data_category_name=category_name,
+                                                      is_time_series=time_series_val,
+                                                      has_subject_name=hasSubjectNames,
+                                                      dc_table_name=dc_table_name,
+                                                      dc_description=description)
+        
+        return True
+    
+    except:
+        return False 
 
-            if noErrors is False:
-                errorMessage = "Error found when inserting to Attribute table!"
-                raise IntegrityError()
-            
-            noErrors = DBHandler.newTableHandler(myMap)
-            
-            print(noErrors)
-            if noErrors is False:
-                errorMessage = "Error found when creating the new table!"
-                raise IntegrityError()
-                
-    except IntegrityError:
-        print('SHOULD ROLLBACK')
 
-        return uploaderInfo, errorMessage
+
+def getDataCategoryID(tableName, is_time_series):
+    
+    return (DataCategory.objects.get(dc_table_name=tableName, is_time_series=is_time_series)).data_category_id  
+
     
     
-    return uploaderInfo, None
+    
+def insertToDataCategoryXref(category_id, study_id):
+    
+    try:
+        studyObj = Study.objects.get(study_id=study_id)
+        dcObj = DataCategory.objects.get(data_category_id=category_id)
+        newXref = DataCategoryStudyXref.objects.create(data_category=dcObj,
+                                                       study=studyObj)
+        
+        return True 
+    
+    except:
+        return False 
+    
+    
+def insertToAttribute(attributes, dcID):
+    for colName in attributes:
+        currDict = attributes.get(colName)
+        name = colName
+        description = currDict.get('description')
+        dataType = currDict.get('dataType')
+        unit = currDict.get('unit')
+        device = currDict.get('deviceUsed')
+        
+        try:
+            dcObj = DataCategory.objects.get(data_category_id=dcID)
+            newAttribute = Attribute.objects.create(attr_name=name,
+                                                    attr_description=description,
+                                                    data_type=dataType,
+                                                    unit=unit,
+                                                    device_name=device,
+                                                    data_category=dcObj) 
+            
+        except:
+            return False 
+        
+    
+    return True
+
+
+def createNewTable(myMap):
+    result = False 
+    
+    if myMap.get('createTable') is False:
+        dataTypeMap = {
+            '1' : 'TEXT',
+            '2' : 'INT',
+            '3' : 'FLOAT(10,5)',
+            '4' : 'Datetime',
+            '5' : 'BOOLEAN'
+        }
+
+        table_name = myMap.get('tableName')
+        
+        dataID_field = "data_id INT AUTO_INCREMENT,"
+        subjectID_field = "subject_id INT,"
+        pk_field = "PRIMARY KEY (data_id),"
+        fk_field = "CONSTRAINT FK_{}_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE)".format(table_name.upper())
+    
+        stmt = "CREATE TABLE {}({}".format(table_name, dataID_field)
+    
+        for column in myMap.get('columns'):
+            field_name = column[0]
+            data_type = dataTypeMap.get(column[1]) 
+        
+            tmp_stmt = "{} {},".format(field_name, data_type)
+        
+            stmt += tmp_stmt
+        
+        stmt += subjectID_field
+        stmt += pk_field
+        stmt += fk_field
+        
+        result = DBClient.createTable(stmt, table_name, 1)
+        
+
+    return result
+
+
+
+
+def getAttributeOfTable(tableName):
+    
+    dc_ID = (DataCategory.objects.get(dc_table_name=tableName)).data_category_id
+    dc_obj = DataCategory.objects.get(data_category_id=dc_ID)
+    
+    attributeObj = Attribute.objects.get(data_category=dc_obj)
+    
+    attributeName = attributeObj.attr_name 
+    attributeType = attributeObj.data_type
+    
+    return attributeName, attributeType
+
 
 
 def getTableSchema(tableName):
     string = '{} SCHEMA: '.format(tableName)
     
     columns = DBClient.getTableColumns(tableName)
-    columns = columns[1:-1]
+    columns = columns[1:-2]
     
     for i in range(0, len(columns), 1):
         position = ''
@@ -104,161 +174,44 @@ def getTableSchema(tableName):
         
     return string
 
-         
-def specialUploadToDatabase(file, myMap, column_info):
-    groupID = myMap.get('groupID')
-    tableName = myMap.get('tableName')
+
+def getAllDataCategoriesOfStudy(studyID):
     
-    columnHeaders = DBClient.getTableColumns(tableName)
+    studyObj = Study.objects.get(study_id=studyID)
     
-    columnName = column_info[0][0]
-    dt = column_info[0][1]
+    studysDCXrefs = DataCategoryStudyXref.objects.filter(study=studyObj)
     
-    df = pd.read_csv(file)
+    studysDCs = []
     
-    if myMap.get('subjectPerCol') is True:
-        df = Helper.transposeDataFrame(df, True)
+    for dcXref in studysDCXrefs:
+        dc_obj = dcXref.data_category
+        
+        name = dc_obj.data_category_name
+        
+        studysDCs.append(name)
+        
+    return studysDCs 
+
+
+def getSubjectID(subjectNumber, study_group_id):
+    subjectID = -1 
     
-    numpyArray = df.to_numpy()
-    print(numpyArray)
-    print('YO WHY')
-    print(columnName)
+    groupObj = StudyGroup.objects.get(study_group_id=study_group_id)
+    subjectExist = Subject.objects.filter(subject_number=subjectNumber, study_group=groupObj).exists()
+    
+    if subjectExist:
+        subjectID = (Subject.objects.get(subject_number=subjectNumber, study_group=groupObj)).subject_id
+        
+    return subjectID
+
+
+def insertToSubject(subjectNumber, study_group_id):
+    
     try:
-        print('IN TRY')
-        myDf = pd.DataFrame(columns=[columnName, 'subject_id']) 
-        print('PAST MY DF')
-        print(myDf)
-        with transaction.atomic():
-            print('IN ATOMIC!')
-            
-            i = 0
-            for row in numpyArray:
-                                
-                subject_number = i 
+        groupObj = StudyGroup.objects.get(study_group_id=study_group_id)
+        newSubject = Subject.objects.create(subject_number=subjectNumber, study_group=groupObj)
         
-                if myMap.get('hasSubjectNames') is True:
-                    subject_number = row[0]
-                    row = row[1:]
-        
-                subject_id, noError = DBHandler.subjectHandler("", groupID, subject_number)
-
-                if noError is False:
-                    raise Exception()
-        
-                tmpDf = pd.DataFrame(row, columns=[columnName])
-
-                if dt == 1:
-                    tmpDf[[columnName]].astype(str)
-
-                elif dt == 2:
-                    tmpDf[[columnName]].astype(int)
-
-                elif dt == 3:
-                    tmpDf[[columnName]].astype(float)
-
-                elif dt == 4:
-                    tmpDf[columnName] = pd.to_datetime(df[columnName])
-                    tmpDf[columnName] = df[columnName].dt.strftime('%Y-%m-%d %H:%M:%S')
-            
-                else:
-                    tmpDf[columnName].astype(bool)
-            
-                tmpDf['subject_id'] = subject_id
-                
-                DBClient.dfInsert(tmpDf, tableName)
-                i += 1
-                
-            print('ALL DONE')
+        return True 
+    
     except:
         return False
-    
-    return True
-    
-    
-    
-def uploadToDatabase(file, filename, myMap, column_info, organizedColumns):
-    errorMessage = None
-    columnFlag = False 
-    df = pd.read_csv(file)
-    
-    if myMap.get('subjectPerCol') is True:
-        columnFlag = True
-        df = Helper.transposeDataFrame(df, True)
-        
-    
-    filename = Helper.modifyFileName(filename)
-    groupID = myMap.get('groupID')
-    
-    tableName = myMap.get('tableName')
-        
-    # fix error handler
-    if myMap.get('hasSubjectNames') is True:
-        listOfSubjects = []
-        listOfSubjectNum = []
-        
-        if columnFlag is True:
-            listOfSubjectNum = list(df.index)
-        else:
-            listOfSubjectNum = list(df.iloc[:,0])
-        
-        for num in listOfSubjectNum:
-            if isinstance(num, str):
-                num = num.upper()
-                
-            currID, errorMessage = DBHandler.subjectHandler("", groupID, num)
-            listOfSubjects.append(currID)
-        
-        
-        df = df.drop(df.columns[0], axis=1) # deleting the subjects column
-        
-        df = df[organizedColumns]
-        df['subject_id'] = listOfSubjects
-        
-    else:
-        subjectID, errorMessage = DBHandler.subjectHandler(filename, groupID)
-        
-        df = df[organizedColumns]
-        df['subject_id'] = subjectID
-        
-    try:
-        with transaction.atomic():
-            for col in column_info:
-                col_name = col[0]
-                dt = col[1]
-        
-                if dt == 1:
-                    df[[col_name]].astype(str)
-
-                elif dt == 2:
-                    df[[col_name]].astype(int)
-
-                elif dt == 3:
-                    df[[col_name]].astype(float)
-
-                elif dt == 4:
-                    df[col_name] = pd.to_datetime(df[col_name])
-                    df[col_name] = df[col_name].dt.strftime('%Y-%m-%d %H:%M:%S')
-            
-                else:
-                    df[col_name].astype(bool)
-    
-            columnHeaders = DBClient.getTableColumns(tableName)
-    
-            if len(columnHeaders) == 0:
-                errorMessage = "ERROR: found no column headers for {} table".format(tableName)
-                raise Exception()
-            
-            
-            columnHeaders = columnHeaders[1:]
-        
-            df.columns = columnHeaders
-        
-            DBClient.dfInsert(df, tableName)
-    
-    except Exception as e:
-        if errorMessage is None:
-            #errorMessage = "Error found when trying to insert to the {} table. Most likely an incorrect data type was specified for one of the columns.".format(tableName)
-            errorMessage = str(e)
-        return False, errorMessage     
-    
-    return True, None

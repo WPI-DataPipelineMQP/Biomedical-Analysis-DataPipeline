@@ -1,5 +1,4 @@
-from datetime import datetime 
-from ..models import Document  
+from datetime import datetime  
 import csv, os
 
 import random
@@ -21,13 +20,18 @@ def pathIsBroken(session, uploadInfoFlag=False):
     
     return True
 
-
-def deleteAllDocuments():
-    filenames = Document.objects.all()
+def deleteFile(filepath):
+    os.remove(filepath)
     
-    for name in filenames:
-        name.uploadedFile.delete()
-        name.delete()
+def deleteAllDocuments():
+    
+    directory_path = 'uploaded_csvs/'
+    
+    uploadedFiles = os.listdir(directory_path)
+    
+    for file in uploadedFiles:
+        filepath = directory_path + file
+        os.remove(filepath)
 
 
 def clearUploadInfo(session):
@@ -228,6 +232,7 @@ def hasHeaders(filepath):
     
     print(hasHeaders)
     return hasHeaders 
+
 
 def transposeDataFrame(df, withSubjects=True):
     indexVal = df.columns[0] # used to maintain labels after transposing

@@ -55,6 +55,7 @@
 
 	// Progress Bar (JQuery)
 	$(function () {
+        document.getElementById('startUploader').disabled = 'disabled';
 		var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
 		CeleryProgressBar.initProgressBar(progressUrl, {
 			onProgress: processProgress,

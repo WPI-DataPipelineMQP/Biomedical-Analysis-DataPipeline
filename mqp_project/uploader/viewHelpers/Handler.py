@@ -1,7 +1,7 @@
 from django.db import IntegrityError, transaction
 from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, Subject, DataCategory, DataCategoryStudyXref
-from . import Helper, DBHandler2 
+from . import Helper, DBFunctions
 
 import pandas as pd 
 import numpy as np
@@ -12,7 +12,6 @@ def updateFieldsFromDataCategory(data_category_id, fields):
     
     tableName = (DataCategory.objects.get(data_category_id=data_category_id)).dc_table_name
     isTimeSeries = (DataCategory.objects.get(data_category_id=data_category_id)).is_time_series
-    print('IN UPDATE', isTimeSeries)
     hasSubjectNames = (DataCategory.objects.get(data_category_id=data_category_id)).has_subject_name
                 
     fields['tableName'] = tableName
@@ -34,16 +33,16 @@ def dataCategoryHandler(myMap, study_id):
     description = myMap.get('DC_description')
     dc_table_name = data_category_name + '_' + str(study_id)
     
-    insertSuccess = DBHandler2.insertToDataCategory(data_category_name, time_series, has_subjectNames, dc_table_name, description)
+    insertSuccess = DBFunctions.insertToDataCategory(data_category_name, time_series, has_subjectNames, dc_table_name, description)
     
     if insertSuccess is False:
         return myMap, False
     
-    data_category_id = DBHandler2.getDataCategoryID(dc_table_name, time_series)
+    data_category_id = DBFunctions.getDataCategoryID(dc_table_name, time_series)
     
     myMap['DC_ID'] = data_category_id
         
-    insertSuccess = DBHandler2.insertToDataCategoryXref(data_category_id, study_id)
+    insertSuccess = DBFunctions.insertToDataCategoryXref(data_category_id, study_id)
 
     if insertSuccess is False:
         return myMap, False
@@ -95,13 +94,13 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
 
             cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
             
-            noErrors = DBHandler2.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
+            noErrors = DBFunctions.insertToAttribute(cleanAttributeFormat, myMap.get('DC_ID'))
 
             if noErrors is False:
                 errorMessage = "Error found when inserting to Attribute table!"
                 raise IntegrityError()
             
-            noErrors = DBHandler2.createNewTable(myMap)
+            noErrors = DBFunctions.createNewTable(myMap)
             
             if noErrors is False:
                 errorMessage = "Error found when creating the new table!"
@@ -124,23 +123,23 @@ def subjectHandler(filename, study_group_id, subjectNumber=None):
         subject_number = filename.split('_')[0] 
         
     
-    subject_id = DBHandler2.getSubjectID(subject_number, study_group_id)
+    subject_id = DBFunctions.getSubjectID(subject_number, study_group_id)
     
     if subject_id == -1:
-        insertSuccess = DBHandler2.insertToSubject(subject_number, study_group_id)
+        insertSuccess = DBFunctions.insertToSubject(subject_number, study_group_id)
         
         if insertSuccess is False:
             errorMessage = 'ERROR: Error Found When Attempting to Insert Subject_Number: {} and Study Group ID: {} to Subject Table'.format(subject_number, study_group_id)
             
             return -1, errorMessage
         
-        subject_id = DBHandler2.getSubjectID(subject_number, study_group_id)
+        subject_id = DBFunctions.getSubjectID(subject_number, study_group_id)
         
     
     return subject_id, None
 
 
-def specialUploadToDatabase(file, myMap, column_info):
+def specialUploadToDatabase(file, filename, myMap, column_info):
     groupID = myMap.get('groupID')
     tableName = myMap.get('tableName')
     
@@ -157,7 +156,7 @@ def specialUploadToDatabase(file, myMap, column_info):
     numpyArray = df.to_numpy()
 
     try:
-        myDf = pd.DataFrame(columns=[columnName, 'subject_id']) 
+        myDf = pd.DataFrame(columns=[columnName, 'subject_id', 'filename']) 
         with transaction.atomic():
             for i, row in enumerate(numpyArray):
                                 
@@ -191,6 +190,7 @@ def specialUploadToDatabase(file, myMap, column_info):
                     tmpDf[columnName].astype(bool)
             
                 tmpDf['subject_id'] = subject_id
+                tmpDf['filename'] = filename
                 
                 myDf = myDf.append(tmpDf, ignore_index=True)
 
@@ -250,6 +250,7 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns):
         
         df = df[organizedColumns]
         df['subject_id'] = subjectID
+        df['filename'] = filename
         
     try:
         with transaction.atomic():
