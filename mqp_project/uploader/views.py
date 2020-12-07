@@ -180,8 +180,9 @@ def info(request):
                 context['form'] = uploaderForm 
                 
                 Helper.deleteAllDocuments()
-                msg = ' '.join(duplicateFiles)
-                messages.warning(request, f'Found Duplicates! Duplicate Files: {msg}')
+                dups = ', '.join(duplicateFiles)
+                allFiles = ', '.join(filenames)
+                messages.warning(request, f'Found Duplicates! Duplicate Files: {dups} || All Files Being Uploaded: {allFiles}')
                 
                 request.session['checkedForDuplications'] = True 
                 return render(request, 'uploader/info.html', context)
