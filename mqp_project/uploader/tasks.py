@@ -4,7 +4,7 @@ import time
 
 from django.conf import settings
 
-from .viewHelpers import Helper, DBFunctions
+from .viewHelpers import Helper, DBFunctions, DBFunctions2
 from .models import Document
 
 @shared_task(bind=True)
@@ -34,10 +34,10 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
 
         if specialFlag is True: 
             print('Starting...')
-            DBFunctions.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
+            noError, errorMessage = DBFunctions2.specialUploadToDatabase(filepath, uploaderInfo, columnInfo)
             
         else:
-            noError, errorMessage = DBFunctions.uploadToDatabase(filepath, file, uploaderInfo, columnInfo, organizedColumns)
+            noError, errorMessage = DBFunctions2.uploadToDatabase(filepath, file, uploaderInfo, columnInfo, organizedColumns)
                 
         if noError is False:
             raise Exception(errorMessage)

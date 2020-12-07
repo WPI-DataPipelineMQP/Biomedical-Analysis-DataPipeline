@@ -174,4 +174,4 @@ def tryExecuteCommand(template, args):
     
 def dfInsert(df, tableName):
     db_engine = sql.create_engine(settings.DB_CONNECTION_URL)
-    df.to_sql(name=tableName, con=db_engine, if_exists='append', index=False)
+    df.to_sql(name=tableName, con=db_engine, if_exists='append', index=False, chunksize=20000)

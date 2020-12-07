@@ -38,6 +38,14 @@ def clearUploadInfo(session):
 def clearStudyName(session):
     if session.get('studyName', None) != None:
         del session['studyName']
+        
+def checkForSpecialCase(session):
+    uploaderInfo = session.get('uploaderInfo')
+    
+    if uploaderInfo.get('SpecialCase', None) != None:
+        return uploaderInfo.get('SpecialCase')
+    
+    return False
        
         
 def extractName(string):

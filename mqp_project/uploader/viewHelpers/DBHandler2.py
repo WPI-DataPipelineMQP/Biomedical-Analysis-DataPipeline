@@ -1,5 +1,6 @@
 from datapipeline.database import DBClient
-from datapipeline.models import Study, StudyGroup, DataCategory, DataCategoryStudyXref, Attribute
+from datapipeline.models import Study, StudyGroup, Subject, DataCategory, DataCategoryStudyXref, Attribute
+
 
 def insertToStudyGroup(groupName, description, studyID):
     studyObj = Study.objects.get(study_id=studyID)
@@ -9,7 +10,31 @@ def insertToStudyGroup(groupName, description, studyID):
     
     
 def getGroupID(groupName, studyID):
-    return (StudyGroup.objects.get(study_group_name=groupName, study=studyID)).study_group_id 
+    
+    groupExists = StudyGroup.objects.filter(study_group_name=groupName, study=studyID).exists()
+    
+    if groupExists:
+        return (StudyGroup.objects.get(study_group_name=groupName, study=studyID)).study_group_id 
+    
+    return -1
+
+
+def getDataCategoryIDIfExists(category_name, timeSeries, studyID):
+    data_category_id = -1
+    
+    categoryExists = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries).exists()
+        
+    if categoryExists:
+        potentialInstances = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries)
+            
+        for dc in potentialInstances:
+            xrefExists = DataCategoryStudyXref.objects.filter(data_category=dc, study=studyID).exists()
+                
+            if xrefExists:
+                data_category_id = (DataCategoryStudyXref.objects.get(data_category=dc, study=studyID)).data_category.data_category_id
+                break
+            
+    return data_category_id
 
 
 
@@ -112,3 +137,81 @@ def createNewTable(myMap):
         
 
     return result
+
+
+
+
+def getAttributeOfTable(tableName):
+    
+    dc_ID = (DataCategory.objects.get(dc_table_name=tableName)).data_category_id
+    dc_obj = DataCategory.objects.get(data_category_id=dc_ID)
+    
+    attributeObj = Attribute.objects.get(data_category=dc_obj)
+    
+    attributeName = attributeObj.attr_name 
+    attributeType = attributeObj.data_type
+    
+    return attributeName, attributeType
+
+
+
+def getTableSchema(tableName):
+    string = '{} SCHEMA: '.format(tableName)
+    
+    columns = DBClient.getTableColumns(tableName)
+    columns = columns[1:-1]
+    
+    for i in range(0, len(columns), 1):
+        position = ''
+        if i != ( len(columns)-1 ):
+            position = "{} [ position = {} ], ".format(columns[i], i)
+            
+            
+        else:
+            position = "{} [ position = {} ]".format(columns[i], i)
+            
+        string += position
+        
+    return string
+
+
+def getAllDataCategoriesOfStudy(studyID):
+    
+    studyObj = Study.objects.get(study_id=studyID)
+    
+    studysDCXrefs = DataCategoryStudyXref.objects.filter(study=studyObj)
+    
+    studysDCs = []
+    
+    for dcXref in studysDCXrefs:
+        dc_obj = dcXref.data_category
+        
+        name = dc_obj.data_category_name
+        
+        studysDCs.append(name)
+        
+    return studysDCs 
+
+
+def getSubjectID(subjectNumber, study_group_id):
+    subjectID = -1 
+    
+    groupObj = StudyGroup.objects.get(study_group_id=study_group_id)
+    subjectExist = Subject.objects.filter(subject_number=subjectNumber, study_group=groupObj).exists()
+    
+    if subjectExist:
+        subjectID = (Subject.objects.get(subject_number=subjectNumber, study_group=groupObj)).subject_id
+        
+    return subjectID
+
+
+def insertToSubject(subjectNumber, study_group_id):
+    
+    try:
+        groupObj = StudyGroup.objects.get(study_group_id=study_group_id)
+        newSubject = Subject.objects.create(subject_number=subjectNumber, study_group=groupObj)
+        
+        return True 
+    
+    except:
+        return False

@@ -168,9 +168,17 @@ def info(request):
         
         
         subjectOrgVal = fields.get('subjectOrganization')
-        timeSeriesVal = fields.get('isTimeSeries')
+        rawTimeSeries = fields.get('isTimeSeries')
+        fields['isTimeSeries'] = True if rawTimeSeries == 'y' else False
         groupName = fields.get('groupName') 
         dataCategoryName = fields.get('categoryName')
+        
+        specialFlag = False
+        
+        if fields.get('isTimeSeries') and (subjectOrgVal == 'row' or subjectOrgVal == 'column'):
+            specialFlag = True 
+            
+        fields['SpecialCase'] = specialFlag
         
         # READING THE CSV FILE
         firstFile = filenames[0]
@@ -195,27 +203,9 @@ def info(request):
             
         fields['headerInfo'] = headers
         
-        groupID = -1 
+        groupID = DBHandler2.getGroupID(groupName, studyID)
         
-        groupExists = StudyGroup.objects.filter(study_group_name=groupName, study=studyID)
-        
-        if groupExists:
-            groupID = (StudyGroup.objects.get(study_group_name=groupName, study=studyID)).study_group_id 
-
-        
-        data_category_id = -1
-        categoryExists = DataCategory.objects.filter(data_category_name=dataCategoryName, is_time_series=timeSeriesVal).exists()
-        
-        if categoryExists:
-            potentialInstances = DataCategory.objects.filter(data_category_name=dataCategoryName, is_time_series=timeSeriesVal)
-            
-            for dc in potentialInstances:
-                xrefExists = DataCategoryStudyXref.objects.filter(data_category=dc, study=studyID).exists()
-                
-                if xrefExists:
-                    data_category_id = (DataCategoryStudyXref.objects.get(data_category=dc, study=studyID)).data_category.data_category_id
-                    break
-        
+        data_category_id = DBHandler2.getDataCategoryIDIfExists(dataCategoryName, fields.get('isTimeSeries'), studyID)
         
         if data_category_id != -1:
             fields = DBFunctions2.updateFieldsFromDataCategory(data_category_id, fields)
@@ -247,7 +237,6 @@ def info(request):
     elif request.method == 'GET':
         print('\nGot Uploader Info Request\n')
         
-        # get all the Study Groups and Data Categories for the Study and add to context
         
         groupsExist = StudyGroup.objects.filter(study=studyID)
         
@@ -258,18 +247,12 @@ def info(request):
             
             studyGroups = [obj.study_group_name for obj in groupObjs]
             
-        
-        where_params = [('study_id', studyID, False)]
-        join_stmt = 'DataCategoryStudyXref dcXref ON dc.data_category_id = dcXref.data_category_id'
-        joinInfo = ['INNER JOIN', join_stmt]
-    
-        dataCategories = DBHandler.getInfoOnStudy('dc.data_category_name', 'DataCategory dc', where_params, joinInfo)
+        dataCategories = DBHandler2.getAllDataCategoriesOfStudy(studyID)
         
         context['studyGroups'] = studyGroups
         context['dataCategories'] = dataCategories
     
     #############################################################################################################
-    
     
     form = UploaderInfoForm()
     
@@ -299,9 +282,8 @@ def extraInfo(request):
     groupName = uploaderInfo.get('groupName')
     dcID = uploaderInfo.get('dcID')
     
-    if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
+    if Helper.checkForSpecialCase(request.session):
         headers = ['Entered Name']
-        
     form = UploadInfoCreationForm(None, dynamicFields=headers)
     
     ############################################################################################################# 
@@ -309,9 +291,8 @@ def extraInfo(request):
         form = UploadInfoCreationForm(request.POST, dynamicFields=headers)
         form.reset()
         
-        print(form.errors)
-        myFields = {}
-        myExtras = []
+        myFields, myExtras = {}, []
+        
         if form.is_valid():
             for (i, val) in form.getAllFields():
                 myFields[i] = val 
@@ -319,14 +300,15 @@ def extraInfo(request):
             for (name, val) in form.getExtraFields():
                 myExtras.append((name, val))
         
-        print(myFields)
-        
-        if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
+        if Helper.checkForSpecialCase(request.session):
             colName = myFields.get('nameOfValueMeasured')
             dataType = myExtras[0][1]
             dataType = Helper.getActualDataType(dataType)
             uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
             myExtras = Helper.replaceWithNameOfValue(myExtras, colName)
+            
+        if subjectRule == 'column':
+            myFields['hasSubjectID'] = 'y'
             
 
         if groupID == -1:
@@ -356,16 +338,16 @@ def extraInfo(request):
     #############################################################################################################     
     elif request.method == 'GET':
         case1 = False
-        if (subjectRule == 'row' or subjectRule == 'column') and isTimeSeries == 'y':
+        if Helper.checkForSpecialCase(request.session):
             print('FOUND CASE 1')
             form.fields['hasSubjectID'].required = True
             form.fields['nameOfValueMeasured'].required = True 
             context['case1'] = True
             case1 = True
             
-        elif subjectRule == 'row':
+        if subjectRule == 'column':
             print('FOUND CASE 2 ')
-            form.fields['hasSubjectID'].required = True
+            form.fields['hasSubjectID'].required = False
             context['case2'] = True
             
         if groupID == -1:
@@ -378,7 +360,7 @@ def extraInfo(request):
             form.fields['dataCategoryDescription'].required = True
             filenames = uploaderInfo.get('filenames')
             context['case4'] = True
-            
+        
         elif dcID == -1 and case1 is True: 
             print('FOUND CASE 5')
             form.fields['dataCategoryDescription'].required = True
@@ -439,10 +421,9 @@ def finalPrompt(request):
             
     #############################################################################################################
     elif request.method == 'GET':
-        if isTimeSeries and (subjectOrg == 'row' or subjectOrg == 'column'):
-            colName, dataType = DBHandler.getAttributeOfTable(tableName)
-            print(colName)
-            print(dataType)
+        print('RESULT', Helper.checkForSpecialCase(request.session))
+        if Helper.checkForSpecialCase(request.session):
+            colName, dataType = DBHandler2.getAttributeOfTable(tableName)
             uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
             request.session['uploaderInfo'] = uploaderInfo
             return redirect(upload)
@@ -451,7 +432,7 @@ def finalPrompt(request):
         
     #############################################################################################################
     
-    tableSchema = DBFunctions.getTableSchema(tableName)
+    tableSchema = DBHandler2.getTableSchema(tableName)
     
     context['schema'] = tableSchema
     

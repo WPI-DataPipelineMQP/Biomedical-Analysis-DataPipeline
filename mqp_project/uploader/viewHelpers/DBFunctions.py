@@ -133,10 +133,7 @@ def specialUploadToDatabase(file, myMap, column_info):
             
             i = 0
             for row in numpyArray:
-                print('IN ARRAY')
-                print('Row', end=" ")
-                print(row)
-                
+                                
                 subject_number = i 
         
                 if myMap.get('hasSubjectNames') is True:
@@ -144,15 +141,12 @@ def specialUploadToDatabase(file, myMap, column_info):
                     row = row[1:]
         
                 subject_id, noError = DBHandler.subjectHandler("", groupID, subject_number)
-                
-                print(subject_id)
+
                 if noError is False:
                     raise Exception()
         
                 tmpDf = pd.DataFrame(row, columns=[columnName])
-                
-                print(tmpDf.head())
-        
+
                 if dt == 1:
                     tmpDf[[columnName]].astype(str)
 
@@ -171,16 +165,9 @@ def specialUploadToDatabase(file, myMap, column_info):
             
                 tmpDf['subject_id'] = subject_id
                 
-                print(tmpDf.head())
-                print('appending after adjusting')
-                myDf = myDf.append(tmpDf, ignore_index=True)
-                print(myDf.head())
-                
+                DBClient.dfInsert(tmpDf, tableName)
                 i += 1
                 
-            print('Done')
-            print(myDf.head())
-            DBClient.dfInsert(myDf, tableName)
             print('ALL DONE')
     except:
         return False

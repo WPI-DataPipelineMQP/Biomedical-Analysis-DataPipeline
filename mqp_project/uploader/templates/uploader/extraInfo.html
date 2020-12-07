@@ -4,25 +4,21 @@
 
 <form method="POST" action="{% url 'uploader-uploaderExtraInfo' %}" enctype="multipart/form-data">
     {% csrf_token %}
-    {% if case1 is True %}
+    {% if case1 is True and case2 is False%}
     <p>
        {{ form.hasSubjectID.errors }}
        <label for="{{ form.hasSubjectID.id_for_label }}"> {{form.hasSubjectID.label}}</label>
        {{ form.hasSubjectID }}
     </p>
+    {% endif %}
+
+    {% if case1 is True %}
     <p>
         {{ form.nameOfValueMeasured.errors }} 
         {{ form.datatypeOfMeasured.errors }}
         <label for="{{ form.nameOfValueMeasured.id_for_label }}"> {{form.nameOfValueMeasured.label}}</label>
         {{ form.nameOfValueMeasured }}
         {{ form.datatypeOfMeasured }}
-    </p>
-
-    {% elif case2 is True %}
-    <p>
-        {{ form.hasSubjectID.errors }}
-        <label for="{{ form.hasSubjectID.id_for_label }}"> {{form.hasSubjectID.label}}</label>
-        {{ form.hasSubjectID }}
     </p>
     {% endif %}
 
