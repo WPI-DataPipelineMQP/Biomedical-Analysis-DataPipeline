@@ -21,15 +21,26 @@ class UploaderInfoForm(forms.Form):
     groupName = forms.CharField(label='Study Group Name', required=False)
     categoryName = forms.CharField(label='Data Category Name', required=True)
     
-    SUBJECT_CHOICES = [('file', ('Subject per File')), ('row', 'Subject per Row'), ('column', 'Subject per Column')]
+    SUBJECT_CHOICES = [('file', 'Subject per File'), ('row', 'Subject per Row'), ('column', 'Subject per Column')]
     
-    subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="What Format Does this Data Category Follow?")
+    DUPLICATE_CHOICES = [('replace', 'Replace Duplicates'), ('append', 'Add Duplicates'), ('newFile', 'Try Different File(s)')]
+    
+    subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES, 
+                                            widget=forms.RadioSelect(attrs={'required': 'required'}), label="What Format Does this Data Category Follow?")
     
     TIME_SERIES_CHOICES = [('y', 'Yes'), ('n', 'No')]
     
-    isTimeSeries = forms.ChoiceField(choices=TIME_SERIES_CHOICES, widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is this Data Category Time Series?")
+    isTimeSeries = forms.ChoiceField(choices=TIME_SERIES_CHOICES, 
+                                     widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is this Data Category Time Series?")
+    
+    handleDuplicate = forms.ChoiceField(choices=DUPLICATE_CHOICES,
+                                      widget=forms.RadioSelect, label="Handling Duplicate Options", required=False)
+    
     
     uploadedFiles = forms.FileField(label="Select Files", required=True, widget=forms.ClearableFileInput(attrs={'multiple': True}))
+    
+    
+    
     
 
 class UploadInfoCreationForm(forms.Form):

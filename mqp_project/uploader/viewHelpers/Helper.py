@@ -1,3 +1,5 @@
+from django.core.files.storage import default_storage
+
 from datetime import datetime  
 import csv, os
 
@@ -279,6 +281,25 @@ def getUploadResults(filenames):
         filesUploaded.append('none')
         
     return filesUploaded, filesLeft 
+
+
+def getFieldsFromInfoForm(uploaderForm, files):
+    fields, filenames = {}, []
+    
+    for field in uploaderForm.fields:
+        if uploaderForm.cleaned_data[field]:
+            if field == 'uploadedFiles':
+                path = 'uploaded_csvs/'
+                for file in files:
+                    filepath = path + file.name
+                    filenames.append(file.name)
+                    default_storage.save(filepath, file)
+                            
+                        
+            else:
+                fields[field] = uploaderForm[field].data
+                
+    return fields, filenames
     
     
         

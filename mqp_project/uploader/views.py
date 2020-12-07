@@ -1,18 +1,18 @@
 from django.shortcuts import render
+from django import forms
 from django.shortcuts import HttpResponse
 from django.contrib import messages
 from django.contrib.messages import get_messages
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core import serializers
 from django.shortcuts import redirect
-from django.core.files.storage import default_storage
+from django.core.files.storage import FileSystemStorage
 
 from datapipeline.views import home
 from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, DataCategory, DataCategoryStudyXref
 
 from .viewHelpers import Helper, DBFunctions, Handler
-from .models import Document
 from . import views
 from .forms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
 from .tasks import ProcessUpload
@@ -44,6 +44,7 @@ def study(request):
                     )
             studyName = fields[0].get('value')
             request.session['studyName'] = studyName
+            request.session['checkedForDuplications'] = False
             
             studyExists = Study.objects.filter(study_name=studyName).exists()
             
@@ -141,6 +142,7 @@ def info(request):
         return redirect(study)
     
     studyName = request.session['studyName']
+    checkedForDuplications = request.session['checkedForDuplications']
     
     context = {
          'myCSS': 'uploaderInfo.css',
@@ -151,31 +153,42 @@ def info(request):
     #############################################################################################################
     if request.method == 'POST':
         uploaderForm = UploaderInfoForm(request.POST, request.FILES)
-        fields = {}
-        filenames = []
-        
+                
         if uploaderForm.is_valid():
-            for field in uploaderForm.fields:
-                if uploaderForm.cleaned_data[field]:
-                    if field == 'uploadedFiles':
-                        files = request.FILES.getlist(field)
-                        path = 'uploaded_csvs/'
-                        for file in files:
-                            filepath = path + file.name
-                            filenames.append(file.name)
-                            default_storage.save(filepath, file)
-                            
-                        
-                    else:
-                        fields[field] = uploaderForm[field].data
+            files = request.FILES.getlist('uploadedFiles')
+            
+            fields, filenames = Helper.getFieldsFromInfoForm(uploaderForm, files)
         
-        
+                
         subjectOrgVal = fields.get('subjectOrganization')
         rawTimeSeries = fields.get('isTimeSeries')
         fields['isTimeSeries'] = True if rawTimeSeries == 'y' else False
         groupName = fields.get('groupName') 
         dataCategoryName = fields.get('categoryName')
         
+        print(fields)
+        if checkedForDuplications is False or fields.get('handleDuplicate', 'N/A') == 'newFile':
+            duplicateFiles = []
+            for filename in filenames:
+                if Handler.documentExists(filename, dataCategoryName, fields['isTimeSeries'], studyID):
+                    duplicateFiles.append(filename)
+                    
+            if len(duplicateFiles) > 0:
+                context['studyGroups'] = request.session['studyGroups']
+                context['dataCategories'] = request.session['dataCategories']
+                uploaderForm.fields['handleDuplicate'].required = True
+                context['form'] = uploaderForm 
+                
+                Helper.deleteAllDocuments()
+                msg = ' '.join(duplicateFiles)
+                messages.warning(request, f'Found Duplicates! Duplicate Files: {msg}')
+                
+                request.session['checkedForDuplications'] = True 
+                return render(request, 'uploader/info.html', context)
+        
+        if 'handleDuplicate' not in fields:
+            fields['handleDuplicate'] = 'append'
+            
         specialFlag = False
         
         if fields.get('isTimeSeries') and (subjectOrgVal == 'row' or subjectOrgVal == 'column'):
@@ -239,7 +252,7 @@ def info(request):
           
     elif request.method == 'GET':
         print('\nGot Uploader Info Request\n')
-        
+        request.session['checkedForDuplications'] = False
         Helper.deleteAllDocuments()
         groupsExist = StudyGroup.objects.filter(study=studyID)
         
@@ -253,12 +266,14 @@ def info(request):
         dataCategories = DBFunctions.getAllDataCategoriesOfStudy(studyID)
         
         context['studyGroups'] = studyGroups
+        request.session['studyGroups'] = studyGroups
         context['dataCategories'] = dataCategories
+        request.session['dataCategories'] = dataCategories
     
     #############################################################################################################
     
     form = UploaderInfoForm()
-    
+    form.fields['handleDuplicate'].widget = forms.HiddenInput()
     context['form'] = form
     
     return render(request, 'uploader/info.html', context)

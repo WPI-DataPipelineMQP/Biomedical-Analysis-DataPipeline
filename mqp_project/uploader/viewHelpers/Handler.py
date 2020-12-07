@@ -1,15 +1,27 @@
 from django.db import IntegrityError, transaction
 from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, Subject, DataCategory, DataCategoryStudyXref
+from ..models import Document
+
 from . import Helper, DBFunctions
 
 import pandas as pd 
 import numpy as np
 
+def documentExists(filename, category_name, timeSeries, studyID):
+    dcID = DBFunctions.getDataCategoryIDIfExists(category_name, timeSeries, studyID)
+    
+    if dcID != -1:
+        dcObj = DataCategory.objects.get(data_category_id=dcID) 
+        exists = Document.objects.filter(filename=filename, data_category=dcObj).exists()
+        
+        return exists 
+    
+    return False 
+
 
 def updateFieldsFromDataCategory(data_category_id, fields):
-    where_params = [('data_category_id', data_category_id, False)]
-    
+
     tableName = (DataCategory.objects.get(data_category_id=data_category_id)).dc_table_name
     isTimeSeries = (DataCategory.objects.get(data_category_id=data_category_id)).is_time_series
     hasSubjectNames = (DataCategory.objects.get(data_category_id=data_category_id)).has_subject_name
@@ -139,7 +151,7 @@ def subjectHandler(filename, study_group_id, subjectNumber=None):
     return subject_id, None
 
 
-def specialUploadToDatabase(file, filename, myMap, column_info):
+def specialUploadToDatabase(file, docID, myMap, column_info):
     groupID = myMap.get('groupID')
     tableName = myMap.get('tableName')
     
@@ -156,7 +168,7 @@ def specialUploadToDatabase(file, filename, myMap, column_info):
     numpyArray = df.to_numpy()
 
     try:
-        myDf = pd.DataFrame(columns=[columnName, 'subject_id', 'filename']) 
+        myDf = pd.DataFrame(columns=[columnName, 'subject_id', 'doc_id']) 
         with transaction.atomic():
             for i, row in enumerate(numpyArray):
                                 
@@ -190,7 +202,7 @@ def specialUploadToDatabase(file, filename, myMap, column_info):
                     tmpDf[columnName].astype(bool)
             
                 tmpDf['subject_id'] = subject_id
-                tmpDf['filename'] = filename
+                tmpDf['doc_id'] = docID
                 
                 myDf = myDf.append(tmpDf, ignore_index=True)
 
@@ -208,7 +220,7 @@ def specialUploadToDatabase(file, filename, myMap, column_info):
 
 
 
-def uploadToDatabase(file, filename, myMap, column_info, organizedColumns):
+def uploadToDatabase(file, filename, docID, myMap, column_info, organizedColumns):
     errorMessage = None
     columnFlag = False 
     df = pd.read_csv(file)
@@ -250,7 +262,7 @@ def uploadToDatabase(file, filename, myMap, column_info, organizedColumns):
         
         df = df[organizedColumns]
         df['subject_id'] = subjectID
-        df['filename'] = filename
+        df['doc_id'] = docID
         
     try:
         with transaction.atomic():

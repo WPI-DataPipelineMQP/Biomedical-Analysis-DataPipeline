@@ -175,3 +175,10 @@ def tryExecuteCommand(template, args):
 def dfInsert(df, tableName):
     db_engine = sql.create_engine(settings.DB_CONNECTION_URL)
     df.to_sql(name=tableName, con=db_engine, if_exists='append', index=False, chunksize=20000)
+    
+
+def deleteData(tableName, docID):
+    with connection.cursor() as cursor:
+        stmt = f'DELETE FROM {tableName} WHERE doc_id = {docID}'
+        
+        cursor.execute(stmt)
