@@ -349,10 +349,10 @@ def output(request):
     if 'filter_values' in request.session:
         filter_values = request.session['filter_values']
         
-    if "StudyGroup.study_group_name" not in attribute_names:
+    if "StudyGroup.study_group_name" not in attribute_names and "study_group_name" not in attribute_names:
         attribute_names.append("StudyGroup.study_group_name")
         
-    if "Subject.subject_number" not in attribute_names:
+    if "Subject.subject_number" not in attribute_names and "subject_number" not in attribute_names:
         attribute_names.append("Subject.subject_number")
 
     args = {
