@@ -34,8 +34,9 @@ def deleteAllDocuments():
     uploadedFiles = os.listdir(directory_path)
     
     for file in uploadedFiles:
-        filepath = directory_path + file
-        os.remove(filepath)
+        if file.endswith('.csv'):
+            filepath = directory_path + file
+            os.remove(filepath)
 
 
 def clearUploadInfo(session):
