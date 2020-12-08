@@ -190,8 +190,12 @@ def info(request):
             fields['handleDuplicate'] = 'append'
             
         specialFlag = False
+        specialRow = False
         
         if fields.get('isTimeSeries') and (subjectOrgVal == 'row' or subjectOrgVal == 'column'):
+            if subjectOrgVal == 'row':
+                specialRow = True 
+                
             specialFlag = True 
             
         fields['SpecialCase'] = specialFlag
@@ -200,7 +204,7 @@ def info(request):
         firstFile = filenames[0]
         path = 'uploaded_csvs/{}'.format(firstFile)
         
-        if Helper.hasAcceptableHeaders(path) is False:
+        if specialRow is False and Helper.hasAcceptableHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
             uploaderInfo = {'filenames': filenames}
             request.session['uploaderInfo'] = uploaderInfo

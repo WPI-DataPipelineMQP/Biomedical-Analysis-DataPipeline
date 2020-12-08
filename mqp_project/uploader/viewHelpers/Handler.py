@@ -257,12 +257,14 @@ def uploadToDatabase(file, filename, docID, myMap, column_info, organizedColumns
         df = df[organizedColumns]
         df['subject_id'] = listOfSubjects
         
+        
     else:
         subjectID, errorMessage = subjectHandler(filename, groupID)
         
         df = df[organizedColumns]
         df['subject_id'] = subjectID
-        df['doc_id'] = docID
+    
+    df['doc_id'] = docID
         
     try:
         with transaction.atomic():
@@ -296,7 +298,7 @@ def uploadToDatabase(file, filename, docID, myMap, column_info, organizedColumns
             columnHeaders = columnHeaders[1:]
         
             df.columns = columnHeaders
-        
+
             DBClient.dfInsert(df, tableName)
     
     except Exception as e:

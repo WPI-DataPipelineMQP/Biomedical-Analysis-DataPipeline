@@ -300,7 +300,8 @@ def getUploadResults(filenames):
     
     filesLeft = os.listdir(directory_path)
     
-    print(filesLeft)
+    filesLeft.remove('.gitignore')
+    
     if len(filesLeft) == 0:
         return filenames, ['none'] 
     
