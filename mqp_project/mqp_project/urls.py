@@ -21,6 +21,7 @@ urlpatterns = [
     path('datapipeline/', include('datapipeline.urls')),
     path('users/', include('users.urls')),
     path('uploader/', include('uploader.urls')),
+    path('inventory/', include('inventory.urls')),
     path('', include('datapipeline.urls')),
 	path('celery-progress/', include('celery_progress.urls')),
 ]

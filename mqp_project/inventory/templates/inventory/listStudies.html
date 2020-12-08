@@ -1,0 +1,41 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% load inventory_extras %}
+{% block content %}
+
+<h2>Inventory Analysis</h2>
+
+<form method="POST" action="{% url 'inventory-listStudies' %}">
+    {% csrf_token %}
+    {{ dc_search_form }}
+    <input type="submit" name="search-btn" value="Search">
+</form>
+
+{% if study_ids|length == 1 %}
+    <p>{{ study_ids|length }} study found</p>
+{% else %}
+    <p>{{ study_ids|length }} studies found</p>
+{% endif %}
+
+<form method="POST" action="{% url 'inventory-listStudies' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <br/>
+    <ul class="study-listings">
+        {% for field in studies_form %}
+        <li class="study-article">
+            {{ field }}
+            <label class="study-article">
+                <article class="media content-section">
+                    <div class="media-body">
+                        <a href="{% url 'inventory-study' study_ids|get_item:field.label %}"><h2>{{ field.label }}</h2></a>
+                        <p class="article-content">{{ field.help_text }}</p>
+                    </div>
+                </article>
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <input type="submit" class="selection-btn" name="selection-btn" value="Start Selection Analysis">
+</form>
+{% endblock content %}
