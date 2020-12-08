@@ -12,6 +12,7 @@ from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
 from .viewHelpers import viewsHelper as ViewHelper
+from uploader.viewHelpers import Helper as UploadHelper
 from django.db import connection
 from .database import DBClient, DBHandler
 from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi
@@ -20,9 +21,11 @@ from .forms import CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 # Create your views here.
 
 def home(request):
+    UploadHelper.deleteAllDocuments()
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
 
 def studySelection(request):
+    UploadHelper.deleteAllDocuments()
     study_fields = []
     args = {
         'selectors': 'study_name, study_description, study_id',

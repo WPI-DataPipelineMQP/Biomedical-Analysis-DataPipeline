@@ -3,12 +3,13 @@ from django.shortcuts import render, redirect
 from datapipeline.database import DBClient, DBHandler
 from datapipeline.forms import CreateChosenBooleanForm
 from datapipeline.viewHelpers import viewsHelper as ViewHelper
+from uploader.viewHelpers import Helper as UploadHelper
 from .forms import DataCategorySearchForm
 from django.contrib import messages
 
 # 1st screen: Show list of studies and allow user to start selection on them or use links to study page
 def listStudies(request):
-
+    UploadHelper.deleteAllDocuments()
     dc_searchTerm = None
 
     # If submit button was clicked to go to selection

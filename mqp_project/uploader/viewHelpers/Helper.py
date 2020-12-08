@@ -1,6 +1,8 @@
 from django.core.files.storage import default_storage
 
 from datetime import datetime  
+from dateutil.parser import parse
+import pandas as pd 
 import csv, os
 
 import random
@@ -224,16 +226,48 @@ def modifyFileName(name):
     return modifiedResult
         
 
-def hasHeaders(filepath):
-    hasHeaders = False 
-    with open(filepath, 'r') as csvfile:
-        sniffer = csv.Sniffer()
-        hasHeaders = sniffer.has_header(csvfile.read(2048))
-        
-
+def hasDate(string):
+    try:
+        parse(string)
+        return True 
     
-    print(hasHeaders)
-    return hasHeaders 
+    except ValueError:
+        return False 
+    
+        
+def hasAcceptableHeaders(filepath):
+    df = pd.read_csv(filepath)
+    
+    unnamedCols = any(col == True for col in df.columns.str.contains('^Unnamed'))
+    
+    if unnamedCols:
+        return False 
+    
+    for header in list(df.columns):
+        if hasDate(header):
+            return False 
+        
+        if header.isnumeric():
+            return False 
+        
+    
+    return True
+
+
+def extractHeaders(path, subjectOrgVal):
+    df = pd.read_csv(path) 
+    
+    hasSubjectNames = False 
+    subjectPerCol = False 
+    
+    if subjectOrgVal == 'column':
+        subjectPerCol = True 
+        hasSubjectNames = True
+        df = transposeDataFrame(df, False)
+        
+    headers = list(df.columns)
+    
+    return headers, hasSubjectNames, subjectPerCol
 
 
 def transposeDataFrame(df, withSubjects=True):

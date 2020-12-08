@@ -19,8 +19,7 @@ from .tasks import ProcessUpload
 
 import celery
 import json
-import pandas as pd
-import numpy as np 
+
 
 # FIRST PAGE
 def study(request):
@@ -201,22 +200,13 @@ def info(request):
         firstFile = filenames[0]
         path = 'uploaded_csvs/{}'.format(firstFile)
         
-        if Helper.hasHeaders(path) is False:
+        if Helper.hasAcceptableHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
             uploaderInfo = {'filenames': filenames}
             request.session['uploaderInfo'] = uploaderInfo
             return redirect(error)
-            
-        df = pd.read_csv(path) 
         
-        hasSubjectNames = False 
-        subjectPerCol = False 
-        if subjectOrgVal == 'column':
-            subjectPerCol = True 
-            hasSubjectNames = True
-            df = Helper.transposeDataFrame(df, False)
-        
-        headers = list(df.columns)
+        headers, hasSubjectNames, subjectPerCol = Helper.extractHeaders(path, subjectOrgVal)
             
         fields['headerInfo'] = headers
         
@@ -303,6 +293,7 @@ def extraInfo(request):
     
     if Helper.checkForSpecialCase(request.session):
         headers = ['Entered Name']
+        
     form = UploadInfoCreationForm(None, dynamicFields=headers)
     
     ############################################################################################################# 
@@ -440,7 +431,6 @@ def finalPrompt(request):
             
     #############################################################################################################
     elif request.method == 'GET':
-        print('RESULT', Helper.checkForSpecialCase(request.session))
         if Helper.checkForSpecialCase(request.session):
             colName, dataType = DBFunctions.getAttributeOfTable(tableName)
             uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
