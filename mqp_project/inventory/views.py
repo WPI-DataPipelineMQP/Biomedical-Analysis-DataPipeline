@@ -143,7 +143,8 @@ def studySummary(request, id):
     context = {
         'study': study_dict,
         'studygroups': studygroups_dict,
-        'datacategories': data_category_dict
+        'datacategories': data_category_dict,
+        'myCSS': 'inventoryStudy.css'
     }
     return render(request, 'inventory/study.html', context)
 
