@@ -186,7 +186,7 @@ def dataSelectionContinued(request):
         }
         result = DBClient.executeQuery(args, 1)
         for column_name in result:
-            if(column_name[3] == "data_id" or column_name[3] == "subject_id"):
+            if(column_name[3] == "data_id" or column_name[3] == "subject_id" or column_name[3] == "doc_id"):
                 pass
             else:
                 column_dict = {}
