@@ -7,7 +7,7 @@ from django.shortcuts import HttpResponse
 from sqlalchemy import create_engine
 from django.conf import settings
 
-from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateChosenFilterForm, CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi, CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
+from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateChosenFilterForm
 from django.http import HttpResponseRedirect
 from django.core import serializers
 from django.shortcuts import redirect
@@ -15,8 +15,6 @@ from .viewHelpers import viewsHelper as ViewHelper
 from uploader.viewHelpers import Helper as UploadHelper
 from django.db import connection
 from .database import DBClient, DBHandler
-from .forms import CreateHeartRateForm, CreateCorsiForm, CreateFlankerForm, CreateHeartRateANDCorsi
-from .forms import CreateHeartRateANDFlanker, CreateCorsiANDFlanker, CreateALL
 
 # Create your views here.
 
