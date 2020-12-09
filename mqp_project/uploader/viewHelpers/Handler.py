@@ -89,7 +89,7 @@ def handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo
         'DC_description': myFields.get('dataCategoryDescription')
     }
     
-    cleanResult = Helper.getCleanFormat(myExtras)
+    cleanResult = Helper.organizeExtraColsDataType(myExtras)
     
     try:
         with transaction.atomic():

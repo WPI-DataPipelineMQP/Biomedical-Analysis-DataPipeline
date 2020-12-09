@@ -102,8 +102,6 @@ def studyInfo(request):
                 if form.cleaned_data[field]:
                     fields[field] = form[field].data 
         
-        
-        
             studyDescription = fields.get('studyDescription')
             hasIRB = fields.get('isIRB_Approved')
             institutions = fields.get('institutions', '') 

@@ -7,12 +7,22 @@ import csv, os
 
 import random
 
+"""Function verifies that user is not jumping around pages when navigating through uploader
+
+PARAMS:
+session - the request session in dictionary data structure 
+uploadInfoFlag - a boolean to decide whether to check if the uploaderInfo stucture exists within the session
+
+LOGIC:
+if studyName is not in the session it means a incorrect jump was made so return False. Same concept applies 
+if checking for the 'uploaderInfo' key existing in the session
+
+returns Boolean - True if it detected that user tried going to a page they should not be accessing
+"""
 def pathIsBroken(session, uploadInfoFlag=False):
  
     if session.get('studyName', None) != None:
-        print('Found StudyName')
         if uploadInfoFlag is True:
-            print('Testing uploadInfoFlag')
             if session.get('uploaderInfo', None) != None:
                 return False 
             
@@ -24,9 +34,24 @@ def pathIsBroken(session, uploadInfoFlag=False):
     
     return True
 
+
+"""Function will delete the file with the provided filepath
+
+filepath - a string of the filepath of the file to be deleted
+
+returns None
+"""
 def deleteFile(filepath):
     os.remove(filepath)
-    
+
+
+"""Function that deletes all the documents in the uploaded_csv folder
+
+LOGIC:
+- iterate through each csv file (ignoring the .gitignore file) and delete it
+
+returns None
+"""
 def deleteAllDocuments():
     
     directory_path = 'uploaded_csvs/'
@@ -38,7 +63,12 @@ def deleteAllDocuments():
             filepath = directory_path + file
             os.remove(filepath)
 
+"""Function that removes uploaderInfo key from the session
 
+PARAMS:
+session - the request session to delete 
+
+"""
 def clearUploadInfo(session):
     if session.get('uploaderInfo', None) != None:
         del session['uploaderInfo']
@@ -48,6 +78,25 @@ def clearStudyName(session):
     if session.get('studyName', None) != None:
         del session['studyName']
         
+"""Function that removes uploaderInfo key from the session
+
+PARAMS:
+session - the request session to delete the key from
+
+returns None 
+"""
+def clearKeyInSession(session, key):
+    if session.get(key, None) != None:
+        del session[key]
+
+
+"""Function to return the value of 'SpecialCase' in the uploaderInfo dictionary (if exists)
+
+PARAMS:
+session - the request session to get the uploaderInfo from
+
+returns Boolean - the value of SpecialCase or False if uploaderInfo is not in the session
+"""       
 def checkForSpecialCase(session):
     uploaderInfo = session.get('uploaderInfo')
     
@@ -56,7 +105,18 @@ def checkForSpecialCase(session):
     
     return False
        
-        
+       
+"""Function to extract the actual column names from a form POST request
+
+PARAMS:
+string - a string value of the raw column name to extract the name from
+
+LOGIC:
+- finds the index of the first occurance of '_' in the string 
+- obtains the name from getting a substring of the string from 0 to the found index
+
+returns String - the actual name of the column
+"""       
 def extractName(string):
     indexPos = string.find('_')
     
@@ -65,6 +125,17 @@ def extractName(string):
     return name 
 
 
+"""Function to extract the field name from a form POST request
+
+PARAMS:
+string - a string value of the raw column name to extract the field name from
+
+LOGIC:
+- finds the index of the last occurance of '_' in the string 
+- obtains the name from getting a substring of the string from the index after found index to the end of string
+
+returns String - the field name
+"""  
 def getFieldName(string):
     indexPos = string.rfind('_')
     
@@ -73,7 +144,20 @@ def getFieldName(string):
     return name
 
 
-def getCleanFormat(myList):
+"""Function to organize the raw extras from the form to a list of tuples with the column name and its value in a tuple 
+
+ex: [ (column1, value), (column2, value), ... ]
+
+PARAMS:
+myList - a list of the raw extras from the form
+
+LOGIC:
+- only perform the logic on column names that contains '_custom_dataType'
+- if check is True, extract the value and the actual column name, put them into a tuple and add to the list
+
+returns List - a clean list to easily parse through and get the necessary information from
+""" 
+def organizeExtraColsDataType(myList):
     clean = []
     for (name, val) in myList:
         if '_custom_dataType' in name:
@@ -108,15 +192,32 @@ def convertToIntValue(string):
     return dataTypeMap.get(string)
 
 
+"""Function produces a nested dictionary so that each column will point to a dictionary of the fields corressponding to that column
+
+ex: {
+    'column1':
+        {
+            'field1': val,
+            'field2': val
+        }
+    }
+    
+PARAMS:
+columns - a list of the raw columns from the form
+keepOriginal - boolean value that determines if the column name should stay the same (with the included spaces in between words)
+
+LOGIC:
+- iterate through each column
+    - get the actual column name. Figure out whether or not to keep the original string or remove the spaces from the string
+    - initialize a empty dictionary which would be the value of the column name which acts as a key in the top-level dictionary
+    - iterate through the fields in the column
+        - add the key value pairs to the empty dictionary
+    - add the generated dictionary to be the value of the column name key
+    
+returns Dictionary - a clean way to parse through the columns and their respective field values
+"""
 def clean(columns, keepOriginal):
     myMap = {}
-    dataTypeMap = {
-        '1' : 'TEXT',
-        '2' : 'INT',
-        '3' : 'FLOAT(10,5)',
-        '4' : 'DATETIME',
-        '5' : 'BOOLEAN'
-    }
     
     for column in columns:
         columnName = extractName(column[0][0])
@@ -130,7 +231,7 @@ def clean(columns, keepOriginal):
             value = field[1]
             
             if fieldName == 'dataType':
-                value = dataTypeMap.get(field[1])
+                value = getActualDataType(field[1])
             
             currMap[fieldName] = value
             
@@ -138,12 +239,56 @@ def clean(columns, keepOriginal):
     
     return myMap 
 
+
+"""Function does the whole process of taking in raw inputs from the form and organizing it in the format that is produced from the clean function (look above)
+
+ex:
+
+input: [('X_custom_dataType', '1'), ('X_custom_description', 'string'), ..., ('Y_custom_dataType', '2'), ...]  ==> see next line
+
+output: 
+{
+    'X':
+        {
+            'dataType': 'TEXT',
+            'description': 'string',
+            ...
+        }
+    
+    'Y':
+        {
+            'dataType': 'INT',
+            ...
+        }
+}
+
+PARAMS:
+- myList - a raw list of tuples of the data gathered from the form
+- flag - a int value to decide when to move on to next column. Say if there are 4 fields for each column, flag should be 4
+    - will be used for iterating through myList. Iterate by the value of flag
+    
+- keepOriginal - boolean value that determines if the column name should stay the same (with the included spaces in between words)
+
+LOGIC:
+initialize an empty list to hold all the information for each column (currentList)
+- iterate through each item in myList:
+    - if i is less than the value of the flag -> keep adding to currentList
+    - if i == flag, append the intialized list to the columns list and clear the data in currentList
+        - example of what currentList would look like before it is cleared:
             
+            currentList = [ ('X_custom_dataType', '1'), ('X_custom_description', 'string'), ('X_custom_unit', ''), ('X_custom_deviceUsed', '') ]
+            
+            NOTE: so each length of currentList should be equal to the value of flag 
+            
+- now run the clean function on the columns list to get the desired output
+
+return Dictionary (output of clean function)
+"""          
 def seperateByName(myList, flag, keepOriginal):
     index = 0
     i = 0
     
-    columns = []
+    columns = [] # will be a 2D array (number of columns x value of flag)
     currentList = []
     while index < len(myList):
         if i < flag:
