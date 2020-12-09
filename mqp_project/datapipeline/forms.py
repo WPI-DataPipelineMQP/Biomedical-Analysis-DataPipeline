@@ -41,7 +41,10 @@ class CreateChosenBooleanFormWithoutDesc(forms.Form):
         super(CreateChosenBooleanFormWithoutDesc, self).__init__(*args, **kwargs)
 
         for i, field in enumerate(fields):
-            self.fields[field['name'] + '_custom_%s' % i] = forms.BooleanField(label=field['name'], required=False)
+            if(field['name'] == "subject_number" or field['name'] == "study_group_name"):
+                self.fields[field['name'] + '_custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, initial=True)
+            else:
+                self.fields[field['name'] + '_custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, initial=False)
 
 
     def getAllFields(self):
