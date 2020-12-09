@@ -122,12 +122,17 @@ class UploadPositionForm(forms.Form) :
         
         super(UploadPositionForm, self).__init__(*args, **kwargs) 
         
-        for column in columns:
+        for i, column in enumerate(columns):
             position = '{}_custom_position'.format(column)
             dataType = '{}_custom_dataType'.format(column)
             
-            self.fields[position] = forms.CharField(label="{}'s Position: ".format(column), widget=forms.Select(choices=available_positions, attrs={'id': 'mySelection'}), required=True)
-            self.fields[dataType] = forms.CharField(label='Datatype:', widget=forms.Select(choices=allowed_datatypes, attrs={'id': 'mySelection'}), required=True)
+            self.fields[position] = forms.CharField(label="{}'s Position: ".format(column), 
+                                                    widget=forms.Select(choices=available_positions, attrs={'id': 'mySelection'}), 
+                                                    required=True,
+                                                    initial=i)
+            self.fields[dataType] = forms.CharField(label='Datatype:', 
+                                                    widget=forms.Select(choices=allowed_datatypes, attrs={'id': 'mySelection'}), 
+                                                    required=True)
     
     def getColumnFields(self):
         for name, value in self.cleaned_data.items():
