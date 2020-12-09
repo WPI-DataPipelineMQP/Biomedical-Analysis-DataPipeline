@@ -59,7 +59,6 @@ def create_scatter(df, xcol, ycol):
     plt.show()
 
 
-prompt
 # user clarification for datatype
 # TODO: change print statement to an alert/prompt
 
