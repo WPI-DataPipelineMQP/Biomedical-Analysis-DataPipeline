@@ -19,9 +19,9 @@
         {% endfor %}
     </tbody>
 </table>
-<p> </p>
+<br/>
 <form action="{% url 'datapipeline-export_summary' %}">
-    <button id="export-button" href=>Export Summary to CSV</button>
+    <button class="export-button">Export Summary to CSV</button>
 </form>
 
 <!--WE COULD DO THIS TO MAKE THE COLUMN NAMES STAY AT THE TOP, NEEDS FORMATTING THO-->
@@ -60,9 +60,13 @@
         </div>
     </div>
 </article>
-<p></p>
+<br/>
 <form action="{% url 'datapipeline-export_data' %}">
-    <button id="export-button" href=>Export Data to CSV</button>
+    <button class="export-button">Export Data to CSV</button>
+</form>
+<br />
+<form action="{% url 'analysis-data_analysis' %}">
+    <button class="export-button">Further Analysis</button>
 </form>
 
 {% endblock content %}
