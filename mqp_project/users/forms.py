@@ -7,6 +7,18 @@ class UserRegisterForm(UserCreationForm):
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
 
+    # Prevent accounts with the same email
+    def clean_email(self):
+        if User.objects.filter(email=self.cleaned_data['email']).exists():
+            raise forms.ValidationError("This email is already used for another profile! Consider resetting your password.")
+        return self.cleaned_data['email']
+
+    # Prevent accounts with the same username
+    def clean_username(self):
+        if User.objects.filter(email=self.cleaned_data['username']).exists():
+            raise forms.ValidationError("This username is already used for another profile!")
+        return self.cleaned_data['username']
+
     class Meta:
         model = User
 
