@@ -383,12 +383,25 @@ def output(request):
     # Set up stats summary
     engine = create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
-    stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
-    print(stat_summary)
-    records = stat_summary.to_records(index=True)
-    print(records)
-    record_list = list(records)
-    print(record_list)
+
+    print(df.dtypes)
+    correctType = False
+    for datatype in df.dtypes:
+        if datatype == np.int64 or datatype == np.float64:
+            correctType = True
+            break
+    record_list = []
+    if correctType == True:
+        stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
+        #print(stat_summary)
+        header = ("Attribute Name",)
+        for x in stat_summary.columns:
+            header += (x,)
+        records = stat_summary.to_records(index=True)
+        #print(records)
+        record_list = list(records)
+        record_list.insert(0, header)
+    #print(record_list)
 
     #saved to session for exporting
     request.session['args'] = args
