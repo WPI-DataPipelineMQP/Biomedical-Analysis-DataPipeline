@@ -55,8 +55,10 @@ def study(request):
     #############################################################################################################           
     elif request.method == 'GET':
         
-        Helper.clearStudyName(request.session)
-        Helper.clearUploadInfo(request.session)
+        Helper.clearKeyInSession(request.session, 'studyName')
+        Helper.clearKeyInSession(request.session, 'uploaderInfo')
+        Helper.clearKeyInSession(request.session, 'studyGroups')
+        Helper.clearKeyInSession(request.session, 'dataCategories') 
         Helper.deleteAllDocuments()
         
         allStudies = Study.objects.all()
@@ -528,7 +530,10 @@ def error(request):
     
     
     if request.method == 'POST':
-        Helper.clearUploadInfo(request.session)    
+        Helper.clearKeyInSession(request.session, 'uploaderInfo') 
+        Helper.clearKeyInSession(request.session, 'studyGroups')
+        Helper.clearKeyInSession(request.session, 'dataCategories')  
+
         Helper.deleteAllDocuments()
         return redirect(home)
     
@@ -556,11 +561,13 @@ def success(request):
     
     if request.method == 'POST':
         if 'finished' in request.POST:
-            Helper.clearStudyName(request.session)
+            Helper.clearKeyInSession(request.session, 'studyName')
             return redirect(home)
         
         elif 'continue' in request.POST:
-            Helper.clearUploadInfo(request.session) 
+            Helper.clearKeyInSession(request.session, 'uploaderInfo') 
+            Helper.clearKeyInSession(request.session, 'studyGroups')
+            Helper.clearKeyInSession(request.session, 'dataCategories') 
             return redirect(info)
         
     elif request.method == 'GET':

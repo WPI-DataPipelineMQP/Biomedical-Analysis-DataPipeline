@@ -70,10 +70,10 @@ class UploadInfoCreationForm(forms.Form):
     #datatypeOfMeasured = forms.CharField(label='What is the Data Type?', widget=forms.Select(choices=allowed_datatypes), required=False)
 
     studyGroupDescription = forms.CharField(
-        label='Study Group Descrption', required=False)
+        label='Study Group Description', required=False)
 
     dataCategoryDescription = forms.CharField(
-        label='Data Category Descrption', required=False)
+        label='Data Category Description', required=False)
 
     def __init__(self, *args, **kwargs):
         extra = kwargs.pop('dynamicFields')
@@ -99,7 +99,7 @@ class UploadInfoCreationForm(forms.Form):
             self.fields[description] = forms.CharField(
                 label='Description of {}'.format(fieldName), required=True)
             self.fields[unit] = forms.CharField(
-                label='Unit of {} (if aplicable)'.format(fieldName), required=False)
+                label='Unit of {} (if applicable)'.format(fieldName), required=False)
             self.fields[deviceUsed] = forms.CharField(
                 label='Device Used to Measure {} (if applicable)'.format(fieldName), required=False)
 

@@ -62,21 +62,6 @@ def deleteAllDocuments():
         if file.endswith('.csv'):
             filepath = directory_path + file
             os.remove(filepath)
-
-"""Function that removes uploaderInfo key from the session
-
-PARAMS:
-session - the request session to delete 
-
-"""
-def clearUploadInfo(session):
-    if session.get('uploaderInfo', None) != None:
-        del session['uploaderInfo']
-
-
-def clearStudyName(session):
-    if session.get('studyName', None) != None:
-        del session['studyName']
         
 """Function that removes uploaderInfo key from the session
 
@@ -206,14 +191,7 @@ PARAMS:
 columns - a list of the raw columns from the form
 keepOriginal - boolean value that determines if the column name should stay the same (with the included spaces in between words)
 
-LOGIC:
-- iterate through each column
-    - get the actual column name. Figure out whether or not to keep the original string or remove the spaces from the string
-    - initialize a empty dictionary which would be the value of the column name which acts as a key in the top-level dictionary
-    - iterate through the fields in the column
-        - add the key value pairs to the empty dictionary
-    - add the generated dictionary to be the value of the column name key
-    
+
 returns Dictionary - a clean way to parse through the columns and their respective field values
 """
 def clean(columns, keepOriginal):
@@ -269,56 +247,34 @@ PARAMS:
     
 - keepOriginal - boolean value that determines if the column name should stay the same (with the included spaces in between words)
 
-LOGIC:
-initialize an empty list to hold all the information for each column (currentList)
-- iterate through each item in myList:
-    - if i is less than the value of the flag -> keep adding to currentList
-    - if i == flag, append the intialized list to the columns list and clear the data in currentList
-        - example of what currentList would look like before it is cleared:
-            
-            currentList = [ ('X_custom_dataType', '1'), ('X_custom_description', 'string'), ('X_custom_unit', ''), ('X_custom_deviceUsed', '') ]
-            
-            NOTE: so each length of currentList should be equal to the value of flag 
-            
-- now run the clean function on the columns list to get the desired output
 
 return Dictionary (output of clean function)
 """          
 def seperateByName(myList, flag, keepOriginal):
-    index = 0
-    i = 0
-    
+
     columns = [] # will be a 2D array (number of columns x value of flag)
-    currentList = []
-    while index < len(myList):
-        if i < flag:
-            currentList.append(myList[index])
-            i += 1
-            
-        if i == flag:
-            columns.append(currentList)
-            currentList = [] 
-            i = 0
-        
-        index += 1
-    
+
+    for i in range(0, len(myList), flag):
+        currentList = myList[i:i+flag]
+        columns.append(currentList)
+
     result = clean(columns, keepOriginal)
     
     return result         
        
             
 def foundDuplicatePositions(myMap):
-    foundPositions = {}
+    foundPositions = set()
     
     for key in myMap:
         currDict = myMap.get(key)
         currPos = currDict.get('position')
         
-        if currPos in foundPositions.keys():
+        if currPos in foundPositions:
             return True
         
         else:
-            foundPositions[currPos] = 0
+            foundPositions.add(currPos)
             
     return False
 

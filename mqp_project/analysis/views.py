@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.conf import settings
-from ..datapipeline.database import DBClient, DBHandler
+from datapipeline.database import DBClient, DBHandler
 from sqlalchemy import create_engine
 import matplotlib.pyplot as plt
 from datetime import datetime
