@@ -1,4 +1,4 @@
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, DatabaseError, transaction
 from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, Subject, DataCategory, DataCategoryStudyXref
 from .models import Document
@@ -53,31 +53,58 @@ class UploaderInfo:
         
         
     def dataCategoryHandler(self, myMap):
-
+        
+        errorMessage = None
         description = myMap.get('DC_description')
         
-        data_category_name = self.categoryName.replace(" ", "_")
-        attachmentToTableName = f'_{self.studyID}'
-        self.tableName = data_category_name + attachmentToTableName
-        
-        insertSuccess = DBFunctions.insertToDataCategory(self.categoryName, self.isTimeSeries, self.hasSubjectNames, self.tableName, description)
+        insertSuccess, errorMessage = DBFunctions.insertToDataCategory(self.categoryName, self.isTimeSeries, self.hasSubjectNames, self.tableName, description)
     
         if insertSuccess is False:
-            return False
+            return False, errorMessage
     
         data_category_id = DBFunctions.getDataCategoryID(self.tableName, self.isTimeSeries)
         
         self.dcID = data_category_id
-        insertSuccess = DBFunctions.insertToDataCategoryXref(data_category_id, self.studyID)
+        insertSuccess, errorMessage = DBFunctions.insertToDataCategoryXref(data_category_id, self.studyID)
 
         if insertSuccess is False:
-            return False
+            return False, errorMessage
 
-        return True
+        return True, ''
+
     
-    
-    def handleMissingDataCategoryID(self, subjectRule, otherInfo):
+    def __performTransaction(self, myMap, myExtras):
+        
         errorMessage = ''
+        
+        data_category_name = self.categoryName.replace(" ", "_")
+        attachmentToTableName = f'_{self.studyID}'
+        self.tableName = data_category_name + attachmentToTableName
+        myMap['tableName'] = self.tableName
+        
+        # do this first because MySQL does not support DDL transactions
+        noErrors, errorMessage = DBFunctions.createNewTable(myMap)
+                
+        if noErrors is False:
+            raise DatabaseError(errorMessage)
+        
+        noErrors, errorMessage = self.dataCategoryHandler(myMap) 
+                
+        if noErrors is False:
+            DBFunctions.dropTable(self.tableName)
+            raise DatabaseError(errorMessage)
+                
+        cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
+                
+        noErrors, errorMessage = DBFunctions.insertToAttribute(cleanAttributeFormat, self.dcID)
+                
+        if noErrors is False:
+            DBFunctions.dropTable(self.tableName)
+            raise DatabaseError(errorMessage)
+        
+        
+        
+    def handleMissingDataCategoryID(self, subjectRule, otherInfo):
         
         myFields, myExtras = otherInfo[0], otherInfo[1]
         
@@ -96,36 +123,14 @@ class UploaderInfo:
         
         try:
             with transaction.atomic():
-                noErrors = self.dataCategoryHandler(myMap) 
-                
-                myMap['tableName'] = self.tableName
-                
-                if noErrors is False:
-                    errorMessage = "Error found when updating the DataCategory Table!"
-                    raise IntegrityError()
-                
-                cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
-                
-                noErrors = DBFunctions.insertToAttribute(cleanAttributeFormat, self.dcID)
-                
-                if noErrors is False:
-                    errorMessage = "Error found when inserting to Attribute table!"
-                    
-                    raise IntegrityError()
-                
-                noErrors = DBFunctions.createNewTable(myMap)
-                
-                if noErrors is False:
-                    errorMessage = "Error found when creating the new table!"
-                    raise IntegrityError()
-                
-        except IntegrityError:
+                self.__performTransaction(myMap, myExtras)
+                 
+        except DatabaseError as e:
             print('SHOULD ROLLBACK')
-
-            return errorMessage
-    
-    
+            return str(e)
+        
         return None
+         
     
     
     def subjectHandler(self, filename, subjectNumber=None):

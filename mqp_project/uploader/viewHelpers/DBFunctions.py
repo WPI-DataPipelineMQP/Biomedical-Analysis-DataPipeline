@@ -47,10 +47,11 @@ def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_tab
                                                       dc_table_name=dc_table_name,
                                                       dc_description=description)
         
-        return True
+        return True, ''
     
-    except:
-        return False 
+    except Exception as e:
+        
+        return False, str(e)
 
 
 
@@ -69,13 +70,14 @@ def insertToDataCategoryXref(category_id, study_id):
         newXref = DataCategoryStudyXref.objects.create(data_category=dcObj,
                                                        study=studyObj)
         
-        return True 
+        return True, '' 
     
-    except:
-        return False 
+    except Exception as e:
+        return False, str(e)
     
     
 def insertToAttribute(attributes, dcID):
+    
     for colName in attributes:
         currDict = attributes.get(colName)
         name = colName
@@ -93,12 +95,20 @@ def insertToAttribute(attributes, dcID):
                                                     device_name=device,
                                                     data_category=dcObj) 
             
-        except:
-            return False 
+        except Exception as e:
+            return False, str(e) 
         
     
-    return True
+    return True, ''
 
+
+def dropTable(tableName):
+    stmt = f"DROP TABLE IF EXISTS {tableName}"
+    
+    DBClient.executeStmt(stmt)
+    
+    print(f"DROPPED TABLE: {tableName}")
+    
 
 def createNewTable(myMap):
     result = False 
@@ -135,10 +145,11 @@ def createNewTable(myMap):
         stmt += pk_field
         stmt += fk_field
         
-        result = DBClient.createTable(stmt, table_name, 1)
+        result, errorMessage = DBClient.createTable(stmt, table_name, 1)
         
 
-    return result
+    return result, errorMessage
+        
 
 
 
