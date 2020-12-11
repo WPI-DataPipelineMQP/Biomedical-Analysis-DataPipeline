@@ -437,6 +437,12 @@ def getFieldsFromInfoForm(uploaderForm, files):
                 fields[field] = uploaderForm[field].data
                 
     return fields, filenames
+
+def cleanCategoryName(name):
+    if '-' in name:
+        newName = name.replace('-', '_')
+        
+    return newName
     
     
         

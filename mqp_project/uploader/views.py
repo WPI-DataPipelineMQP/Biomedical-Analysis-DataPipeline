@@ -166,10 +166,10 @@ def info(request):
         rawTimeSeries = fields.get('isTimeSeries')
         uploaderInfo.isTimeSeries = True if rawTimeSeries == 'y' else False
         uploaderInfo.groupName = fields.get('groupName') 
-        uploaderInfo.categoryName = fields.get('categoryName')
+        uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
         
-        print(fields)
+        print(uploaderInfo.getAllAttributes())
         if checkedForDuplications is False or uploaderInfo.handleDuplicate == 'newFile':
             duplicateFiles = []
             for filename in filenames:
