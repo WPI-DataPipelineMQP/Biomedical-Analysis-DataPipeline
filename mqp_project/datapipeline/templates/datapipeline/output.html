@@ -6,20 +6,20 @@
 <table class="table-bordered">
     <thead>
         {% for stat in stat_summary %}
-            <th> {{ stat.0 }} </th>
+        <th> {{ stat.0 }} </th>
         {% endfor %}
     </thead>
     <tbody>
         {% for stat in stat_summary %}
-                {% for val in stat %}
-                    {% if not forloop.first %}
-                        <td> {{ val }} </td>
-                    {% endif %}
-                {% endfor %}
+        {% for val in stat %}
+        {% if not forloop.first %}
+        <td> {{ val }} </td>
+        {% endif %}
+        {% endfor %}
         {% endfor %}
     </tbody>
 </table>
-<br/>
+<br />
 <form action="{% url 'datapipeline-export_summary' %}">
     <button class="export-button">Export Summary to CSV</button>
 </form>
@@ -43,30 +43,33 @@
                 <thead>
                     <tr>
                         {% for label in attribute_names %}
-                            <th scope="col">{{ label }}</th>
+                        <th scope="col">{{ label }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for dc in data %}
-                        <tr>
-                            {% for val in dc %}
-                                <td> {{ val }}</td>
-                            {% endfor %}
-                        </tr>
+                    <tr>
+                        {% for val in dc %}
+                        <td> {{ val }}</td>
+                        {% endfor %}
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </article>
-<br/>
+<br />
 <form action="{% url 'datapipeline-export_data' %}">
     <button class="export-button">Export Data to CSV</button>
 </form>
 <br />
-<form action="{% url 'analysis-data_analysis' %}">
-    <button class="export-button">Further Analysis</button>
+<form action="{% url 'analysis-make_hist' %}">
+    <button class="export-button">Make Histogram</button>
 </form>
-
+<br />
+<form action="{% url 'analysis-make_scatter' %}">
+    <button class="export-button">Make Scatter Plot</button>
+</form>
 {% endblock content %}

@@ -1,0 +1,9 @@
+{% extends "datapipeline/base.html" %}
+{% load static %}
+{% block content %}
+<h2>Scatter Plot Result:</h2>
+
+<body>
+    <img src='data:image/png;base64,{{data}}' alt='' height='300' ,width='300'>
+</body>
+{% endblock content %}
