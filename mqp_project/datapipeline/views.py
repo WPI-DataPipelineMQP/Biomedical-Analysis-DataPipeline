@@ -394,14 +394,14 @@ def output(request):
     if correctType == True:
         stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
         #print(stat_summary)
-        header = ("Attribute Name",)
+        header = ("",)
         for x in stat_summary.columns:
             header += (x,)
         records = stat_summary.to_records(index=True)
         #print(records)
         record_list = list(records)
         record_list.insert(0, header)
-    #print(record_list)
+    print(record_list)
 
     #saved to session for exporting
     request.session['args'] = args

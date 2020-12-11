@@ -119,6 +119,7 @@ def show_scatter(request):
     buf.seek(0)
     string = base64.b64encode(buf.read())
     uri = urllib.parse.quote(string)
+    plt.close()
     return render(request, 'analysis/showScatter.html', {'data': uri})
 
 

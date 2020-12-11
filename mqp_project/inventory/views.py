@@ -92,7 +92,7 @@ def listStudies(request):
     else:
         args = {
             'selectors': 'DISTINCT s.study_name, s.study_description, s.study_id',
-            'from': 'Study s, datacategorystudyxref x, datacategory dc',
+            'from': 'Study s, DataCategoryStudyXref x, DataCategory dc',
             'join-type': None,
             'join-stmt': None,
             'where': 's.study_id = x.study_id AND x.data_category_id = dc.data_category_id AND dc.data_category_name LIKE \'%'+dc_searchTerm+'%\'',
