@@ -442,7 +442,9 @@ def cleanCategoryName(name):
     if '-' in name:
         newName = name.replace('-', '_')
         
-    return newName
+        return newName
+        
+    return name
     
     
         

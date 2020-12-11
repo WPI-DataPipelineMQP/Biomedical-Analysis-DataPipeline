@@ -169,7 +169,6 @@ def info(request):
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
         
-        print(uploaderInfo.getAllAttributes())
         if checkedForDuplications is False or uploaderInfo.handleDuplicate == 'newFile':
             duplicateFiles = []
             for filename in filenames:
