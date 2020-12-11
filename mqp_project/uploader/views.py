@@ -12,12 +12,13 @@ from datapipeline.views import home
 from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, DataCategory, DataCategoryStudyXref
 
-from .viewHelpers import Helper, DBFunctions, Handler
+from .viewHelpers import Helper, DBFunctions
 from . import views
 from .forms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
 from .tasks import ProcessUpload
+from .uploaderinfo import UploaderInfo
 
-import celery
+import celery, jsonpickle
 import json
 
 
@@ -55,8 +56,10 @@ def study(request):
     #############################################################################################################           
     elif request.method == 'GET':
         
-        Helper.clearStudyName(request.session)
-        Helper.clearUploadInfo(request.session)
+        Helper.clearKeyInSession(request.session, 'studyName')
+        Helper.clearKeyInSession(request.session, 'uploaderInfo')
+        Helper.clearKeyInSession(request.session, 'studyGroups')
+        Helper.clearKeyInSession(request.session, 'dataCategories') 
         Helper.deleteAllDocuments()
         
         allStudies = Study.objects.all()
@@ -101,8 +104,6 @@ def studyInfo(request):
             for field in form.fields:
                 if form.cleaned_data[field]:
                     fields[field] = form[field].data 
-        
-        
         
             studyDescription = fields.get('studyDescription')
             hasIRB = fields.get('isIRB_Approved')
@@ -158,18 +159,20 @@ def info(request):
             
             fields, filenames = Helper.getFieldsFromInfoForm(uploaderForm, files)
         
-                
-        subjectOrgVal = fields.get('subjectOrganization')
-        rawTimeSeries = fields.get('isTimeSeries')
-        fields['isTimeSeries'] = True if rawTimeSeries == 'y' else False
-        groupName = fields.get('groupName') 
-        dataCategoryName = fields.get('categoryName')
         
-        print(fields)
-        if checkedForDuplications is False or fields.get('handleDuplicate', 'N/A') == 'newFile':
+        uploaderInfo = UploaderInfo(studyName)
+        uploaderInfo.studyID = studyID
+        uploaderInfo.subjectOrganization = fields.get('subjectOrganization')
+        rawTimeSeries = fields.get('isTimeSeries')
+        uploaderInfo.isTimeSeries = True if rawTimeSeries == 'y' else False
+        uploaderInfo.groupName = fields.get('groupName') 
+        uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
+        uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
+        
+        if checkedForDuplications is False or uploaderInfo.handleDuplicate == 'newFile':
             duplicateFiles = []
             for filename in filenames:
-                if Handler.documentExists(filename, dataCategoryName, fields['isTimeSeries'], studyID):
+                if uploaderInfo.documentExists(filename):
                     duplicateFiles.append(filename)
                     
             if len(duplicateFiles) > 0:
@@ -187,19 +190,20 @@ def info(request):
                 return render(request, 'uploader/info.html', context)
         
         if 'handleDuplicate' not in fields:
-            fields['handleDuplicate'] = 'append'
+            uploaderInfo.handleDuplicate = 'append'
             
         specialFlag = False
         specialRow = False
         
-        if fields.get('isTimeSeries') and (subjectOrgVal == 'row' or subjectOrgVal == 'column'):
-            if subjectOrgVal == 'row':
+        if uploaderInfo.isTimeSeries and (uploaderInfo.subjectOrganization == 'row' or uploaderInfo.subjectOrganization == 'column'):
+            if uploaderInfo.subjectOrganization == 'row':
                 specialRow = True 
                 
-            specialFlag = True 
-            
-        fields['SpecialCase'] = specialFlag
+            specialFlag = True
         
+        print('Special Flag', specialFlag)
+        uploaderInfo.specialCase = specialFlag 
+
         # READING THE CSV FILE
         firstFile = filenames[0]
         path = 'uploaded_csvs/{}'.format(firstFile)
@@ -207,33 +211,29 @@ def info(request):
         if specialRow is False and Helper.hasAcceptableHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
             uploaderInfo = {'filenames': filenames}
-            request.session['uploaderInfo'] = uploaderInfo
+            request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
             return redirect(error)
         
-        headers, hasSubjectNames, subjectPerCol = Helper.extractHeaders(path, subjectOrgVal)
-            
-        fields['headerInfo'] = headers
+        headers, hasSubjectNames, subjectPerCol = Helper.extractHeaders(path, uploaderInfo.subjectOrganization)
         
-        groupID = DBFunctions.getGroupID(groupName, studyID)
+        uploaderInfo.headers = headers
         
-        data_category_id = DBFunctions.getDataCategoryIDIfExists(dataCategoryName, fields.get('isTimeSeries'), studyID)
+        groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
+        
+        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, studyID)
         
         if data_category_id != -1:
-            fields = Handler.updateFieldsFromDataCategory(data_category_id, fields)
-            
-        # UPDATING THE FIELDS
-        fields['studyID'] = studyID
-        fields['filenames'] = filenames
-        fields['studyName'] = studyName
-        fields['groupName'] = groupName
-        fields['groupID'] = groupID
-        fields['dcID'] = data_category_id
-        fields['hasSubjectNames'] = hasSubjectNames 
-        fields['subjectPerCol'] = subjectPerCol
+            uploaderInfo.updateFieldsFromDataCategory(data_category_id)
+        
+        uploaderInfo.groupID = groupID
+        uploaderInfo.dcID = data_category_id
+        uploaderInfo.subjectPerCol = subjectPerCol
+        uploaderInfo.hasSubjectNames = hasSubjectNames
+        uploaderInfo.uploadedFiles = filenames
         
         
         # ALLOWING FIELDS TO BE PASSED AROUND
-        request.session['uploaderInfo'] = fields 
+        request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
         
         # CONDITIONS IF EXTRA INFORMATION IS NEEDED
         if (groupID == -1) or (data_category_id == -1):
@@ -280,22 +280,22 @@ def extraInfo(request):
         return redirect(study)
     
     studyName = request.session['studyName']
-    uploaderInfo = request.session['uploaderInfo']
+    uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
     
     context = {
          'myCSS': 'uploaderExtraInfo.css',
          'studyName': studyName
     }
     
-    headers = uploaderInfo.get('headerInfo')
-    subjectRule = uploaderInfo.get('subjectOrganization')
-    isTimeSeries = uploaderInfo.get('isTimeSeries')
-    studyID = uploaderInfo.get('studyID')
-    groupID = uploaderInfo.get('groupID')
-    groupName = uploaderInfo.get('groupName')
-    dcID = uploaderInfo.get('dcID')
+    headers = uploaderInfo.headers
+    subjectRule = uploaderInfo.subjectOrganization
+    isTimeSeries = uploaderInfo.isTimeSeries
+    studyID = uploaderInfo.studyID
+    groupID = uploaderInfo.groupID
+    groupName = uploaderInfo.groupName
+    dcID = uploaderInfo.dcID
     
-    if Helper.checkForSpecialCase(request.session):
+    if uploaderInfo.specialCase:
         headers = ['Entered Name']
         
     form = UploadInfoCreationForm(None, dynamicFields=headers)
@@ -314,11 +314,11 @@ def extraInfo(request):
             for (name, val) in form.getExtraFields():
                 myExtras.append((name, val))
         
-        if Helper.checkForSpecialCase(request.session):
+        if uploaderInfo.specialCase:
             colName = myFields.get('nameOfValueMeasured')
             dataType = myExtras[0][1]
             dataType = Helper.getActualDataType(dataType)
-            uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
+            uploaderInfo.specialInsert = { colName: {'position': '0', 'dataType': dataType} }
             myExtras = Helper.replaceWithNameOfValue(myExtras, colName)
             
         if subjectRule == 'column':
@@ -332,53 +332,48 @@ def extraInfo(request):
             
             groupID = DBFunctions.getGroupID(groupName, studyID)
             
-            uploaderInfo['groupID'] = groupID
+            uploaderInfo.groupID = groupID
             
             
         if dcID == -1:
-            uploaderInfo, errorMessage = Handler.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
+            errorMessage = uploaderInfo.handleMissingDataCategoryID(subjectRule, [myFields, myExtras])
             
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
                 return redirect(error)
         
-        if uploaderInfo.get('subjectPerCol') is True:
-            uploaderInfo['hasSubjectNames'] = True
+        if uploaderInfo.subjectPerCol is True:
+            uploaderInfo.hasSubjectNames = True
         
-        request.session['uploaderInfo'] = uploaderInfo
+        request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
         
         return redirect(finalPrompt)
     
     #############################################################################################################     
     elif request.method == 'GET':
         case1 = False
-        if Helper.checkForSpecialCase(request.session):
+        if uploaderInfo.specialCase:
             print('FOUND CASE 1')
-            form.fields['hasSubjectID'].required = True
-            form.fields['nameOfValueMeasured'].required = True 
-            context['case1'] = True
-            case1 = True
+            form.fields['nameOfValueMeasured'].required = True
             
-        if subjectRule == 'column':
-            print('FOUND CASE 2 ')
-            form.fields['hasSubjectID'].required = False
-            context['case2'] = True
+            context['case1'] = True
+            if subjectRule == 'column':
+                form.fields['hasSubjectID'].required = False
+                context['withSubjectID'] = False
+            
+            else:
+                context['withSubjectID'] = True
+
             
         if groupID == -1:
-            print('FOUND CASE 3')
+            print('FOUND CASE 2')
             form.fields['studyGroupDescription'].required = True 
-            context['case3'] = True 
+            context['case2'] = True 
             
         if dcID == -1:
-            print('FOUND CASE 4')
+            print('FOUND CASE 3')
             form.fields['dataCategoryDescription'].required = True
-            filenames = uploaderInfo.get('filenames')
-            context['case4'] = True
-        
-        elif dcID == -1 and case1 is True: 
-            print('FOUND CASE 5')
-            form.fields['dataCategoryDescription'].required = True
-            context['case5'] = True
+            context['case3'] = True
 
                  
         print('\nGot Uploader Extra Info Request\n')
@@ -397,7 +392,7 @@ def finalPrompt(request):
         return redirect(study)
     
     studyName = request.session['studyName']
-    uploaderInfo = request.session['uploaderInfo']
+    uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
     
     context = {
          'myCSS': 'uploaderFinalPrompt.css',
@@ -406,10 +401,10 @@ def finalPrompt(request):
          'error': False
     }
     
-    headers = uploaderInfo.get('headerInfo')
-    isTimeSeries = uploaderInfo.get('isTimeSeries')
-    subjectOrg = uploaderInfo.get('subjectOrganization')
-    tableName = uploaderInfo.get('tableName')
+    headers = uploaderInfo.headers
+    isTimeSeries = uploaderInfo.isTimeSeries
+    subjectOrg = uploaderInfo.subjectOrganization
+    tableName = uploaderInfo.tableName
     
     form = UploadPositionForm(None, columns=headers)
     context['form'] = form
@@ -435,13 +430,12 @@ def finalPrompt(request):
             
     #############################################################################################################
     elif request.method == 'GET':
-        if Helper.checkForSpecialCase(request.session):
+        if uploaderInfo.specialCase:
             colName, dataType = DBFunctions.getAttributeOfTable(tableName)
-            uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
-            request.session['uploaderInfo'] = uploaderInfo
-            return redirect(upload)
+            uploaderInfo.specialInsert = { colName: {'position': '0', 'dataType': dataType} }
+            request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
             
-        print('\nGot Uploader Extra Info Request\n')
+            return redirect(upload)
         
     #############################################################################################################
     
@@ -460,10 +454,11 @@ def upload(request):
     
     studyName = request.session['studyName']
     positionInfo = request.session['positionInfo']
-    uploaderInfo = request.session['uploaderInfo']
-    filenames = uploaderInfo.get('filenames')
-    hasSubjectNames = uploaderInfo.get('hasSubjectNames')
-    print('Has Subject Names', hasSubjectNames)
+    uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
+    
+    filenames = uploaderInfo.uploadedFiles
+    hasSubjectNames = uploaderInfo.hasSubjectNames
+
     form = DisabledInputForm()
     
     context = {
@@ -482,25 +477,18 @@ def upload(request):
             return HttpResponse(status=400)
         
         else:
-            uploaderInfo['uploadedSuccessfully'] = True
             return HttpResponse(status=200)
         
         
     elif request.method == 'POST':
         
         specialFlag = False 
-    
-        key = 'specialInsert'
-        if key in uploaderInfo.keys():
-            positionInfo = uploaderInfo.get(key)
+
+        if uploaderInfo.specialInsert != '':
+            positionInfo = uploaderInfo.specialInsert
             specialFlag = True
-        
-        groupID = uploaderInfo.get('groupID')
-        
-        tableName = uploaderInfo.get('tableName')
-        
-        
-        task = ProcessUpload.delay(filenames, uploaderInfo, positionInfo, specialFlag)
+
+        task = ProcessUpload.delay(filenames, jsonpickle.encode(uploaderInfo), positionInfo, specialFlag)
         
         print (f'Celery Task ID: {task.task_id}')
             
@@ -530,7 +518,10 @@ def error(request):
     
     
     if request.method == 'POST':
-        Helper.clearUploadInfo(request.session)    
+        Helper.clearKeyInSession(request.session, 'uploaderInfo') 
+        Helper.clearKeyInSession(request.session, 'studyGroups')
+        Helper.clearKeyInSession(request.session, 'dataCategories')  
+
         Helper.deleteAllDocuments()
         return redirect(home)
     
@@ -539,8 +530,8 @@ def error(request):
             context['errorMessage'] = request.session['errorMessage']
             
         if request.session.get('uploaderInfo', None) != None:
-            uploaderInfo = request.session['uploaderInfo']
-            filenames = uploaderInfo.get('filenames')
+            uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
+            filenames = uploaderInfo.uploadedFiles
 
             uploaded, notUploaded = Helper.getUploadResults(filenames)
             
@@ -558,17 +549,20 @@ def success(request):
     
     if request.method == 'POST':
         if 'finished' in request.POST:
-            Helper.clearStudyName(request.session)
+            Helper.clearKeyInSession(request.session, 'studyName')
             return redirect(home)
         
         elif 'continue' in request.POST:
-            Helper.clearUploadInfo(request.session) 
+            Helper.clearKeyInSession(request.session, 'uploaderInfo') 
+            Helper.clearKeyInSession(request.session, 'studyGroups')
+            Helper.clearKeyInSession(request.session, 'dataCategories') 
+            
             return redirect(info)
         
     elif request.method == 'GET':
         if request.session.get('uploaderInfo', None) != None:
-            uploaderInfo = request.session['uploaderInfo']
-            filenames = uploaderInfo.get('filenames')
+            uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
+            filenames = uploaderInfo.uploadedFiles
 
             uploaded, notUploaded = Helper.getUploadResults(filenames)
             

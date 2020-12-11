@@ -80,7 +80,7 @@ def performFetchAll(stmt):
 
 
 def createTable(stmt, table_name, verbose=0):
-
+    
     try:
         with connection.cursor() as cursor:
             if verbose == 1:
@@ -91,11 +91,10 @@ def createTable(stmt, table_name, verbose=0):
             print('\nCreated {} Table Successfully'.format(table_name))
             
     
-    except:
-        print("\nIssue Found When Creating {} Table".format(table_name))
-        return False 
+    except Exception as e:
+        return False, str(e)
         
-    return True
+    return True, None 
         
 
 
@@ -166,10 +165,11 @@ def executeCommand(template, args):
         print('ERROR IN EXECUTE COMMAND')
             
         return False
-    
-def tryExecuteCommand(template, args):
+
+ 
+def executeStmt(stmt):
     with connection.cursor() as cursor:
-        cursor.execute(template, args)
+        cursor.execute(stmt)
         
     
 def dfInsert(df, tableName):
