@@ -8,3 +8,7 @@
   margin-bottom: 30px;
   width: 200px;
 }
+
+th, td{
+  padding: 5px
+}

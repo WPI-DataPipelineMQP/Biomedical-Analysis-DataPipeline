@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Data:</h2>
 <h3>Summary:</h3>
-<table class="table-bordered">
+<table class="table-bordered table-striped">
     <tbody>
         {% for stat in stat_summary %}
         <tr>
@@ -34,7 +34,7 @@
 <article class="media">
     <div class="media-body">
         <div class="output-scroll">
-            <table class="table-bordered">
+            <table class="table-bordered table-striped">
                 <thead>
                     <tr>
                         {% for label in attribute_names %}
@@ -60,11 +60,12 @@
     <button class="export-button">Export Data to CSV</button>
 </form>
 <br />
-<form action="{% url 'analysis-make_hist' %}">
+<a href="{% url 'analysis-make_hist' %}">
     <button class="export-button">Make Histogram</button>
-</form>
+</a>
 <br />
-<form action="{% url 'analysis-make_scatter' %}">
+<a href="{% url 'analysis-make_scatter' %}">
     <button class="export-button">Make Scatter Plot</button>
-</form>
+</a>
+
 {% endblock content %}
