@@ -169,6 +169,9 @@ def info(request):
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
         
+        if uploaderInfo.handleDuplicate == 'N/A':
+            checkedForDuplications = False 
+        
         if checkedForDuplications is False or uploaderInfo.handleDuplicate == 'newFile':
             duplicateFiles = []
             for filename in filenames:
@@ -220,7 +223,7 @@ def info(request):
         
         groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
         
-        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, studyID)
+        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
         
         if data_category_id != -1:
             uploaderInfo.updateFieldsFromDataCategory(data_category_id)
@@ -237,7 +240,7 @@ def info(request):
         
         # CONDITIONS IF EXTRA INFORMATION IS NEEDED
         if (groupID == -1) or (data_category_id == -1):
-
+            print('here')
             return redirect(extraInfo)
             
         else:

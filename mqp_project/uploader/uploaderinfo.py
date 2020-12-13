@@ -35,7 +35,7 @@ class UploaderInfo:
         
     def documentExists(self, filename):
         
-        document_dcID = DBFunctions.getDataCategoryIDIfExists(self.categoryName, self.isTimeSeries, self.studyID)
+        document_dcID = DBFunctions.getDataCategoryIDIfExists(self.categoryName, self.isTimeSeries, self.subjectOrganization, self.studyID)
         
         if document_dcID != -1:
             dcObj = DataCategory.objects.get(data_category_id=document_dcID) 

@@ -55,3 +55,7 @@ ul.uploaderInfo {
 li.uploaderInfo {
     font-size: 20px;
 }
+
+mark {
+  background-color: #fff3cd;
+}

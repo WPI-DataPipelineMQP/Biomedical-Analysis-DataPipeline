@@ -19,13 +19,13 @@ def getGroupID(groupName, studyID):
     return -1
 
 
-def getDataCategoryIDIfExists(category_name, timeSeries, studyID):
+def getDataCategoryIDIfExists(category_name, timeSeries, subjectOrg, studyID):
     data_category_id = -1
     
-    categoryExists = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries).exists()
+    categoryExists = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries, subject_organization=subjectOrg).exists()
         
     if categoryExists:
-        potentialInstances = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries)
+        potentialInstances = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries, subject_organization=subjectOrg)
             
         for dc in potentialInstances:
             xrefExists = DataCategoryStudyXref.objects.filter(data_category=dc, study=studyID).exists()
@@ -151,12 +151,10 @@ def createNewTable(myMap):
     return result, errorMessage
         
 
-
-
-
 def getAttributeOfTable(tableName):
     
     dc_ID = (DataCategory.objects.get(dc_table_name=tableName)).data_category_id
+    
     dc_obj = DataCategory.objects.get(data_category_id=dc_ID)
     
     attributeObj = Attribute.objects.get(data_category=dc_obj)

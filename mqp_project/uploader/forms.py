@@ -1,5 +1,6 @@
 from django import forms
 from functools import partial
+from django.utils.safestring import mark_safe
 
 
 class StudyNameForm(forms.Form):
@@ -43,7 +44,9 @@ class UploaderInfoForm(forms.Form):
                                      widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is this Data Category Time Series?")
 
     handleDuplicate = forms.ChoiceField(choices=DUPLICATE_CHOICES,
-                                        widget=forms.RadioSelect, label="Handling Duplicate Options", required=False)
+                                        widget=forms.RadioSelect(attrs={'class': 'duplicate'}), 
+                                        label=mark_safe("<mark>Handling Duplicate Options (<strong>Please Select One of the Options</strong>)</mark>"),
+                                        required=False)
 
     uploadedFiles = forms.FileField(
         label="Select Files", required=True, widget=forms.ClearableFileInput(attrs={'multiple': True}))
@@ -52,7 +55,7 @@ class UploaderInfoForm(forms.Form):
 class UploadInfoCreationForm(forms.Form):
     YES_NO_CHOICES = [('y', 'Yes'), ('n', 'No')]
 
-    subjectLabel = "Is the subject name or ID included in the file? Note that it must be the first column"
+    subjectLabel = mark_safe("Is the subject name or ID included in the file?* <strong>Note that it must be the first column</strong>")
     hasSubjectID = forms.ChoiceField(
         choices=YES_NO_CHOICES, widget=forms.RadioSelect, label=subjectLabel, required=False)
 

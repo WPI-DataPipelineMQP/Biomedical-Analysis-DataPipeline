@@ -17,8 +17,6 @@ class Study(models.Model):
         db_table = "Study"  
     
     
-    
-
 class StudyGroup(models.Model):
     study_group_id = models.AutoField(primary_key=True)
     study_group_name = models.CharField(max_length=255, null=True, blank=True)
@@ -43,6 +41,7 @@ class DataCategory(models.Model):
     data_category_name = models.CharField(max_length=255, null=True, blank=True)
     is_time_series = models.BooleanField(null=True, blank=True) 
     has_subject_name = models.BooleanField(null=True, blank=True)
+    subject_organization = models.CharField(max_length=255, null=True, blank=True)
     dc_table_name = models.CharField(max_length=255, null=True, blank=True)
     dc_description = models.TextField(null=True, blank=True) 
     

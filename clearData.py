@@ -218,24 +218,24 @@ def populateDataCategoryTable():
     try:
         myCursor = db.cursor()
         dataCategory_insert_template = ("INSERT INTO DataCategory "
-               "(data_category_name, is_time_series, has_subject_name, dc_table_name, dc_description) "
-               "VALUE (%s, %s, %s, %s, %s)")
+               "(data_category_name, is_time_series, has_subject_name, dc_table_name, dc_description, subject_organization) "
+               "VALUE (%s, %s, %s, %s, %s, %s)")
 
         # Add heart rate data category
         description = "Time series heart rate data collected by a FitBit Inspire HR"
-        heart_rate_data_category = ('HeartRate', True, False, 'HeartRate_1', description)
+        heart_rate_data_category = ('HeartRate', True, False, 'HeartRate_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, heart_rate_data_category)
         db.commit()
 
         # Add Corsi data category
         description = "Test results from Corsi memory tests"
-        corsi_data_category = ('Corsi', False, False, 'Corsi_1', description)
+        corsi_data_category = ('Corsi', False, False, 'Corsi_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, corsi_data_category)
         db.commit()
 
         # Add Flanker data category
         description = "Test results from Flanker attention tests"
-        flanker_data_category = ('Flanker', False, False, 'Flanker_1', description)
+        flanker_data_category = ('Flanker', False, False, 'Flanker_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, flanker_data_category)
         db.commit()
 
