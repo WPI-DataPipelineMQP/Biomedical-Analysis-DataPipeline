@@ -38,14 +38,15 @@ def getDataCategoryIDIfExists(category_name, timeSeries, subjectOrg, studyID):
 
 
 
-def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_table_name, description):
+def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_table_name, description, subjectOrg):
     
     try:
         newDataCategory = DataCategory.objects.create(data_category_name=category_name,
                                                       is_time_series=time_series_val,
                                                       has_subject_name=hasSubjectNames,
                                                       dc_table_name=dc_table_name,
-                                                      dc_description=description)
+                                                      dc_description=description,
+                                                      subject_organization=subjectOrg)
         
         return True, ''
     
@@ -118,7 +119,7 @@ def createNewTable(myMap):
             '1' : 'TEXT',
             '2' : 'INT',
             '3' : 'FLOAT(10,5)',
-            '4' : 'Datetime',
+            '4' : 'Datetime(3)',
             '5' : 'BOOLEAN'
         }
 

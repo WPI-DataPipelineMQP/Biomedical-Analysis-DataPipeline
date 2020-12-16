@@ -57,7 +57,7 @@ class UploaderInfo:
         errorMessage = None
         description = myMap.get('DC_description')
         
-        insertSuccess, errorMessage = DBFunctions.insertToDataCategory(self.categoryName, self.isTimeSeries, self.hasSubjectNames, self.tableName, description)
+        insertSuccess, errorMessage = DBFunctions.insertToDataCategory(self.categoryName, self.isTimeSeries, self.hasSubjectNames, self.tableName, description, self.subjectOrganization)
     
         if insertSuccess is False:
             return False, errorMessage
@@ -166,8 +166,16 @@ class UploaderInfo:
             df[[columnName]].astype(float)
             
         elif dt == 4:
+            firstDateTime = df.iloc[0, df.columns.get_loc(columnName)]
+            
+            if firstDateTime.count(':') == 3:
+                df['reverse'] = df.loc[:,columnName].apply(lambda x: x[::-1])
+                df['reverse'] = df['reverse'].str.replace(':', '.', 1)
+                df[columnName] = df.loc[:,'reverse'].apply(lambda x: x[::-1])
+                del df['reverse']
+            
             df[columnName] = pd.to_datetime(df[columnName])
-            df[columnName] = df[columnName].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df[columnName] = df[columnName].dt.strftime('%Y-%m-%d %H:%M:%S.%f')
             
         else:
             df[columnName].astype(bool)
