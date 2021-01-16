@@ -1,2 +1,2 @@
 release: python manage.py migrate
-web: gunicorn mqp_project.wsgi
+web: gunicorn mqp_project.wsgi:datapipeline
