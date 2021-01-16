@@ -3,6 +3,10 @@
     margin-bottom: 30px;
 }
 
+.warning {
+    color: red;
+}
+
 #dataType-label {
     margin-left: 50px;
 }
@@ -30,8 +34,7 @@ input[type='submit'] {
 p.finalPrompt {
     text-align: center;
     font-weight: bold;
-    font-size: 1.2vw;
-    white-space:nowrap;
+    text-size-adjust: auto;
 }
 
 p.prompt {

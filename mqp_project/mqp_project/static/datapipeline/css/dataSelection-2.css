@@ -1,3 +1,25 @@
+.left-spacing {
+  margin-left: 10px;
+}
+
+input[type="submit"] {
+  float: right;
+  margin-top: 200px;
+  width: 100px;
+}
+
+ul.no-bullets {
+  list-style-type: none;
+}
+
+label.field-label {
+  margin-left: 15px;
+}
+
+h2.center {
+  text-align: center;
+  margin-bottom: 20px;
+}
 * {
   box-sizing: border-box;
 }
@@ -21,24 +43,4 @@
   .column {
     width: 100%;
   }
-}
-
-h1 {
-    text-align: left;
-    margin-bottom: 40px;
-}
-
-input[type="submit"] {
-  float: right;
-  margin-top: 50px;
-  width: 100px;
-}
-
-ul {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-li {
-    font-size: 20px;
 }

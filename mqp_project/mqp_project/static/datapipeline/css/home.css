@@ -6,20 +6,20 @@
 	display: grid;
 	grid-template-columns: auto auto auto;
 	grid-auto-rows: auto;
-	background-color: #2196F3;
+	background-color: #016b48;
   	padding: 10px;
 }
 
 .grid-item {
-  	background-color: rgba(255, 255, 255, 0.8);
-  	border: 1px solid rgba(0, 0, 0, 0.8);
+  	background-color: #ffffff;
+  	border: 3px solid #016b48;
   	padding: 20px;
   	font-size: 30px;
   	text-align: center;
 }
 
 .grid-item:hover {
-  	background-color: #cbd5db;
+  	background-color: #babec0;
   	border: 1px solid rgba(0, 0, 0, 0.8);
   	padding: 20px;
   	font-size: 30px;
@@ -32,7 +32,7 @@
 		display: grid;
 		grid-template-columns: auto;
 		grid-auto-rows: auto;
-		background-color: #2196F3;
+		background-color: #016b48;
   		padding: 10px;
 	}
 }

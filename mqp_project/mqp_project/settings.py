@@ -158,7 +158,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'WPI Data Pipeline Team <wpidatapipeline@gmail.com>'
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+#STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 # Celery Settngs
 BROKER_URL = 'redis://localhost:6379'
