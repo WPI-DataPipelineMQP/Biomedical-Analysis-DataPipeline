@@ -17,3 +17,4 @@ tqdm
 jsonpickle
 django-colorfield
 mysqlclient
+gunicorn
