@@ -1,2 +1,1 @@
-release: python manage.py migrate
-web: gunicorn mqp_project.wsgi --preload --log-file -
+web: gunicorn mqp_project.wsgi
