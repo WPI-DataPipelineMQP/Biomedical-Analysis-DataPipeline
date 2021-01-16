@@ -1,1 +1,1 @@
-web: gunicorn mqp_project.wsgi
+gunicorn mqp_project.wsgi
