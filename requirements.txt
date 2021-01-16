@@ -18,3 +18,4 @@ jsonpickle
 django-colorfield
 mysqlclient
 gunicorn
+django_heroku

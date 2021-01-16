@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from decouple import config
 from django.contrib.messages import constants as messages
+import django_heroku
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -163,3 +164,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Celery Settngs
 BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+django_heroku.settings(locals())
