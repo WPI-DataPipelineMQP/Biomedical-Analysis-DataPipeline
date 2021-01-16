@@ -1,2 +1,2 @@
 release: python manage.py migrate
-web: gunicorn_django -b 0.0.0.0:$PORT
+web: gunicorn mqp_project.wsgi:application
