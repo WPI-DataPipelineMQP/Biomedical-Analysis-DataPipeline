@@ -16,3 +16,4 @@ stats
 tqdm
 jsonpickle
 django-colorfield
+mysql-connector-python
