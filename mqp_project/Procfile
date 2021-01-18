@@ -1,1 +1,2 @@
 web: sh run.sh
+worker: celery -A mqp_project worker --loglevel=info
