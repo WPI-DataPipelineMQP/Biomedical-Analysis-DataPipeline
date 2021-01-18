@@ -2,7 +2,7 @@
 
 ## Installing Python Dependencies
 
-- Install the python dependencies that this program requires. The dependencies are defined in the requirements.txt file so just follow the command below.
+- Install the python dependencies that this program requires. The dependencies are defined in the requirements.txt file so just follow the command below
 
 ```console
 $ pip3 install -r requirements.txt
