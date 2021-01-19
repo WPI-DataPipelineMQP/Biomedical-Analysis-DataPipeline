@@ -408,6 +408,7 @@ def finalPrompt(request):
     isTimeSeries = uploaderInfo.isTimeSeries
     subjectOrg = uploaderInfo.subjectOrganization
     tableName = uploaderInfo.tableName
+    dcID = uploaderInfo.dcID
     
     form = UploadPositionForm(None, columns=headers)
     context['form'] = form
@@ -442,7 +443,7 @@ def finalPrompt(request):
         
     #############################################################################################################
     
-    tableSchema = DBFunctions.getTableSchema(tableName)
+    tableSchema = DBFunctions.getTableSchema(tableName, dcID)
     
     context['schema'] = tableSchema
     

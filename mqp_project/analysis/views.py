@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.conf import settings
 from datapipeline.database.DBClient import buildQuery
-from sqlalchemy import create_engine
+import sqlalchemy as sql
 import matplotlib.pyplot as plt
 from datetime import datetime
 import pandas as pd
@@ -49,13 +49,16 @@ def make_hist(request):
 
 def show_hist(request):
     # create dataframe based on previous query
-    engine = create_engine(settings.DB_CONNECTION_URL)
+    engine = sql.create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=buildQuery(
         request.session['args']), con=engine)
     # adjust column name from front end selection (remove study label)
     col_name = request.session['hist_data'][1]
-    col_list = col_name.split('.')
-    col_name = col_list[1]
+    
+    if col_name.find('.') != -1:
+        col_list = col_name.split('.')
+        col_name = col_list[1]
+        
     # turn column to np array
     as_array = df[col_name].to_numpy()
     # plot figure and save to django compatible format
@@ -98,7 +101,7 @@ def make_scatter(request):
 
 
 def show_scatter(request):
-    engine = create_engine(settings.DB_CONNECTION_URL)
+    engine = sql.create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=buildQuery(request.session['args']), con=engine)
     xcol_name = request.session['scatter_data'][0]
     xcol_list = xcol_name.split('.')

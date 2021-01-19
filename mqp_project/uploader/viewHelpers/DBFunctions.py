@@ -124,6 +124,7 @@ def createNewTable(myMap):
         }
 
         table_name = myMap.get('tableName')
+        #table_name = table_name.lower()
         
         dataID_field = "data_id SERIAL,"
         subjectID_field = "subject_id INT,"
@@ -167,7 +168,7 @@ def getAttributeOfTable(tableName):
 
 
 
-def getTableSchema(tableName):
+def getTableSchema(tableName, dcID):
     string = '{} SCHEMA: '.format(tableName)
     
     columns = DBClient.getTableColumns(tableName)
@@ -175,12 +176,14 @@ def getTableSchema(tableName):
     
     for i in range(0, len(columns), 1):
         position = ''
+        attributeObj = Attribute.objects.get(attr_name=columns[i], data_category=dcID) 
+        attributeType = attributeObj.data_type
         if i != ( len(columns)-1 ):
-            position = "{} [ position = {} ], ".format(columns[i], i)
+            position = "{} [ position = {}, datatype = {} ], ".format(columns[i], i, attributeType)
             
             
         else:
-            position = "{} [ position = {} ]".format(columns[i], i)
+            position = "{} [ position = {}, datatype = {} ]".format(columns[i], i, attributeType)
             
         string += position
         

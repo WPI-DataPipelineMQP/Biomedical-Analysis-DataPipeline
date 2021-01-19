@@ -209,19 +209,19 @@ def populateDataCategoryTable():
 
         # Add heart rate data category
         description = "Time series heart rate data collected by a FitBit Inspire HR"
-        heart_rate_data_category = ('HeartRate', True, False, 'HeartRate_1', description, 'file')
+        heart_rate_data_category = ('HeartRate', True, False, 'heartrate_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, heart_rate_data_category)
         db.commit()
 
         # Add Corsi data category
         description = "Test results from Corsi memory tests"
-        corsi_data_category = ('Corsi', False, False, 'Corsi_1', description, 'file')
+        corsi_data_category = ('Corsi', False, False, 'corsi_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, corsi_data_category)
         db.commit()
 
         # Add Flanker data category
         description = "Test results from Flanker attention tests"
-        flanker_data_category = ('Flanker', False, False, 'Flanker_1', description, 'file')
+        flanker_data_category = ('Flanker', False, False, 'flanker_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, flanker_data_category)
         db.commit()
 
