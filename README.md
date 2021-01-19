@@ -74,7 +74,7 @@ $ python -m celery -A mqp_project worker --loglevel=info
 This section provides additional information and advice for potential future developers of this project.
 
 ### Django
-- Given that this project uses Django, it is advised to get familiar with the framework. [These video tutorials](https://www.youtube.com/watch?v=UmljXZIypDc&feature=youtu.be&list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p) were very helpful for us.
+- [These video tutorials](https://www.youtube.com/watch?v=UmljXZIypDc&feature=youtu.be&list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p) are very helpful for learning Django.
 
 
 ### .Env file
