@@ -173,16 +173,8 @@ def dataSelectionContinued(request):
     columnsForFiltersList = []
     for table in category_names:
         column_dict = {}
-        args = {
-            'selectors': '*',
-            'from': 'INFORMATION_SCHEMA.COLUMNS',
-            'join-type': None,
-            'join-stmt': None,
-            'where': "TABLE_NAME = N'"+table+"'",
-            'group-by': None,
-            'order-by': None
-        }
         result = DBClient.getTableColumns(table)
+        
         for column_name in result:
             if(column_name == "data_id" or column_name == "subject_id" or column_name == "doc_id"):
                 pass
@@ -254,8 +246,8 @@ def dataSelectionContinued(request):
 
 def make_join(lodt):
     str = ""
-    str += "StudyGroup JOIN Subject ON StudyGroup.study_group_id = Subject.study_group_id JOIN "
-    str += lodt[0] + " ON "+lodt[0]+".subject_id = Subject.subject_id"
+    str += "studygroup JOIN subject ON studygroup.study_group_id = subject.study_group_id JOIN "
+    str += lodt[0] + " ON "+lodt[0]+".subject_id = subject.subject_id"
     if len(lodt) >= 2:
         str += " JOIN "+lodt[1]+" ON "+lodt[0] + \
             ".subject_id = "+lodt[1]+".subject_id"
