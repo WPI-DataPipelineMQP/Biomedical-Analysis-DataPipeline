@@ -1,5 +1,9 @@
 # Biomedical-Analysis-DataPipeline
 
+This is a web application that allows researchers to upload, store, filter, and perform analyses on any type of biomedical data (assuming it is uploaded as a .csv file and follows some formatting standards). This is intended to provide a centralized source of data for different studies and provide a variety of different actions that would otherwise need to done through Excel, scripting, or statistical software. Additionally, one of the main goals of this project was to allow data analysis across different studies. 
+
+This project was created over the course of 1.5 semesters as part of Worcester Polytechnic Institute's Major Qualifying Project. It utilizes a Python web framework called Django, with most of the back end written in Python. Bootstrap is used on the front end. 
+
 ## Installing Python Dependencies
 
 - Install the python dependencies that this program requires. The dependencies are defined in the requirements.txt file so just follow the command below.
@@ -14,7 +18,7 @@ $ pip3 install -r requirements.txt
 
 - Move this file to be within the Biomedical-Analysis-DataPipeline (root) directory
 
-## Run Website
+## Run Website (Locally)
 
 - Navigate to the mqp_project directory and run the following command.
 
@@ -66,6 +70,19 @@ $ python -m celery -A mqp_project worker --loglevel=info
 - This should eventually show ```celery@<your device> ready.``` and then hang. If the redis server is not running, it will have an appropriate error message. After running the command sucessfully, you can now run the project normally in another terminal.
 > NOTE: You will have 3 terminals in total. One to run redis, one to run celery, and another to run the django server.
 
-## Helpful Link to Playlist of Django Tutorials
+## Developer Guide
+This section provides additional information and advice for potential future developers of this project.
 
-[Youtube Link](https://www.youtube.com/watch?v=UmljXZIypDc&feature=youtu.be&list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p)
+### Django
+- Given that this project uses Django, it is advised to get familiar with the framework. [These video tutorials](https://www.youtube.com/watch?v=UmljXZIypDc&feature=youtu.be&list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p) were very helpful for us.
+
+
+### .Env file
+- The .env file externally stores sensitive or development specific environment variables that would otherwise be directly put in settings.py. For this reason, .env is purposely included in .gitignore and should be distributed to team members through less public means.
+- An example of what the .env file would look like for this project is included in the example.env.txt file
+- [This link](https://simpleisbetterthancomplex.com/2015/11/26/package-of-the-week-python-decouple.html) provides more information about setting up the .env file and accessing environment variables using the Decouple Python package
+- One of the variables in .env is the secret key. This is used for cryptographic signing and general security so it should be hidden. It basically just needs to be a unique string so using a generator like [this](https://miniwebtool.com/django-secret-key-generator/) should be sufficient.
+
+### Email Address for Password Reset Feature
+- Currently, the password reset system utilizes a gmail account. Future developers should consider creating a new account or maybe even using an automated email service. 
+- [This tutorial](https://youtu.be/-tyBEsHSv7w) provides additional information on setting up an email address for this.
