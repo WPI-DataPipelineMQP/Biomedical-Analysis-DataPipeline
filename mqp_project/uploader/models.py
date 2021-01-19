@@ -9,3 +9,5 @@ class Document(models.Model):
     
     class Meta:
         db_table = "Document"
+        managed = True
+

@@ -77,20 +77,10 @@ class UploaderInfo:
         
         errorMessage = ''
         
-        data_category_name = self.categoryName.replace(" ", "_")
-        attachmentToTableName = f'_{self.studyID}'
-        self.tableName = data_category_name + attachmentToTableName
-        myMap['tableName'] = self.tableName
-        
-        # do this first because MySQL does not support DDL transactions
-        noErrors, errorMessage = DBFunctions.createNewTable(myMap)
-                
-        if noErrors is False:
-            raise DatabaseError(errorMessage)
-        
         noErrors, errorMessage = self.dataCategoryHandler(myMap) 
                 
         if noErrors is False:
+            print('data category')
             DBFunctions.dropTable(self.tableName)
             raise DatabaseError(errorMessage)
                 
@@ -99,6 +89,7 @@ class UploaderInfo:
         noErrors, errorMessage = DBFunctions.insertToAttribute(cleanAttributeFormat, self.dcID)
                 
         if noErrors is False:
+            print('attribute')
             DBFunctions.dropTable(self.tableName)
             raise DatabaseError(errorMessage)
         
@@ -121,6 +112,18 @@ class UploaderInfo:
             'createTable': False
         }
         
+        data_category_name = self.categoryName.replace(" ", "_")
+        attachmentToTableName = f'_{self.studyID}'
+        self.tableName = data_category_name + attachmentToTableName
+        myMap['tableName'] = self.tableName
+        
+        # do this first because MySQL does not support DDL transactions
+        noErrors, errorMessage = DBFunctions.createNewTable(myMap)
+                
+        if noErrors is False:
+            print('creating table')
+            return str(errorMessage)
+            
         try:
             with transaction.atomic():
                 self.__performTransaction(myMap, myExtras)

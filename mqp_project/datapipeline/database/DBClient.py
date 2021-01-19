@@ -1,63 +1,45 @@
 import mysql.connector
+import psycopg2
 from django.db import connection
 from django.conf import settings
 import pandas as pd 
 import numpy as np
 import sqlalchemy as sql
 
-def dictfetchall(cursor):
-    # "Return all rows from a cursor as a dict"
-    columns = [col[0] for col in cursor.description]
-    rows =  [
-        dict(zip(columns, row))
-        for row in cursor.fetchall()
-    ]
-
-    # if list is empty
-    if not rows:
-        rows = [
-            dict.fromkeys(columns, "")
-        ]
-
-    return rows
 
 def getTables():
     try:
-        myTables = []
         with connection.cursor() as cursor:
-            cursor.execute("SHOW TABLES")
+            cursor.execute("""SELECT table_name FROM information_schema.tables
+						 WHERE table_schema = 'public'""")
             
-            tables_raw = cursor.fetchall()
+            myTables = [res[0] for res in cursor.fetchall()]
             
-            if not tables_raw:
-                return []
-            
-            for table in tables_raw:
-                myTables.append(table[0])
-                
             return myTables
         
     except:
         print("ERROR GETTING TABLES")
-        return []
+    
+    return []
 
 
 def getTableColumns(table_name):
-    myColumns = []
     
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SHOW COLUMNS FROM {}".format(table_name))
-        
-            columns_raw = cursor.fetchall()
-        
-            for column in columns_raw:
-                myColumns.append(column[0])
+            stmt = "select * from {} LIMIT 0".format(table_name)
+            print(stmt)
+            cursor.execute("select * from {} LIMIT 0".format(table_name))
+            colNames = [res[0] for res in cursor.description]
+            
+            print(colNames)
+            return colNames
+            
         
     except:
         print('Error')
         
-    return myColumns
+    return []
 
 
 def performFetchAll(stmt):
@@ -90,6 +72,10 @@ def createTable(stmt, table_name, verbose=0):
             
             print('\nCreated {} Table Successfully'.format(table_name))
             
+            cursor.close()
+        
+        connection.commit()
+            
     
     except Exception as e:
         return False, str(e)
@@ -102,7 +88,7 @@ def createTable(stmt, table_name, verbose=0):
 
 def buildQuery(args):
     stmt = "SELECT " + args['selectors'] + " "
-    stmt += "FROM " + args['from'] + " "
+    stmt += "FROM " + '"' + args['from'] + '"' + " "
 
 
     if args['join-type'] != None and args['join-stmt'] != None:
@@ -130,9 +116,6 @@ def executeQuery(args, verbose=0):
                 print(stmt)
             
             stmt = buildQuery(args)
-        
-            # if verbose == 1:
-            #     print(stmt)
             
             cursor.execute(stmt)
             
@@ -148,7 +131,8 @@ def executeQuery(args, verbose=0):
     #     return []
     except mysql.connector.Error as e:
         print(e)
-        return []
+    
+    return []
         
 # Execute an insert, update, or delete command
 # @param template - String of sql command with string formatters (%s)
@@ -158,6 +142,8 @@ def executeCommand(template, args):
     try:
         with connection.cursor() as cursor:
             cursor.execute(template, args)
+            
+        connection.commit()
             
         return True
         
@@ -171,6 +157,8 @@ def executeStmt(stmt):
     with connection.cursor() as cursor:
         cursor.execute(stmt)
         
+    connection.commit()
+        
     
 def dfInsert(df, tableName):
     db_engine = sql.create_engine(settings.DB_CONNECTION_URL)
@@ -182,3 +170,5 @@ def deleteData(tableName, docID):
         stmt = f'DELETE FROM {tableName} WHERE doc_id = {docID}'
         
         cursor.execute(stmt)
+        
+    connection.commit()

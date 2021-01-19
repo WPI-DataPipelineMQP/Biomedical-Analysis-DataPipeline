@@ -119,17 +119,17 @@ def createNewTable(myMap):
             '1' : 'TEXT',
             '2' : 'INT',
             '3' : 'FLOAT(10,5)',
-            '4' : 'Datetime(3)',
+            '4' : 'timestamp',
             '5' : 'BOOLEAN'
         }
 
         table_name = myMap.get('tableName')
         
-        dataID_field = "data_id INT AUTO_INCREMENT,"
+        dataID_field = "data_id SERIAL,"
         subjectID_field = "subject_id INT,"
         docID_field = "doc_id INT,"
         pk_field = "PRIMARY KEY (data_id),"
-        fk_field = "CONSTRAINT FK_{}_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE)".format(table_name.upper())
+        fk_field = """CONSTRAINT FK_{}_SubjectID FOREIGN KEY(subject_id) REFERENCES "Subject"(subject_id) ON DELETE CASCADE)""".format(table_name.upper())
     
         stmt = "CREATE TABLE {}({}".format(table_name, dataID_field)
     

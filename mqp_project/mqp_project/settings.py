@@ -29,7 +29,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['biomed-analysis-datapipeline.herokuapp.com', '127.0.0.1']
 
 
 # Application definition
@@ -61,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'mqp_project.urls'
@@ -97,7 +98,7 @@ DATABASES = {
     }
 }
 
-DB_CONNECTION_URL = 'mysql://{}:{}@{}:{}/{}'.format(
+DB_CONNECTION_URL = 'postgresql://{}:{}@{}:{}/{}'.format(
     DATABASES.get('default').get('USER'),
     DATABASES.get('default').get('PASSWORD'),
     DATABASES.get('default').get('HOST'),
@@ -145,12 +146,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'mqp_project/static'),
+)
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = 'datapipeline-home'
 LOGIN_URL = 'users-login'
 
@@ -162,7 +167,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'WPIDataPipeline'
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'WPI Data Pipeline Team <wpidatapipeline@gmail.com>'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 # Celery Settings
 BROKER_URL = config('BROKER_URL')
