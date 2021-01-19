@@ -129,7 +129,7 @@ def createNewTable(myMap):
         subjectID_field = "subject_id INT,"
         docID_field = "doc_id INT,"
         pk_field = "PRIMARY KEY (data_id),"
-        fk_field = """CONSTRAINT FK_{}_SubjectID FOREIGN KEY(subject_id) REFERENCES "Subject"(subject_id) ON DELETE CASCADE)""".format(table_name.upper())
+        fk_field = "CONSTRAINT FK_{}_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE)".format(table_name.upper())
     
         stmt = "CREATE TABLE {}({}".format(table_name, dataID_field)
     

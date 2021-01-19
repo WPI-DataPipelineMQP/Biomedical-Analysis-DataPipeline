@@ -88,7 +88,7 @@ def createTable(stmt, table_name, verbose=0):
 
 def buildQuery(args):
     stmt = "SELECT " + args['selectors'] + " "
-    stmt += "FROM " + '"' + args['from'] + '"' + " "
+    stmt += "FROM " + args['from'] + " "
 
 
     if args['join-type'] != None and args['join-stmt'] != None:

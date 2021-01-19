@@ -27,30 +27,30 @@ else :
 myCursor = db.cursor()
 
 #myCursor.execute("SET FOREIGN_KEY_CHECKS = 0")
-myCursor.execute("DROP TABLE IF EXISTS Flanker_1")
-myCursor.execute("DROP TABLE IF EXISTS Corsi_1")
-myCursor.execute("DROP TABLE IF EXISTS HeartRate_1")
-myCursor.execute('TRUNCATE "DataCategoryStudyXref" RESTART IDENTITY CASCADE')
-myCursor.execute('TRUNCATE "Attribute" RESTART IDENTITY CASCADE')
-myCursor.execute('TRUNCATE "Document" RESTART IDENTITY CASCADE')
-myCursor.execute('TRUNCATE "DataCategory" RESTART IDENTITY CASCADE')
-myCursor.execute('TRUNCATE "Subject" RESTART IDENTITY CASCADE')
-myCursor.execute('TRUNCATE "StudyGroup" RESTART IDENTITY CASCADE')
-myCursor.execute('TRUNCATE "Study" RESTART IDENTITY CASCADE')
+myCursor.execute("DROP TABLE IF EXISTS flanker_1")
+myCursor.execute("DROP TABLE IF EXISTS corsi_1")
+myCursor.execute("DROP TABLE IF EXISTS heartrate_1")
+myCursor.execute('TRUNCATE DataCategoryStudyXref RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Attribute RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Document RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE DataCategory RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Subject RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE StudyGroup RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Study RESTART IDENTITY CASCADE')
 #myCursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
-myCursor.execute("CREATE TABLE HeartRate_1(" +
+myCursor.execute("CREATE TABLE heartrate_1(" +
                              "data_id SERIAL," +
                              "date_time timestamp," +
                              "heart_rate INT," +
                              "subject_id INT," +
                              "doc_id INT," +
                              "PRIMARY KEY (data_id)," +
-                             'CONSTRAINT FK_HeartRate_SubjectID FOREIGN KEY(subject_id) REFERENCES "Subject"(subject_id) ON DELETE CASCADE' +
+                             'CONSTRAINT FK_HeartRate_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE' +
                              ")")
 
 
-myCursor.execute("CREATE TABLE Corsi_1(" +
+myCursor.execute("CREATE TABLE corsi_1(" +
                              "data_id SERIAL," +
                              "highest_corsi_span INT," +
                              "num_of_items INT," +
@@ -60,11 +60,11 @@ myCursor.execute("CREATE TABLE Corsi_1(" +
                              "subject_id INT," +
                              "doc_id INT," +
                              "PRIMARY KEY (data_id)," +
-                             'CONSTRAINT FK_Corsi_SubjectID FOREIGN KEY(subject_id) REFERENCES "Subject"(subject_id) ON DELETE CASCADE' +
+                             'CONSTRAINT FK_Corsi_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE' +
                              ")")
 
 
-myCursor.execute("CREATE TABLE Flanker_1(" +
+myCursor.execute("CREATE TABLE flanker_1(" +
                              "data_id SERIAL," +
                              "flanker_code VARCHAR(255)," +
                              "is_congruent INT," +
@@ -74,14 +74,14 @@ myCursor.execute("CREATE TABLE Flanker_1(" +
                              "subject_id INT," +
                              "doc_id INT," +
                              "PRIMARY KEY (data_id)," +
-                             'CONSTRAINT FK_Flanker_SubjectID FOREIGN KEY(subject_id) REFERENCES "Subject"(subject_id) ON DELETE CASCADE' +
+                             'CONSTRAINT FK_Flanker_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE' +
                              ")")
 
 # Populate study table with Exercise IQP
 def populateStudyTable():
     try:
         myCursor = db.cursor()
-        study_insert_template = ("""INSERT INTO "Study" """
+        study_insert_template = ("""INSERT INTO Study """
                "(study_name, study_description, is_irb_approved, institutions_involved) "
                "VALUES (%s, %s, %s, %s)")
         description = "The goal of our project is to explore relationships between exercise and cognition. " \
@@ -111,7 +111,7 @@ def populateStudyTable():
 def populateStudyGroupTable():
     try:
         myCursor = db.cursor()
-        group_insert_template = ("""INSERT INTO "StudyGroup" """
+        group_insert_template = ("""INSERT INTO StudyGroup """
                "(study_group_name, study_id, study_group_description) "
                "VALUES (%s, %s, %s)")
 
@@ -161,7 +161,7 @@ def populateSubjectTable():
 
 # Add individual subject
 def addSubject(subject_number, studyGroup_id):
-    subject_insert_template = ("""INSERT INTO "Subject" """
+    subject_insert_template = ("""INSERT INTO Subject """
                                "(subject_number, study_group_id) "
                                "VALUES (%s, %s)")
     subject = (subject_number, studyGroup_id)
@@ -180,7 +180,7 @@ def populateDemographicsTable():
 
 # Generate random demographic data for individual subject
 def addDemographic(subject_id):
-    demographic_insert_template = ("""INSERT INTO "Demographics" """
+    demographic_insert_template = ("""INSERT INTO Demographics """
                                "(subject_id, age, sex, race, ethnicity, school_year, phone_num, address, "
                                    "height, weight, med_history) "
                                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
@@ -203,7 +203,7 @@ def addDemographic(subject_id):
 def populateDataCategoryTable():
     try:
         myCursor = db.cursor()
-        dataCategory_insert_template = ("""INSERT INTO "DataCategory" """
+        dataCategory_insert_template = ("""INSERT INTO DataCategory """
                "(data_category_name, is_time_series, has_subject_name, dc_table_name, dc_description, subject_organization) "
                "VALUES (%s, %s, %s, %s, %s, %s)")
 
@@ -234,7 +234,7 @@ def populateDataCategoryTable():
 def populateDataCategoryStudyXrefTable():
     try:
         myCursor = db.cursor()
-        dataCategoryStudyXref_insert_template = ("""INSERT INTO "DataCategoryStudyXref" """
+        dataCategoryStudyXref_insert_template = ("""INSERT INTO DataCategoryStudyXref """
                "(data_category_id, study_id) "
                "VALUES (%s, %s)")
 
@@ -288,7 +288,7 @@ def populateHeartRateTable():
 def populateAttributeTable():
     try:
         myCursor = db.cursor()
-        attribute_insert_template = ("""INSERT INTO "Attribute" """
+        attribute_insert_template = ("""INSERT INTO Attribute """
                    "(attr_name, data_type, data_category_id) "
                    "VALUES (%s, %s, %s)")
 

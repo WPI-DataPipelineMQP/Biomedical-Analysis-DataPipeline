@@ -14,7 +14,7 @@ class Study(models.Model):
     study_notes = models.TextField(null=True, blank=True)
     
     class Meta:
-        db_table = "Study"  
+        db_table = "study"  
     
     
 class StudyGroup(models.Model):
@@ -24,7 +24,7 @@ class StudyGroup(models.Model):
     study = models.ForeignKey(Study, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "StudyGroup"  
+        db_table = "studygroup"  
     
     
 class Subject(models.Model):
@@ -33,7 +33,7 @@ class Subject(models.Model):
     study_group = models.ForeignKey(StudyGroup, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "Subject"  
+        db_table = "subject"  
     
     
 class DataCategory(models.Model):
@@ -46,7 +46,7 @@ class DataCategory(models.Model):
     dc_description = models.TextField(null=True, blank=True) 
     
     class Meta:
-        db_table = "DataCategory"  
+        db_table = "datacategory"  
     
     
 class DataCategoryStudyXref(models.Model):
@@ -56,7 +56,7 @@ class DataCategoryStudyXref(models.Model):
     dc_table_name = models.CharField(max_length=255, null=True, blank=True)
     
     class Meta:
-        db_table = "DataCategoryStudyXref"  
+        db_table = "datacategorystudyxref"  
   
   
 class Attribute(models.Model):
@@ -69,4 +69,4 @@ class Attribute(models.Model):
     data_category = models.ForeignKey(DataCategory, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "Attribute"
+        db_table = "attribute"

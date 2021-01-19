@@ -182,13 +182,14 @@ def dataSelectionContinued(request):
             'group-by': None,
             'order-by': None
         }
-        result = DBClient.executeQuery(args, 1)
+        result = DBClient.getTableColumns(table)
         for column_name in result:
-            if(column_name[3] == "data_id" or column_name[3] == "subject_id" or column_name[3] == "doc_id"):
+            if(column_name == "data_id" or column_name == "subject_id" or column_name == "doc_id"):
                 pass
+            
             else:
                 column_dict = {}
-                column_dict["name"] = "{}.{}".format(table, column_name[3])
+                column_dict["name"] = "{}.{}".format(table, column_name)
                 column_dict["table"] = table
                 #column_dict["display"] = "{}.{}".format(table, column_name[3])
                 columnsForAttributeList.append(column_dict)

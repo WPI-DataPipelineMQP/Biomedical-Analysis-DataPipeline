@@ -300,7 +300,7 @@ def getDataCategoriesOfStudies(study_ids_forquery):
         'selectors': 'DataCategory.dc_table_name',
         'from': 'DataCategory',
         'join-type': 'JOIN',
-        'join-stmt': '"DataCategoryStudyXref" ON DataCategory.data_category_id = DataCategoryStudyXref.data_category_id WHERE ' + study_ids_forquery,
+        'join-stmt': 'DataCategoryStudyXref ON DataCategory.data_category_id = DataCategoryStudyXref.data_category_id WHERE ' + study_ids_forquery,
         'where': None,
         'group-by': None,
         'order-by': None
