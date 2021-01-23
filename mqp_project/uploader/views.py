@@ -165,7 +165,16 @@ def info(request):
         uploaderInfo.subjectOrganization = fields.get('subjectOrganization')
         rawTimeSeries = fields.get('isTimeSeries')
         uploaderInfo.isTimeSeries = True if rawTimeSeries == 'y' else False
-        uploaderInfo.groupName = fields.get('groupName') 
+
+        # If group name is a blank string, treat as default group
+        if fields.get('groupName') is None:
+            defaultGroup = True
+            uploaderInfo.groupName = "(default)"
+            print("Default group")
+        else:
+            defaultGroup = False
+            uploaderInfo.groupName = fields.get('groupName')
+
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
         
@@ -221,6 +230,12 @@ def info(request):
         
         uploaderInfo.headers = headers
         
+        groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
+
+        # Set default description and insert study group here if using the default study group for the first time
+        if groupID == -1 and defaultGroup:
+            description = "This is the default study group if no study group is specified."
+            DBFunctions.insertToStudyGroup(uploaderInfo.groupName, description, studyID)
         groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
         
         data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
@@ -336,8 +351,8 @@ def extraInfo(request):
             groupID = DBFunctions.getGroupID(groupName, studyID)
             
             uploaderInfo.groupID = groupID
-            
-            
+
+
         if dcID == -1:
             errorMessage = uploaderInfo.handleMissingDataCategoryID(subjectRule, [myFields, myExtras])
             
@@ -367,12 +382,12 @@ def extraInfo(request):
             else:
                 context['withSubjectID'] = True
 
-            
+
         if groupID == -1:
             print('FOUND CASE 2')
             form.fields['studyGroupDescription'].required = True 
             context['case2'] = True 
-            
+
         if dcID == -1:
             print('FOUND CASE 3')
             form.fields['dataCategoryDescription'].required = True
