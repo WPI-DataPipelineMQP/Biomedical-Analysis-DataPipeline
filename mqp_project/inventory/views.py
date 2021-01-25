@@ -4,8 +4,11 @@ from datapipeline.database import DBClient, DBHandler
 from datapipeline.forms import CreateChosenBooleanForm
 from datapipeline.viewHelpers import viewsHelper as ViewHelper
 from uploader.viewHelpers import Helper as UploadHelper
+from uploader.viewHelpers import DBFunctions
 from .forms import DataCategorySearchForm
 from django.contrib import messages
+from django.db.models import Q
+from datapipeline.models import Study
 
 # 1st screen: Show list of studies and allow user to start selection on them or use links to study page
 def listStudies(request):
@@ -77,37 +80,29 @@ def listStudies(request):
     # Get request
     study_fields = []
     study_ids = {}
-    if dc_searchTerm is None:
-        args = {
-            'selectors': 'study_name, study_description, study_id',
-            'from': 'Study',
-            'join-type': None,
-            'join-stmt': None,
-            'where': None,
-            'group-by': None,
-            'order-by': None
-        }
+
+    studies = Study.objects.filter(
+            ~(Q(visibility="Private") & ~Q(owner=request.user.id))
+        )
 
     # If using a search term, query for specific studies that contain a data category with a name similar to the search term
-    else:
-        args = {
-            'selectors': 'DISTINCT s.study_name, s.study_description, s.study_id',
-            'from': 'Study s, DataCategoryStudyXref x, DataCategory dc',
-            'join-type': None,
-            'join-stmt': None,
-            'where': 's.study_id = x.study_id AND x.data_category_id = dc.data_category_id AND dc.data_category_name LIKE \'%'+dc_searchTerm+'%\'',
-            'group-by': None,
-            'order-by': None
-        }
+    if dc_searchTerm is not None:
+        studiesWithDc = set() # Uses a set instead of list to prevent duplicate studies listed
+        for study in studies:
+            dcs = DBFunctions.getAllDataCategoriesOfStudy(study.study_id)
+            for dc in dcs:
+                if dc_searchTerm in dc:
+                    studiesWithDc.add(study)
+                    break
+        studies = studiesWithDc
 
-    result = DBClient.executeQuery(args, 1)
-    for (study_name, study_description, study_id) in result:  # cursor:
+    for study in studies:
         studies_dict = {}
-        studies_dict["name"] = study_name
-        studies_dict["description"] = study_description
-        studies_dict["id"] = study_id
+        studies_dict["name"] = study.study_name
+        studies_dict["description"] = study.study_description
+        studies_dict["id"] = study.study_id
         study_fields.append(studies_dict)
-        study_ids[study_name] = study_id
+        study_ids[study.study_name] = study.study_id
 
     request.session['study_fields'] = study_fields
 
@@ -134,6 +129,9 @@ def studySummary(request, id):
     study_dict = getStudy(id)
     if not study_dict:
         return render(request, 'inventory/error.html', {'error': 'Study with ID {} not found!'.format(id)})
+
+    if not Study.objects.filter(~(Q(visibility="Private") & ~Q(owner=request.user.id)), study_id=id):
+        return render(request, 'inventory/error.html', {'error': 'You do not have permission to view this study!'.format(id)})
 
     studygroups_dict = getStudyGroups(id)
     data_category_dict = getDataCategories(id)

@@ -15,6 +15,8 @@ from .viewHelpers import viewsHelper as ViewHelper
 from uploader.viewHelpers import Helper as UploadHelper
 from django.db import connection
 from .database import DBClient, DBHandler
+from django.db.models import Q
+from .models import Study
 
 # Create your views here.
 
@@ -25,21 +27,16 @@ def home(request):
 def studySelection(request):
     UploadHelper.deleteAllDocuments()
     study_fields = []
-    args = {
-        'selectors': 'study_name, study_description, study_id',
-        'from': 'Study',
-        'join-type': None,
-        'join-stmt': None,
-        'where': None,
-        'group-by': None,
-        'order-by': None
-    }
-    result = DBClient.executeQuery(args, 1)
-    for (study_name, study_description, study_id) in result:  # cursor:
+
+    studies = Study.objects.filter(
+        ~(Q(visibility="Private") & ~Q(owner=request.user.id))
+    )
+
+    for study in studies:
         studies_dict = {}
-        studies_dict["name"] = study_name
-        studies_dict["description"] = study_description
-        studies_dict["id"] = study_id
+        studies_dict["name"] = study.study_name
+        studies_dict["description"] = study.study_description
+        studies_dict["id"] = study.study_id
         study_fields.append(studies_dict)
     
     request.session['study_fields'] = study_fields
