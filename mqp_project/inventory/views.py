@@ -9,6 +9,8 @@ from .forms import DataCategorySearchForm
 from django.contrib import messages
 from django.db.models import Q
 from datapipeline.models import Study
+from django.contrib.auth.models import User
+from django.db.models.base import ObjectDoesNotExist
 
 # 1st screen: Show list of studies and allow user to start selection on them or use links to study page
 def listStudies(request):
@@ -177,6 +179,12 @@ def getStudy(id):
     study_dict['contact'] = study[7]
     study_dict['notes'] = study[8]
     study_dict['total_subjects'] = len(getStudySubjects(id))
+    try:
+        owner = User.objects.get(pk=study[9])
+    except ObjectDoesNotExist:
+        owner = "None"
+    study_dict['owner'] = owner
+    study_dict['visibility'] = study[10]
 
     return study_dict
 
