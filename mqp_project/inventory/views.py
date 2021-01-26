@@ -81,8 +81,7 @@ def listStudies(request):
 
     # Get request
     study_fields = []
-    study_ids = {}
-
+    study_ids = []
     studies = Study.objects.filter(
             ~(Q(visibility="Private") & ~Q(owner=request.user.id))
         )
@@ -104,8 +103,7 @@ def listStudies(request):
         studies_dict["description"] = study.study_description
         studies_dict["id"] = study.study_id
         study_fields.append(studies_dict)
-        study_ids[study.study_name] = study.study_id
-
+        study_ids.append(study.study_id)
     request.session['study_fields'] = study_fields
 
 

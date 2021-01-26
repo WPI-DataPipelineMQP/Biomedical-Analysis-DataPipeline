@@ -9,6 +9,7 @@ class StudyNameForm(forms.Form):
 
 class StudyInfoForm(forms.Form):
     YES_NO_CHOICES = [(1, 'Yes'), (0, 'No')]
+    VISIBILITY_CHOICES = [('Public', 'Public'), ('Private', 'Private')]
     DateInput = partial(forms.DateInput, {'class': 'datepicker'})
     studyDescription = forms.CharField(
         label='Study Description', required=True)
@@ -21,6 +22,8 @@ class StudyInfoForm(forms.Form):
     endDate = forms.DateField(
         widget=DateInput(), label="Study End Date", required=True)
     contactInfo = forms.CharField(label='Study Contact Info', required=False)
+    visibility = forms.ChoiceField(choices=VISIBILITY_CHOICES, widget=forms.RadioSelect(
+        attrs={'required': 'required'}), label="Visibility")
     notes = forms.CharField(label='Study Notes',
                             widget=forms.Textarea, required=False)
 

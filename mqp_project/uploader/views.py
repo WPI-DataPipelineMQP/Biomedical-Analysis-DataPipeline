@@ -7,6 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core import serializers
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
+from django.contrib.auth.decorators import login_required
 
 from datapipeline.views import home
 from datapipeline.database import DBClient
@@ -23,6 +24,7 @@ import json
 
 
 # FIRST PAGE
+@login_required
 def study(request):
     context = {
          'myCSS': 'uploaderStudy.css',
@@ -46,7 +48,7 @@ def study(request):
             request.session['studyName'] = studyName
             request.session['checkedForDuplications'] = False
             
-            studyExists = Study.objects.filter(study_name=studyName).exists()
+            studyExists = Study.objects.filter(study_name=studyName, owner=request.user.id).exists()
             
             if studyExists is False:
                 return redirect(studyInfo)
@@ -62,7 +64,7 @@ def study(request):
         Helper.clearKeyInSession(request.session, 'dataCategories') 
         Helper.deleteAllDocuments()
         
-        allStudies = Study.objects.all()
+        allStudies = Study.objects.filter(owner=request.user.id)
         
         studyNames = [ study.study_name for study in allStudies ]
             
@@ -78,6 +80,7 @@ def study(request):
 
 
 # PAGE IF STUDY DOESN'T EXIST IN STUDY TABLE
+@login_required
 def studyInfo(request):
     
     if Helper.pathIsBroken(request.session, False):
@@ -111,17 +114,20 @@ def studyInfo(request):
             startDate = Helper.getDatetime(fields.get('startDate')) 
             endDate = Helper.getDatetime(fields.get('endDate')) 
             contactInfo = fields.get('contactInfo', '')
+            visibility = fields.get('visibility', '')
             notes = fields.get('notes', '')
         
             # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
             if Helper.validDates(startDate, endDate):
-                newStudy = Study.objects.create(study_name=studyName, 
+                newStudy = Study.objects.create(study_name=studyName,
+                                                owner=request.user,
                                                 study_description=studyDescription, 
                                                 is_irb_approved=hasIRB, 
                                                 institutions_involved=institutions, 
                                                 study_start_date=startDate, 
                                                 study_end_date=endDate, 
-                                                study_contact=contactInfo, 
+                                                study_contact=contactInfo,
+                                                visibility=visibility,
                                                 study_notes=notes)
             
                 return redirect(info)
@@ -136,6 +142,7 @@ def studyInfo(request):
 
 
 # PAGE THAT GETS THE UPLOADED CSV FILES
+@login_required
 def info(request):
     
     if Helper.pathIsBroken(request.session):
@@ -149,7 +156,7 @@ def info(request):
          'studyName': studyName
     }
     
-    studyID = (Study.objects.get(study_name=studyName)).study_id
+    studyID = (Study.objects.get(study_name=studyName, owner=request.user.id)).study_id
     #############################################################################################################
     if request.method == 'POST':
         uploaderForm = UploaderInfoForm(request.POST, request.FILES)
@@ -291,7 +298,7 @@ def info(request):
     
     return render(request, 'uploader/info.html', context)
 
-
+@login_required
 def extraInfo(request):
     
     if Helper.pathIsBroken(request.session, True):
@@ -403,7 +410,7 @@ def extraInfo(request):
     return render(request, 'uploader/extraInfo.html', context)
 
 
-
+@login_required
 def finalPrompt(request):
     
     if Helper.pathIsBroken(request.session, True):
@@ -465,7 +472,7 @@ def finalPrompt(request):
     
     return render(request, 'uploader/finalPrompt.html', context)
 
-
+@login_required
 def upload(request):
     
     if Helper.pathIsBroken(request.session):
@@ -529,7 +536,7 @@ def upload(request):
         
     return render(request, 'uploader/uploading.html', context) 
 
-
+@login_required
 def error(request):
     context = {
          'myCSS': 'uploaderError.css'
@@ -560,7 +567,7 @@ def error(request):
         
     return render(request, 'uploader/errorPage.html', context) 
 
-
+@login_required
 def success(request):
     context = {
          'myCSS': 'uploaderSuccess.css'
@@ -590,7 +597,3 @@ def success(request):
         
     
     return render(request, 'uploader/successPage.html', context) 
-    
-    
-            
-        
