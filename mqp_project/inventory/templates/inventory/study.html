@@ -3,6 +3,7 @@
 
 <h1>{{ study.name }}</h1>
 
+<p><b>Owner: </b> {{ study.owner }}</p>
 <p><b>Description: </b> {{ study.description}}</p>
 <p><b>Total Participants: </b>{{ study.total_subjects }}</p>
 <p><b>IRB Status: </b>{{ study.irb }}</p>
@@ -10,6 +11,7 @@
 <p><b>Study Start Date: </b>{{ study.start }}</p>
 <p><b>Study End Date: </b>{{ study.end }}</p>
 <p><b>Contact: </b>{{ study.contact }}</p>
+<p><b>Visibility: </b> {{ study.visibility }}</p>
 <p><b>Notes: </b>{{ study.notes }}</p>
 
 <h2>Study Groups ({{study.total_groups }})</h2>

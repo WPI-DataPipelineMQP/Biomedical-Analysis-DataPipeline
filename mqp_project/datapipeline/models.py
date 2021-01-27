@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 # Create your models here.
@@ -12,6 +13,8 @@ class Study(models.Model):
     study_end_date = models.DateField(null=True, blank=True)
     study_contact = models.CharField(max_length=255, null=True, blank=True)
     study_notes = models.TextField(null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
+    visibility = models.TextField(null=True, blank=True)
     
     class Meta:
         db_table = "study"  

@@ -27,7 +27,7 @@
             <label class="study-article">
                 <article class="media content-section">
                     <div class="media-body">
-                        <a href="{% url 'inventory-study' study_ids|get_item:field.label %}"><h2>{{ field.label }}</h2></a>
+                        <a href="{% url 'inventory-study' study_ids|getByIndex:forloop.counter0 %}"><h2>{{ field.label }}</h2></a>
                         <p class="article-content">{{ field.help_text }}</p>
                     </div>
                 </article>
