@@ -1,14 +1,12 @@
+input[type="submit"] {
+  margin-bottom: 30px;
+  width: 200px;
+}
+
 .output-scroll{
 	position: relative;
 	height: 500px;
 	overflow: scroll;
-}
-
-.export-button{
-  margin-bottom: 30px;
-  width: 200px;
-  border: 1px solid rgb(186,186,186);
-  background-color: rgb(216,216,216);
 }
 
 th, td{

@@ -16,7 +16,7 @@
 </table>
 <br />
 <form action="{% url 'datapipeline-export_summary' %}">
-    <button type="submit" class="export-button">Export Summary to CSV</button>
+    <input type="submit" value="Export Summary to CSV">
 </form>
 
 <!--WE COULD DO THIS TO MAKE THE COLUMN NAMES STAY AT THE TOP, NEEDS FORMATTING THO-->
@@ -57,15 +57,15 @@
 </article>
 <br />
 <form action="{% url 'datapipeline-export_data' %}">
-    <button type="submit" class="export-button">Export Data to CSV</button>
+    <input type="submit" value="Export Data to CSV">
 </form>
 <br />
 <a href="{% url 'analysis-make_hist' %}">
-    <button type="submit" class="export-button">Make Histogram</button>
+    <input type="submit" value="Make Histogram">
 </a>
 <br />
 <a href="{% url 'analysis-make_scatter' %}">
-    <button type="submit" class="export-button">Make Scatter Plot</button>
+    <input type="submit" value="Make Scatter Plot">
 </a>
 
 {% endblock content %}
