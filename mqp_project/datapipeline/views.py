@@ -15,6 +15,8 @@ from .viewHelpers import viewsHelper as ViewHelper
 from uploader.viewHelpers import Helper as UploadHelper
 from django.db import connection
 from .database import DBClient, DBHandler
+from django.db.models import Q
+from .models import Study
 
 # Create your views here.
 
@@ -25,21 +27,16 @@ def home(request):
 def studySelection(request):
     UploadHelper.deleteAllDocuments()
     study_fields = []
-    args = {
-        'selectors': 'study_name, study_description, study_id',
-        'from': 'Study',
-        'join-type': None,
-        'join-stmt': None,
-        'where': None,
-        'group-by': None,
-        'order-by': None
-    }
-    result = DBClient.executeQuery(args, 1)
-    for (study_name, study_description, study_id) in result:  # cursor:
+
+    studies = Study.objects.filter(
+        ~(Q(visibility="Private") & ~Q(owner=request.user.id))
+    )
+
+    for study in studies:
         studies_dict = {}
-        studies_dict["name"] = study_name
-        studies_dict["description"] = study_description
-        studies_dict["id"] = study_id
+        studies_dict["name"] = study.study_name
+        studies_dict["description"] = study.study_description
+        studies_dict["id"] = study.study_id
         study_fields.append(studies_dict)
     
     request.session['study_fields'] = study_fields
@@ -173,22 +170,15 @@ def dataSelectionContinued(request):
     columnsForFiltersList = []
     for table in category_names:
         column_dict = {}
-        args = {
-            'selectors': '*',
-            'from': 'INFORMATION_SCHEMA.COLUMNS',
-            'join-type': None,
-            'join-stmt': None,
-            'where': "TABLE_NAME = N'"+table+"'",
-            'group-by': None,
-            'order-by': None
-        }
-        result = DBClient.executeQuery(args, 1)
+        result = DBClient.getTableColumns(table)
+        
         for column_name in result:
-            if(column_name[3] == "data_id" or column_name[3] == "subject_id" or column_name[3] == "doc_id"):
+            if(column_name == "data_id" or column_name == "subject_id" or column_name == "doc_id"):
                 pass
+            
             else:
                 column_dict = {}
-                column_dict["name"] = "{}.{}".format(table, column_name[3])
+                column_dict["name"] = "{}.{}".format(table, column_name)
                 column_dict["table"] = table
                 #column_dict["display"] = "{}.{}".format(table, column_name[3])
                 columnsForAttributeList.append(column_dict)
@@ -253,8 +243,8 @@ def dataSelectionContinued(request):
 
 def make_join(lodt):
     str = ""
-    str += "StudyGroup JOIN Subject ON StudyGroup.study_group_id = Subject.study_group_id JOIN "
-    str += lodt[0] + " ON "+lodt[0]+".subject_id = Subject.subject_id"
+    str += "studygroup JOIN subject ON studygroup.study_group_id = subject.study_group_id JOIN "
+    str += lodt[0] + " ON "+lodt[0]+".subject_id = subject.subject_id"
     if len(lodt) >= 2:
         str += " JOIN "+lodt[1]+" ON "+lodt[0] + \
             ".subject_id = "+lodt[1]+".subject_id"
@@ -383,11 +373,24 @@ def output(request):
     # Set up stats summary
     engine = create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
-    stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
-    print(stat_summary)
-    records = stat_summary.to_records(index=True)
-    print(records)
-    record_list = list(records)
+
+    print(df.dtypes)
+    correctType = False
+    for datatype in df.dtypes:
+        if datatype == np.int64 or datatype == np.float64:
+            correctType = True
+            break
+    record_list = []
+    if correctType == True:
+        stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
+        #print(stat_summary)
+        header = ("",)
+        for x in stat_summary.columns:
+            header += (x,)
+        records = stat_summary.to_records(index=True)
+        #print(records)
+        record_list = list(records)
+        record_list.insert(0, header)
     print(record_list)
 
     #saved to session for exporting

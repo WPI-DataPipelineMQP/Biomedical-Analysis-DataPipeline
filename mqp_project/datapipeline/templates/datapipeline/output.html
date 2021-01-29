@@ -3,23 +3,18 @@
 {% block content %}
 <h2>Data:</h2>
 <h3>Summary:</h3>
-<table class="table-bordered">
-    <thead>
-        {% for stat in stat_summary %}
-            <th> {{ stat.0 }} </th>
-        {% endfor %}
-    </thead>
+<table class="table-bordered table-striped">
     <tbody>
         {% for stat in stat_summary %}
-                {% for val in stat %}
-                    {% if not forloop.first %}
-                        <td> {{ val }} </td>
-                    {% endif %}
-                {% endfor %}
+        <tr>
+            {% for val in stat %}
+            <td> {{ val }} </td>
+            {% endfor %}
+        </tr>
         {% endfor %}
     </tbody>
 </table>
-<br/>
+<br />
 <form action="{% url 'datapipeline-export_summary' %}">
     <button type="submit" class="export-button">Export Summary to CSV</button>
 </form>
@@ -39,34 +34,38 @@
 <article class="media">
     <div class="media-body">
         <div class="output-scroll">
-            <table class="table-bordered">
+            <table class="table-bordered table-striped">
                 <thead>
                     <tr>
                         {% for label in attribute_names %}
-                            <th scope="col">{{ label }}</th>
+                        <th scope="col">{{ label }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for dc in data %}
-                        <tr>
-                            {% for val in dc %}
-                                <td> {{ val }}</td>
-                            {% endfor %}
-                        </tr>
+                    <tr>
+                        {% for val in dc %}
+                        <td> {{ val }}</td>
+                        {% endfor %}
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </article>
-<br/>
+<br />
 <form action="{% url 'datapipeline-export_data' %}">
     <button type="submit" class="export-button">Export Data to CSV</button>
 </form>
 <br />
-<form action="{% url 'analysis-data_analysis' %}">
-    <button type="submit" class="export-button">Further Analysis</button>
-</form>
+<a href="{% url 'analysis-make_hist' %}">
+    <button type="submit" class="export-button">Make Histogram</button>
+</a>
+<br />
+<a href="{% url 'analysis-make_scatter' %}">
+    <button type="submit" class="export-button">Make Scatter Plot</button>
+</a>
 
 {% endblock content %}

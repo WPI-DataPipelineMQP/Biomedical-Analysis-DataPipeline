@@ -7,21 +7,24 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core import serializers
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
+from django.contrib.auth.decorators import login_required
 
 from datapipeline.views import home
 from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, DataCategory, DataCategoryStudyXref
 
-from .viewHelpers import Helper, DBFunctions, Handler
+from .viewHelpers import Helper, DBFunctions
 from . import views
 from .forms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, UploadPositionForm, StudyInfoForm, DisabledInputForm
 from .tasks import ProcessUpload
+from .uploaderinfo import UploaderInfo
 
-import celery
+import celery, jsonpickle
 import json
 
 
 # FIRST PAGE
+@login_required
 def study(request):
     context = {
          'myCSS': 'uploaderStudy.css',
@@ -45,7 +48,7 @@ def study(request):
             request.session['studyName'] = studyName
             request.session['checkedForDuplications'] = False
             
-            studyExists = Study.objects.filter(study_name=studyName).exists()
+            studyExists = Study.objects.filter(study_name=studyName, owner=request.user.id).exists()
             
             if studyExists is False:
                 return redirect(studyInfo)
@@ -55,11 +58,13 @@ def study(request):
     #############################################################################################################           
     elif request.method == 'GET':
         
-        Helper.clearStudyName(request.session)
-        Helper.clearUploadInfo(request.session)
+        Helper.clearKeyInSession(request.session, 'studyName')
+        Helper.clearKeyInSession(request.session, 'uploaderInfo')
+        Helper.clearKeyInSession(request.session, 'studyGroups')
+        Helper.clearKeyInSession(request.session, 'dataCategories') 
         Helper.deleteAllDocuments()
         
-        allStudies = Study.objects.all()
+        allStudies = Study.objects.filter(owner=request.user.id)
         
         studyNames = [ study.study_name for study in allStudies ]
             
@@ -75,6 +80,7 @@ def study(request):
 
 
 # PAGE IF STUDY DOESN'T EXIST IN STUDY TABLE
+@login_required
 def studyInfo(request):
     
     if Helper.pathIsBroken(request.session, False):
@@ -102,25 +108,26 @@ def studyInfo(request):
                 if form.cleaned_data[field]:
                     fields[field] = form[field].data 
         
-        
-        
             studyDescription = fields.get('studyDescription')
             hasIRB = fields.get('isIRB_Approved')
             institutions = fields.get('institutions', '') 
             startDate = Helper.getDatetime(fields.get('startDate')) 
             endDate = Helper.getDatetime(fields.get('endDate')) 
             contactInfo = fields.get('contactInfo', '')
+            visibility = fields.get('visibility', '')
             notes = fields.get('notes', '')
         
             # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
             if Helper.validDates(startDate, endDate):
-                newStudy = Study.objects.create(study_name=studyName, 
+                newStudy = Study.objects.create(study_name=studyName,
+                                                owner=request.user,
                                                 study_description=studyDescription, 
                                                 is_irb_approved=hasIRB, 
                                                 institutions_involved=institutions, 
                                                 study_start_date=startDate, 
                                                 study_end_date=endDate, 
-                                                study_contact=contactInfo, 
+                                                study_contact=contactInfo,
+                                                visibility=visibility,
                                                 study_notes=notes)
             
                 return redirect(info)
@@ -135,6 +142,7 @@ def studyInfo(request):
 
 
 # PAGE THAT GETS THE UPLOADED CSV FILES
+@login_required
 def info(request):
     
     if Helper.pathIsBroken(request.session):
@@ -148,7 +156,7 @@ def info(request):
          'studyName': studyName
     }
     
-    studyID = (Study.objects.get(study_name=studyName)).study_id
+    studyID = (Study.objects.get(study_name=studyName, owner=request.user.id)).study_id
     #############################################################################################################
     if request.method == 'POST':
         uploaderForm = UploaderInfoForm(request.POST, request.FILES)
@@ -158,18 +166,32 @@ def info(request):
             
             fields, filenames = Helper.getFieldsFromInfoForm(uploaderForm, files)
         
-                
-        subjectOrgVal = fields.get('subjectOrganization')
-        rawTimeSeries = fields.get('isTimeSeries')
-        fields['isTimeSeries'] = True if rawTimeSeries == 'y' else False
-        groupName = fields.get('groupName') 
-        dataCategoryName = fields.get('categoryName')
         
-        print(fields)
-        if checkedForDuplications is False or fields.get('handleDuplicate', 'N/A') == 'newFile':
+        uploaderInfo = UploaderInfo(studyName)
+        uploaderInfo.studyID = studyID
+        uploaderInfo.subjectOrganization = fields.get('subjectOrganization')
+        rawTimeSeries = fields.get('isTimeSeries')
+        uploaderInfo.isTimeSeries = True if rawTimeSeries == 'y' else False
+
+        # If group name is a blank string, treat as default group
+        if fields.get('groupName') is None:
+            defaultGroup = True
+            uploaderInfo.groupName = "(default)"
+            print("Default group")
+        else:
+            defaultGroup = False
+            uploaderInfo.groupName = fields.get('groupName')
+
+        uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
+        uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
+        
+        if uploaderInfo.handleDuplicate == 'N/A':
+            checkedForDuplications = False 
+        
+        if checkedForDuplications is False or uploaderInfo.handleDuplicate == 'newFile':
             duplicateFiles = []
             for filename in filenames:
-                if Handler.documentExists(filename, dataCategoryName, fields['isTimeSeries'], studyID):
+                if uploaderInfo.documentExists(filename):
                     duplicateFiles.append(filename)
                     
             if len(duplicateFiles) > 0:
@@ -187,19 +209,20 @@ def info(request):
                 return render(request, 'uploader/info.html', context)
         
         if 'handleDuplicate' not in fields:
-            fields['handleDuplicate'] = 'append'
+            uploaderInfo.handleDuplicate = 'append'
             
         specialFlag = False
         specialRow = False
         
-        if fields.get('isTimeSeries') and (subjectOrgVal == 'row' or subjectOrgVal == 'column'):
-            if subjectOrgVal == 'row':
+        if uploaderInfo.isTimeSeries and (uploaderInfo.subjectOrganization == 'row' or uploaderInfo.subjectOrganization == 'column'):
+            if uploaderInfo.subjectOrganization == 'row':
                 specialRow = True 
                 
-            specialFlag = True 
-            
-        fields['SpecialCase'] = specialFlag
+            specialFlag = True
         
+        print('Special Flag', specialFlag)
+        uploaderInfo.specialCase = specialFlag 
+
         # READING THE CSV FILE
         firstFile = filenames[0]
         path = 'uploaded_csvs/{}'.format(firstFile)
@@ -207,37 +230,39 @@ def info(request):
         if specialRow is False and Helper.hasAcceptableHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
             uploaderInfo = {'filenames': filenames}
-            request.session['uploaderInfo'] = uploaderInfo
+            request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
             return redirect(error)
         
-        headers, hasSubjectNames, subjectPerCol = Helper.extractHeaders(path, subjectOrgVal)
-            
-        fields['headerInfo'] = headers
+        headers, hasSubjectNames, subjectPerCol = Helper.extractHeaders(path, uploaderInfo.subjectOrganization)
         
-        groupID = DBFunctions.getGroupID(groupName, studyID)
+        uploaderInfo.headers = headers
         
-        data_category_id = DBFunctions.getDataCategoryIDIfExists(dataCategoryName, fields.get('isTimeSeries'), studyID)
+        groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
+
+        # Set default description and insert study group here if using the default study group for the first time
+        if groupID == -1 and defaultGroup:
+            description = "This is the default study group if no study group is specified."
+            DBFunctions.insertToStudyGroup(uploaderInfo.groupName, description, studyID)
+        groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
+        
+        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
         
         if data_category_id != -1:
-            fields = Handler.updateFieldsFromDataCategory(data_category_id, fields)
-            
-        # UPDATING THE FIELDS
-        fields['studyID'] = studyID
-        fields['filenames'] = filenames
-        fields['studyName'] = studyName
-        fields['groupName'] = groupName
-        fields['groupID'] = groupID
-        fields['dcID'] = data_category_id
-        fields['hasSubjectNames'] = hasSubjectNames 
-        fields['subjectPerCol'] = subjectPerCol
+            uploaderInfo.updateFieldsFromDataCategory(data_category_id)
+        
+        uploaderInfo.groupID = groupID
+        uploaderInfo.dcID = data_category_id
+        uploaderInfo.subjectPerCol = subjectPerCol
+        uploaderInfo.hasSubjectNames = hasSubjectNames
+        uploaderInfo.uploadedFiles = filenames
         
         
         # ALLOWING FIELDS TO BE PASSED AROUND
-        request.session['uploaderInfo'] = fields 
+        request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
         
         # CONDITIONS IF EXTRA INFORMATION IS NEEDED
         if (groupID == -1) or (data_category_id == -1):
-
+            print('here')
             return redirect(extraInfo)
             
         else:
@@ -273,29 +298,29 @@ def info(request):
     
     return render(request, 'uploader/info.html', context)
 
-
+@login_required
 def extraInfo(request):
     
     if Helper.pathIsBroken(request.session, True):
         return redirect(study)
     
     studyName = request.session['studyName']
-    uploaderInfo = request.session['uploaderInfo']
+    uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
     
     context = {
          'myCSS': 'uploaderExtraInfo.css',
          'studyName': studyName
     }
     
-    headers = uploaderInfo.get('headerInfo')
-    subjectRule = uploaderInfo.get('subjectOrganization')
-    isTimeSeries = uploaderInfo.get('isTimeSeries')
-    studyID = uploaderInfo.get('studyID')
-    groupID = uploaderInfo.get('groupID')
-    groupName = uploaderInfo.get('groupName')
-    dcID = uploaderInfo.get('dcID')
+    headers = uploaderInfo.headers
+    subjectRule = uploaderInfo.subjectOrganization
+    isTimeSeries = uploaderInfo.isTimeSeries
+    studyID = uploaderInfo.studyID
+    groupID = uploaderInfo.groupID
+    groupName = uploaderInfo.groupName
+    dcID = uploaderInfo.dcID
     
-    if Helper.checkForSpecialCase(request.session):
+    if uploaderInfo.specialCase:
         headers = ['Entered Name']
         
     form = UploadInfoCreationForm(None, dynamicFields=headers)
@@ -314,11 +339,11 @@ def extraInfo(request):
             for (name, val) in form.getExtraFields():
                 myExtras.append((name, val))
         
-        if Helper.checkForSpecialCase(request.session):
+        if uploaderInfo.specialCase:
             colName = myFields.get('nameOfValueMeasured')
             dataType = myExtras[0][1]
             dataType = Helper.getActualDataType(dataType)
-            uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
+            uploaderInfo.specialInsert = { colName: {'position': '0', 'dataType': dataType} }
             myExtras = Helper.replaceWithNameOfValue(myExtras, colName)
             
         if subjectRule == 'column':
@@ -332,53 +357,48 @@ def extraInfo(request):
             
             groupID = DBFunctions.getGroupID(groupName, studyID)
             
-            uploaderInfo['groupID'] = groupID
-            
-            
+            uploaderInfo.groupID = groupID
+
+
         if dcID == -1:
-            uploaderInfo, errorMessage = Handler.handleMissingDataCategoryID(studyID, subjectRule, isTimeSeries, uploaderInfo, [myFields, myExtras])
+            errorMessage = uploaderInfo.handleMissingDataCategoryID(subjectRule, [myFields, myExtras])
             
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
                 return redirect(error)
         
-        if uploaderInfo.get('subjectPerCol') is True:
-            uploaderInfo['hasSubjectNames'] = True
+        if uploaderInfo.subjectPerCol is True:
+            uploaderInfo.hasSubjectNames = True
         
-        request.session['uploaderInfo'] = uploaderInfo
+        request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
         
         return redirect(finalPrompt)
     
     #############################################################################################################     
     elif request.method == 'GET':
         case1 = False
-        if Helper.checkForSpecialCase(request.session):
+        if uploaderInfo.specialCase:
             print('FOUND CASE 1')
-            form.fields['hasSubjectID'].required = True
-            form.fields['nameOfValueMeasured'].required = True 
+            form.fields['nameOfValueMeasured'].required = True
+            
             context['case1'] = True
-            case1 = True
+            if subjectRule == 'column':
+                form.fields['hasSubjectID'].required = False
+                context['withSubjectID'] = False
             
-        if subjectRule == 'column':
-            print('FOUND CASE 2 ')
-            form.fields['hasSubjectID'].required = False
-            context['case2'] = True
-            
+            else:
+                context['withSubjectID'] = True
+
+
         if groupID == -1:
-            print('FOUND CASE 3')
+            print('FOUND CASE 2')
             form.fields['studyGroupDescription'].required = True 
-            context['case3'] = True 
-            
+            context['case2'] = True 
+
         if dcID == -1:
-            print('FOUND CASE 4')
+            print('FOUND CASE 3')
             form.fields['dataCategoryDescription'].required = True
-            filenames = uploaderInfo.get('filenames')
-            context['case4'] = True
-        
-        elif dcID == -1 and case1 is True: 
-            print('FOUND CASE 5')
-            form.fields['dataCategoryDescription'].required = True
-            context['case5'] = True
+            context['case3'] = True
 
                  
         print('\nGot Uploader Extra Info Request\n')
@@ -390,14 +410,14 @@ def extraInfo(request):
     return render(request, 'uploader/extraInfo.html', context)
 
 
-
+@login_required
 def finalPrompt(request):
     
     if Helper.pathIsBroken(request.session, True):
         return redirect(study)
     
     studyName = request.session['studyName']
-    uploaderInfo = request.session['uploaderInfo']
+    uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
     
     context = {
          'myCSS': 'uploaderFinalPrompt.css',
@@ -406,10 +426,11 @@ def finalPrompt(request):
          'error': False
     }
     
-    headers = uploaderInfo.get('headerInfo')
-    isTimeSeries = uploaderInfo.get('isTimeSeries')
-    subjectOrg = uploaderInfo.get('subjectOrganization')
-    tableName = uploaderInfo.get('tableName')
+    headers = uploaderInfo.headers
+    isTimeSeries = uploaderInfo.isTimeSeries
+    subjectOrg = uploaderInfo.subjectOrganization
+    tableName = uploaderInfo.tableName
+    dcID = uploaderInfo.dcID
     
     form = UploadPositionForm(None, columns=headers)
     context['form'] = form
@@ -435,24 +456,23 @@ def finalPrompt(request):
             
     #############################################################################################################
     elif request.method == 'GET':
-        if Helper.checkForSpecialCase(request.session):
+        if uploaderInfo.specialCase:
             colName, dataType = DBFunctions.getAttributeOfTable(tableName)
-            uploaderInfo['specialInsert'] = { colName: {'position': '0', 'dataType': dataType} }
-            request.session['uploaderInfo'] = uploaderInfo
-            return redirect(upload)
+            uploaderInfo.specialInsert = { colName: {'position': '0', 'dataType': dataType} }
+            request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
             
-        print('\nGot Uploader Extra Info Request\n')
+            return redirect(upload)
         
     #############################################################################################################
     
-    tableSchema = DBFunctions.getTableSchema(tableName)
+    tableSchema = DBFunctions.getTableSchema(tableName, dcID)
     
     context['schema'] = tableSchema
     
     
     return render(request, 'uploader/finalPrompt.html', context)
 
-
+@login_required
 def upload(request):
     
     if Helper.pathIsBroken(request.session):
@@ -460,10 +480,11 @@ def upload(request):
     
     studyName = request.session['studyName']
     positionInfo = request.session['positionInfo']
-    uploaderInfo = request.session['uploaderInfo']
-    filenames = uploaderInfo.get('filenames')
-    hasSubjectNames = uploaderInfo.get('hasSubjectNames')
-    print('Has Subject Names', hasSubjectNames)
+    uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
+    
+    filenames = uploaderInfo.uploadedFiles
+    hasSubjectNames = uploaderInfo.hasSubjectNames
+
     form = DisabledInputForm()
     
     context = {
@@ -482,25 +503,18 @@ def upload(request):
             return HttpResponse(status=400)
         
         else:
-            uploaderInfo['uploadedSuccessfully'] = True
             return HttpResponse(status=200)
         
         
     elif request.method == 'POST':
         
         specialFlag = False 
-    
-        key = 'specialInsert'
-        if key in uploaderInfo.keys():
-            positionInfo = uploaderInfo.get(key)
+
+        if uploaderInfo.specialInsert != '':
+            positionInfo = uploaderInfo.specialInsert
             specialFlag = True
-        
-        groupID = uploaderInfo.get('groupID')
-        
-        tableName = uploaderInfo.get('tableName')
-        
-        
-        task = ProcessUpload.delay(filenames, uploaderInfo, positionInfo, specialFlag)
+
+        task = ProcessUpload.delay(filenames, jsonpickle.encode(uploaderInfo), positionInfo, specialFlag)
         
         print (f'Celery Task ID: {task.task_id}')
             
@@ -522,7 +536,7 @@ def upload(request):
         
     return render(request, 'uploader/uploading.html', context) 
 
-
+@login_required
 def error(request):
     context = {
          'myCSS': 'uploaderError.css'
@@ -530,7 +544,10 @@ def error(request):
     
     
     if request.method == 'POST':
-        Helper.clearUploadInfo(request.session)    
+        Helper.clearKeyInSession(request.session, 'uploaderInfo') 
+        Helper.clearKeyInSession(request.session, 'studyGroups')
+        Helper.clearKeyInSession(request.session, 'dataCategories')  
+
         Helper.deleteAllDocuments()
         return redirect(home)
     
@@ -539,8 +556,8 @@ def error(request):
             context['errorMessage'] = request.session['errorMessage']
             
         if request.session.get('uploaderInfo', None) != None:
-            uploaderInfo = request.session['uploaderInfo']
-            filenames = uploaderInfo.get('filenames')
+            uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
+            filenames = uploaderInfo.uploadedFiles
 
             uploaded, notUploaded = Helper.getUploadResults(filenames)
             
@@ -550,7 +567,7 @@ def error(request):
         
     return render(request, 'uploader/errorPage.html', context) 
 
-
+@login_required
 def success(request):
     context = {
          'myCSS': 'uploaderSuccess.css'
@@ -558,17 +575,20 @@ def success(request):
     
     if request.method == 'POST':
         if 'finished' in request.POST:
-            Helper.clearStudyName(request.session)
+            Helper.clearKeyInSession(request.session, 'studyName')
             return redirect(home)
         
         elif 'continue' in request.POST:
-            Helper.clearUploadInfo(request.session) 
+            Helper.clearKeyInSession(request.session, 'uploaderInfo') 
+            Helper.clearKeyInSession(request.session, 'studyGroups')
+            Helper.clearKeyInSession(request.session, 'dataCategories') 
+            
             return redirect(info)
         
     elif request.method == 'GET':
         if request.session.get('uploaderInfo', None) != None:
-            uploaderInfo = request.session['uploaderInfo']
-            filenames = uploaderInfo.get('filenames')
+            uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
+            filenames = uploaderInfo.uploadedFiles
 
             uploaded, notUploaded = Helper.getUploadResults(filenames)
             
@@ -577,7 +597,3 @@ def success(request):
         
     
     return render(request, 'uploader/successPage.html', context) 
-    
-    
-            
-        

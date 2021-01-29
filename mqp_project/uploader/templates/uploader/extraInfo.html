@@ -1,48 +1,44 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
+{% load crispy_forms_tags %}
 {% block content %}
 
 <form method="POST" action="{% url 'uploader-uploaderExtraInfo' %}" enctype="multipart/form-data">
     {% csrf_token %}
-    {% if case1 is True and case2 is False%}
-    <p>
-       {{ form.hasSubjectID.errors }}
-       <label for="{{ form.hasSubjectID.id_for_label }}"> {{form.hasSubjectID.label}}</label>
-       {{ form.hasSubjectID }}
-    </p>
-    {% endif %}
-
     {% if case1 is True %}
+    {% if withSubjectID is True %}
+    <p>
+        {{ form.hasSubjectID.errors }}
+        {{ form.hasSubjectID |as_crispy_field }}
+     </p>
+     {% endif %}
+
     <p>
         {{ form.nameOfValueMeasured.errors }} 
         {{ form.datatypeOfMeasured.errors }}
-        <label for="{{ form.nameOfValueMeasured.id_for_label }}"> {{form.nameOfValueMeasured.label}}</label>
-        {{ form.nameOfValueMeasured }}
+        {{ form.nameOfValueMeasured |as_crispy_field }}
         {{ form.datatypeOfMeasured }}
     </p>
     {% endif %}
 
-    {% if case3 is True %}
+    {% if case2 is True %}
     <p>
         {{ form.studyGroupDescription.errors }}
-        <label for="{{ form.studyGroupDescription.id_for_label }}"> {{form.studyGroupDescription.label}}</label>
-        {{ form.studyGroupDescription }}
+        {{ form.studyGroupDescription |as_crispy_field}}
     </p>
     {% endif %}
 
-    {% if case4 is True %}
+    {% if case3 is True %}
         <p>
             {{ form.dataCategoryDescription.errors }}
-            <label for="{{ form.dataCategoryDescription.id_for_label }}"> {{form.dataCategoryDescription.label}}</label>
-            {{ form.dataCategoryDescription }}
+            {{ form.dataCategoryDescription |as_crispy_field}}
         </p> 
         <div class="scrollable">
         {% for field in form %}
             {% if '_custom_' in field.html_name %}
             {% cycle False False False True as flag silent %}
             <p>
-                <label for="{{ form.field.id_for_label }}"> {{field.label}}</label>
-                {{ field }}
+                {{ field |as_crispy_field}}
             </p>
             {% if flag %}
             <br/>
@@ -52,14 +48,6 @@
         </div>
     {% endif %}
 
-    {% if case5 is True %}
-    <p>
-        {{ form.dataCategoryDescription.errors }}
-        <label for="{{ form.dataCategoryDescription.id_for_label }}"> {{form.dataCategoryDescription.label}}</label>
-        {{ form.dataCategoryDescription }}
-    </p>
-    {% endif %}
-    <br/>
     <input type="submit" value="Next">
 </form>
 {% endblock content %}

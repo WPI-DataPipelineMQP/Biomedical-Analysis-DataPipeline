@@ -8,4 +8,6 @@ class Document(models.Model):
     data_category = models.ForeignKey(DataCategory, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "Document"
+        db_table = "document"
+        managed = True
+

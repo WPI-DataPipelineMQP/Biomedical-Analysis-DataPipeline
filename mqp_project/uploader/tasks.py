@@ -4,24 +4,25 @@ import time
 
 from django.conf import settings
 
-from .viewHelpers import Helper, Handler
+from .viewHelpers import Helper
 from datapipeline.models import DataCategory
 from datapipeline.database import DBClient
 from .models import Document
+import jsonpickle
 
 @shared_task(bind=True)
 def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     
+    uploaderInfo = jsonpickle.decode(uploaderInfo)
     columnInfo = []
     organizedColumns = []
     
-    print(uploaderInfo)
     progress_recorder = ProgressRecorder(self)
     
     noError = True 
     errorMessage = None
     
-    dcID = uploaderInfo.get('dcID')
+    dcID = uploaderInfo.dcID
     
     dcObj = DataCategory.objects.get(data_category_id=dcID)
     numOfFiles = len(filenames) + 0.5
@@ -30,17 +31,19 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     print('Task started')
     
     print('Start')
+    
     for i, file in enumerate(filenames):
         filepath = directory_path + file
         
         newdoc = None
-        if Handler.documentExists(file, uploaderInfo.get('categoryName'), uploaderInfo.get('isTimeSeries'), uploaderInfo.get('studyID')) is False:
+        
+        if uploaderInfo.documentExists(file) is False:
             newdoc = Document.objects.create(filename=file, data_category=dcObj)
         
         docID = (Document.objects.get(filename=file, data_category=dcObj)).id
         
-        if uploaderInfo.get('handleDuplicate') == 'replace':
-            DBClient.deleteData(uploaderInfo.get('tableName'), docID)
+        if uploaderInfo.handleDuplicate == 'replace':
+            DBClient.deleteData(uploaderInfo.tableName, docID)
             
         
         print(filepath)
@@ -51,10 +54,10 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
 
         if specialFlag is True: 
             print('Starting...')
-            noError, errorMessage = Handler.specialUploadToDatabase(filepath, docID, uploaderInfo, columnInfo)
+            noError, errorMessage = uploaderInfo.specialUploadToDatabase(filepath, docID, columnInfo) 
             
         else:
-            noError, errorMessage = Handler.uploadToDatabase(filepath, file, docID, uploaderInfo, columnInfo, organizedColumns)
+            noError, errorMessage = uploaderInfo.uploadToDatabase(filepath, file, docID, columnInfo, organizedColumns)
                 
         if noError is False:
             if newdoc is not None:

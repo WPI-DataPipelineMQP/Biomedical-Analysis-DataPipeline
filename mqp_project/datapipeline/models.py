@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 # Create your models here.
@@ -12,13 +13,13 @@ class Study(models.Model):
     study_end_date = models.DateField(null=True, blank=True)
     study_contact = models.CharField(max_length=255, null=True, blank=True)
     study_notes = models.TextField(null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
+    visibility = models.TextField(null=True, blank=True)
     
     class Meta:
-        db_table = "Study"  
+        db_table = "study"  
     
     
-    
-
 class StudyGroup(models.Model):
     study_group_id = models.AutoField(primary_key=True)
     study_group_name = models.CharField(max_length=255, null=True, blank=True)
@@ -26,7 +27,7 @@ class StudyGroup(models.Model):
     study = models.ForeignKey(Study, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "StudyGroup"  
+        db_table = "studygroup"  
     
     
 class Subject(models.Model):
@@ -35,7 +36,7 @@ class Subject(models.Model):
     study_group = models.ForeignKey(StudyGroup, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "Subject"  
+        db_table = "subject"  
     
     
 class DataCategory(models.Model):
@@ -43,11 +44,12 @@ class DataCategory(models.Model):
     data_category_name = models.CharField(max_length=255, null=True, blank=True)
     is_time_series = models.BooleanField(null=True, blank=True) 
     has_subject_name = models.BooleanField(null=True, blank=True)
+    subject_organization = models.CharField(max_length=255, null=True, blank=True)
     dc_table_name = models.CharField(max_length=255, null=True, blank=True)
     dc_description = models.TextField(null=True, blank=True) 
     
     class Meta:
-        db_table = "DataCategory"  
+        db_table = "datacategory"  
     
     
 class DataCategoryStudyXref(models.Model):
@@ -57,7 +59,7 @@ class DataCategoryStudyXref(models.Model):
     dc_table_name = models.CharField(max_length=255, null=True, blank=True)
     
     class Meta:
-        db_table = "DataCategoryStudyXref"  
+        db_table = "datacategorystudyxref"  
   
   
 class Attribute(models.Model):
@@ -70,4 +72,4 @@ class Attribute(models.Model):
     data_category = models.ForeignKey(DataCategory, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "Attribute"
+        db_table = "attribute"

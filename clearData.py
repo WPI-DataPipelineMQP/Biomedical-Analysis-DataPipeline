@@ -1,71 +1,57 @@
-import mysql.connector
+import psycopg2
+from decouple import config
 import sys
 
 db = None
-HOST = 'localhost'
-USER = 'WPI'
-PASSWORD = 'DataPipeline'
-DATABASE_NAME = 'DataPipeline'
+HOST = config('DATABASE_HOST')
+USER = config('DATABASE_USER')
+PASSWORD = config('DATABASE_PASSWORD')
+DATABASE_NAME = config('DATABASE_NAME')
+PORT = config('DATABASE_PORT')
 
-tmpDB = mysql.connector.connect(
-	host = HOST,
-    user = USER,
-    password = PASSWORD
-)
-     
-try :
-    tmpCursor = tmpDB.cursor()
-    tmpCursor.execute("DROP DATABASE IF EXISTS exercise")
-    tmpCursor.execute("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME)
-    print('Created Database (if it didn\'t already exist):', DATABASE_NAME)
-    tmpDB.close()
-
-except mysql.connector.Error as err:
-    print("Failed creating database: {}".format(err))
-    exit(1)
-
-db = mysql.connector.connect(
+db = psycopg2.connect(
     host = HOST,
     user = USER,
     password = PASSWORD,
-    database = DATABASE_NAME
+    database = DATABASE_NAME,
+    port = PORT
 )
 
 if db :
-    print('Connected to MySQL Successfully!')
+    print('Connected to PostgreSQL Successfully!')
 
 else :
-	raise Exception('Connection to MySQL Failed')
+	raise Exception('Connection to PostgreSQL Failed')
 	exit(1)
 
 myCursor = db.cursor()
 
-myCursor.execute("SET FOREIGN_KEY_CHECKS = 0")
-myCursor.execute("DROP TABLE IF EXISTS Flanker_1")
-myCursor.execute("DROP TABLE IF EXISTS Corsi_1")
-myCursor.execute("DROP TABLE IF EXISTS HeartRate_1")
-myCursor.execute("TRUNCATE DataCategoryStudyXref")
-myCursor.execute("TRUNCATE Attribute")
-myCursor.execute("TRUNCATE Document")
-myCursor.execute("TRUNCATE DataCategory")
-myCursor.execute("TRUNCATE Subject")
-myCursor.execute("TRUNCATE StudyGroup")
-myCursor.execute("TRUNCATE Study")
-myCursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+#myCursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+myCursor.execute("DROP TABLE IF EXISTS flanker_1")
+myCursor.execute("DROP TABLE IF EXISTS corsi_1")
+myCursor.execute("DROP TABLE IF EXISTS heartrate_1")
+myCursor.execute('TRUNCATE DataCategoryStudyXref RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Attribute RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Document RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE DataCategory RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Subject RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE StudyGroup RESTART IDENTITY CASCADE')
+myCursor.execute('TRUNCATE Study RESTART IDENTITY CASCADE')
+#myCursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
-myCursor.execute("CREATE TABLE HeartRate_1(" +
-                             "data_id INT AUTO_INCREMENT," +
-                             "date_time Datetime," +
+myCursor.execute("CREATE TABLE heartrate_1(" +
+                             "data_id SERIAL," +
+                             "date_time timestamp," +
                              "heart_rate INT," +
                              "subject_id INT," +
                              "doc_id INT," +
                              "PRIMARY KEY (data_id)," +
-                             "CONSTRAINT FK_HeartRate_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE" +
+                             'CONSTRAINT FK_HeartRate_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE' +
                              ")")
 
 
-myCursor.execute("CREATE TABLE Corsi_1(" +
-                             "data_id INT AUTO_INCREMENT," +
+myCursor.execute("CREATE TABLE corsi_1(" +
+                             "data_id SERIAL," +
                              "highest_corsi_span INT," +
                              "num_of_items INT," +
                              "binary_result INT," +
@@ -74,12 +60,12 @@ myCursor.execute("CREATE TABLE Corsi_1(" +
                              "subject_id INT," +
                              "doc_id INT," +
                              "PRIMARY KEY (data_id)," +
-                             "CONSTRAINT FK_Corsi_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE" +
+                             'CONSTRAINT FK_Corsi_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE' +
                              ")")
 
 
-myCursor.execute("CREATE TABLE Flanker_1(" +
-                             "data_id INT AUTO_INCREMENT," +
+myCursor.execute("CREATE TABLE flanker_1(" +
+                             "data_id SERIAL," +
                              "flanker_code VARCHAR(255)," +
                              "is_congruent INT," +
                              "result INT," +
@@ -88,14 +74,14 @@ myCursor.execute("CREATE TABLE Flanker_1(" +
                              "subject_id INT," +
                              "doc_id INT," +
                              "PRIMARY KEY (data_id)," +
-                             "CONSTRAINT FK_Flanker_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE" +
+                             'CONSTRAINT FK_Flanker_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE' +
                              ")")
 
 # Populate study table with Exercise IQP
 def populateStudyTable():
     try:
         myCursor = db.cursor()
-        study_insert_template = ("INSERT INTO Study "
+        study_insert_template = ("""INSERT INTO Study """
                "(study_name, study_description, is_irb_approved, institutions_involved) "
                "VALUES (%s, %s, %s, %s)")
         description = "The goal of our project is to explore relationships between exercise and cognition. " \
@@ -112,12 +98,12 @@ def populateStudyTable():
                       " the exercise group exerted much more effort during their activity sessions. There was not" \
                       " a statistically significant correlation between heart rate or movement with increased" \
                       " cognitive performance."
-        exercise_study = ('Exercise IQP', description, 1, 'Worcester Polytechnic Institute')
+        exercise_study = ('Exercise IQP', description, True, 'Worcester Polytechnic Institute')
 
         myCursor.execute(study_insert_template, exercise_study)
         print("Study Table populated successfully!")
         db.commit()
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating Study Table")
 
@@ -125,7 +111,7 @@ def populateStudyTable():
 def populateStudyGroupTable():
     try:
         myCursor = db.cursor()
-        group_insert_template = ("INSERT INTO StudyGroup "
+        group_insert_template = ("""INSERT INTO StudyGroup """
                "(study_group_name, study_id, study_group_description) "
                "VALUES (%s, %s, %s)")
 
@@ -143,7 +129,7 @@ def populateStudyGroupTable():
         db.commit()
 
         print("StudyGroup Table populated successfully!")
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating StudyGroup Table")
 
@@ -154,7 +140,7 @@ def executeCommand(template, args):
         myCursor.execute(template, args)
         db.commit()
         return True
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         return False
 
@@ -169,13 +155,13 @@ def populateSubjectTable():
             addSubject("C"+str(i), 1)
 
         print("Subject Table populated successfully!")
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating Subject Table")
 
 # Add individual subject
 def addSubject(subject_number, studyGroup_id):
-    subject_insert_template = ("INSERT INTO Subject "
+    subject_insert_template = ("""INSERT INTO Subject """
                                "(subject_number, study_group_id) "
                                "VALUES (%s, %s)")
     subject = (subject_number, studyGroup_id)
@@ -188,13 +174,13 @@ def populateDemographicsTable():
             addDemographic(i)
 
         print("Demographic Table populated successfully!")
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating Demographic Table")
 
 # Generate random demographic data for individual subject
 def addDemographic(subject_id):
-    demographic_insert_template = ("INSERT INTO Demographics "
+    demographic_insert_template = ("""INSERT INTO Demographics """
                                "(subject_id, age, sex, race, ethnicity, school_year, phone_num, address, "
                                    "height, weight, med_history) "
                                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
@@ -217,30 +203,30 @@ def addDemographic(subject_id):
 def populateDataCategoryTable():
     try:
         myCursor = db.cursor()
-        dataCategory_insert_template = ("INSERT INTO DataCategory "
-               "(data_category_name, is_time_series, has_subject_name, dc_table_name, dc_description) "
-               "VALUE (%s, %s, %s, %s, %s)")
+        dataCategory_insert_template = ("""INSERT INTO DataCategory """
+               "(data_category_name, is_time_series, has_subject_name, dc_table_name, dc_description, subject_organization) "
+               "VALUES (%s, %s, %s, %s, %s, %s)")
 
         # Add heart rate data category
         description = "Time series heart rate data collected by a FitBit Inspire HR"
-        heart_rate_data_category = ('HeartRate', True, False, 'HeartRate_1', description)
+        heart_rate_data_category = ('HeartRate', True, False, 'heartrate_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, heart_rate_data_category)
         db.commit()
 
         # Add Corsi data category
         description = "Test results from Corsi memory tests"
-        corsi_data_category = ('Corsi', False, False, 'Corsi_1', description)
+        corsi_data_category = ('Corsi', False, False, 'corsi_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, corsi_data_category)
         db.commit()
 
         # Add Flanker data category
         description = "Test results from Flanker attention tests"
-        flanker_data_category = ('Flanker', False, False, 'Flanker_1', description)
+        flanker_data_category = ('Flanker', False, False, 'flanker_1', description, 'file')
         myCursor.execute(dataCategory_insert_template, flanker_data_category)
         db.commit()
 
         print("DataCategory Table populated successfully!")
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating DataCategory Table")
 
@@ -248,7 +234,7 @@ def populateDataCategoryTable():
 def populateDataCategoryStudyXrefTable():
     try:
         myCursor = db.cursor()
-        dataCategoryStudyXref_insert_template = ("INSERT INTO DataCategoryStudyXref "
+        dataCategoryStudyXref_insert_template = ("""INSERT INTO DataCategoryStudyXref """
                "(data_category_id, study_id) "
                "VALUES (%s, %s)")
 
@@ -265,7 +251,7 @@ def populateDataCategoryStudyXrefTable():
         db.commit()
 
         print("DataCategoryStudyXref Table populated successfully!")
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating DataCategoryStudyXref Table")
 
@@ -293,7 +279,7 @@ def populateHeartRateTable():
         db.commit()
 
         print("HeartRate Table populated successfully!")
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating HeartRate Table")
 
@@ -302,9 +288,9 @@ def populateHeartRateTable():
 def populateAttributeTable():
     try:
         myCursor = db.cursor()
-        attribute_insert_template = ("INSERT INTO Attribute "
+        attribute_insert_template = ("""INSERT INTO Attribute """
                    "(attr_name, data_type, data_category_id) "
-                   "VALUE (%s, %s, %s)")
+                   "VALUES (%s, %s, %s)")
 
         heartrate_datetime = ("date_time", "DATETIME", 1)
         executeCommand(attribute_insert_template, heartrate_datetime)
@@ -343,7 +329,7 @@ def populateAttributeTable():
         executeCommand(attribute_insert_template, flanker_trial)
 
         print("Attribute Table populated successfully!")
-    except mysql.connector.Error as e:
+    except psycopg2.DatabaseError as e:
         print(e)
         print("ERROR: Issue Found When Populating Attribute Table")
 

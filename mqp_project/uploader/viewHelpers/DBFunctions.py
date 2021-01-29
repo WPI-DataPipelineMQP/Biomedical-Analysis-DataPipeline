@@ -19,13 +19,13 @@ def getGroupID(groupName, studyID):
     return -1
 
 
-def getDataCategoryIDIfExists(category_name, timeSeries, studyID):
+def getDataCategoryIDIfExists(category_name, timeSeries, subjectOrg, studyID):
     data_category_id = -1
     
-    categoryExists = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries).exists()
+    categoryExists = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries, subject_organization=subjectOrg).exists()
         
     if categoryExists:
-        potentialInstances = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries)
+        potentialInstances = DataCategory.objects.filter(data_category_name=category_name, is_time_series=timeSeries, subject_organization=subjectOrg)
             
         for dc in potentialInstances:
             xrefExists = DataCategoryStudyXref.objects.filter(data_category=dc, study=studyID).exists()
@@ -38,19 +38,21 @@ def getDataCategoryIDIfExists(category_name, timeSeries, studyID):
 
 
 
-def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_table_name, description):
+def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_table_name, description, subjectOrg):
     
     try:
         newDataCategory = DataCategory.objects.create(data_category_name=category_name,
                                                       is_time_series=time_series_val,
                                                       has_subject_name=hasSubjectNames,
                                                       dc_table_name=dc_table_name,
-                                                      dc_description=description)
+                                                      dc_description=description,
+                                                      subject_organization=subjectOrg)
         
-        return True
+        return True, ''
     
-    except:
-        return False 
+    except Exception as e:
+        
+        return False, str(e)
 
 
 
@@ -69,13 +71,14 @@ def insertToDataCategoryXref(category_id, study_id):
         newXref = DataCategoryStudyXref.objects.create(data_category=dcObj,
                                                        study=studyObj)
         
-        return True 
+        return True, '' 
     
-    except:
-        return False 
+    except Exception as e:
+        return False, str(e)
     
     
 def insertToAttribute(attributes, dcID):
+    
     for colName in attributes:
         currDict = attributes.get(colName)
         name = colName
@@ -93,12 +96,20 @@ def insertToAttribute(attributes, dcID):
                                                     device_name=device,
                                                     data_category=dcObj) 
             
-        except:
-            return False 
+        except Exception as e:
+            return False, str(e) 
         
     
-    return True
+    return True, ''
 
+
+def dropTable(tableName):
+    stmt = f"DROP TABLE IF EXISTS {tableName}"
+    
+    DBClient.executeStmt(stmt)
+    
+    print(f"DROPPED TABLE: {tableName}")
+    
 
 def createNewTable(myMap):
     result = False 
@@ -108,13 +119,14 @@ def createNewTable(myMap):
             '1' : 'TEXT',
             '2' : 'INT',
             '3' : 'FLOAT(10,5)',
-            '4' : 'Datetime',
+            '4' : 'timestamp',
             '5' : 'BOOLEAN'
         }
 
         table_name = myMap.get('tableName')
+        #table_name = table_name.lower()
         
-        dataID_field = "data_id INT AUTO_INCREMENT,"
+        dataID_field = "data_id SERIAL,"
         subjectID_field = "subject_id INT,"
         docID_field = "doc_id INT,"
         pk_field = "PRIMARY KEY (data_id),"
@@ -135,17 +147,16 @@ def createNewTable(myMap):
         stmt += pk_field
         stmt += fk_field
         
-        result = DBClient.createTable(stmt, table_name, 1)
+        result, errorMessage = DBClient.createTable(stmt, table_name, 1)
         
 
-    return result
-
-
-
+    return result, errorMessage
+        
 
 def getAttributeOfTable(tableName):
     
     dc_ID = (DataCategory.objects.get(dc_table_name=tableName)).data_category_id
+    
     dc_obj = DataCategory.objects.get(data_category_id=dc_ID)
     
     attributeObj = Attribute.objects.get(data_category=dc_obj)
@@ -157,7 +168,7 @@ def getAttributeOfTable(tableName):
 
 
 
-def getTableSchema(tableName):
+def getTableSchema(tableName, dcID):
     string = '{} SCHEMA: '.format(tableName)
     
     columns = DBClient.getTableColumns(tableName)
@@ -165,12 +176,14 @@ def getTableSchema(tableName):
     
     for i in range(0, len(columns), 1):
         position = ''
+        attributeObj = Attribute.objects.get(attr_name=columns[i], data_category=dcID) 
+        attributeType = attributeObj.data_type
         if i != ( len(columns)-1 ):
-            position = "{} [ position = {} ], ".format(columns[i], i)
+            position = "{} [ position = {}, datatype = {} ], ".format(columns[i], i, attributeType)
             
             
         else:
-            position = "{} [ position = {} ]".format(columns[i], i)
+            position = "{} [ position = {}, datatype = {} ]".format(columns[i], i, attributeType)
             
         string += position
         
