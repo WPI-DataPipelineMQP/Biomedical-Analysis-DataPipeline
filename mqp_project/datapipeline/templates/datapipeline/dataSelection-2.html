@@ -40,98 +40,6 @@
     {% endfor %}
 </ul>
 
-<!--<h2>What attributes would you like to view?</h2>-->
-
-<!--&lt;!&ndash;<form method="POST" action="/">&ndash;&gt;-->
-<!--&lt;!&ndash;    {% csrf_token %}&ndash;&gt;-->
-<!--&lt;!&ndash;    {{ form.as_p }}&ndash;&gt;-->
-<!--&lt;!&ndash;    <input type="submit" value="Submit">&ndash;&gt;-->
-<!--&lt;!&ndash;</form>&ndash;&gt;-->
-
-
-<!--<div class="i-am-centered">-->
-<!--    <form method="POST">-->
-<!--        {% csrf_token %}-->
-<!--        <div class="form-group">-->
-<!--            {{ form.viewHRDateTime }}-->
-<!--            <label>{{ form.viewHRDateTime.label }} </label>-->
-<!--        </div>-->
-<!--        <div class="form-group">-->
-<!--            {{ form.viewHRHeartRate }}-->
-<!--            <label>{{ form.viewHRHeartRate.label }} </label>-->
-<!--        </div>-->
-<!--        <div class="form-group">-->
-<!--            {{ form.viewSubjectNumber }}-->
-<!--            <label>{{ form.viewSubjectNumber.label }}</label>-->
-<!--        </div>-->
-<!--        <div class="form-group">-->
-<!--            {{ form.viewSGName }}-->
-<!--            <label>{{ form.viewSGName.label }}</label>-->
-<!--        </div>-->
-<!--        <h2>What attributes would you like to filter?</h2>-->
-<!--        <div class="form-group">-->
-<!--            {{ form.filterHRDateTime }}-->
-<!--            <label>{{ form.viewHRDateTime.label }} </label>-->
-<!--            {{ form.filterSymHRDateTime }}-->
-<!--            {{ form.filterValueHRDateTime }}-->
-<!--        </div>-->
-<!--        <div class="form-group">-->
-<!--            {{ form.filterHRHeartRate }}-->
-<!--            <label>{{ form.viewHRHeartRate.label }} </label>-->
-<!--            {{ form.filterSymHRHeartRate }}-->
-<!--            {{ form.filterValueHRHeartRate }}-->
-<!--        </div>-->
-<!--        <div class="form-group">-->
-<!--            {{ form.filterSubjectNumber }}-->
-<!--            <label>{{ form.viewSubjectNumber.label }}</label>-->
-<!--            {{ form.filterSymSubjectNumber }}-->
-<!--            {{ form.filterValueSubjectNumber }}-->
-<!--        </div>-->
-<!--        <div class="form-group">-->
-<!--            {{ form.filterSGName }}-->
-<!--            <label>{{ form.viewSGName.label }}</label>-->
-<!--            {{ form.filterSymSGName }}-->
-<!--            {{ form.filterValueSGName }}-->
-<!--        </div>-->
-<!--        <button type="submit" >Submit</button>-->
-<!--    </form>-->
-<!--</div>-->
-
-
-
-<!--W/O FORM OBJECTS-->
-
-<!--    <h2>What attributes would you like to filter?</h2>-->
-<!--    <div class="i-am-centered">-->
-<!--        <form method="POST">-->
-<!--            {% csrf_token %}-->
-<!--            <div class="form-group">-->
-<!--                {{ form.filterHRDateTime }}-->
-<!--                <label>{{ form.viewHRDateTime.label }} </label>-->
-<!--                {{ form.filterSymHRDateTime }}-->
-<!--                {{ form.filterValueHRDateTime }}-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--                {{ form.filterHRHeartRate }}-->
-<!--                <label>{{ form.viewHRHeartRate.label }} </label>-->
-<!--                {{ form.filterSymHRHeartRate }}-->
-<!--                {{ form.filterValueHRHeartRate }}-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--                {{ form.filterSubjectNumber }}-->
-<!--                <label>{{ form.viewSubjectNumber.label }}</label>-->
-<!--                {{ form.filterSymSubjectNumber }}-->
-<!--                {{ form.filterValueSubjectNumber }}-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--                {{ form.filterSGName }}-->
-<!--                <label>{{ form.viewSGName.label }}</label>-->
-<!--                {{ form.filterSymSGName }}-->
-<!--                {{ form.filterValueSGName }}-->
-<!--            </div>-->
-<!--            <button type="submit" >Submit</button>-->
-<!--        </form>-->
-<!--    </div>-->
 <form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     {% csrf_token %}
     <h2>What attributes would you like to view?</h2>
@@ -162,6 +70,6 @@
             {% endfor %}
 
         </ul>
-    <button type="submit" >Submit</button>
+    <input type="submit" value="Submit">
 </form>
 {% endblock content %}
