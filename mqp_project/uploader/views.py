@@ -158,6 +158,7 @@ def info(request):
     
     studyID = (Study.objects.get(study_name=studyName, owner=request.user.id)).study_id
     form = UploaderInfoForm(id=studyID)
+    
     #############################################################################################################
     if request.method == 'POST':        
         defaultGroup = False
@@ -191,6 +192,17 @@ def info(request):
 
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
+        
+        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
+        
+        if data_category_id != -1:
+            uploaderInfo.updateFieldsFromDataCategory(data_category_id)
+            
+        elif data_category_id == -1 and fields.get('which-category-field') == 'y':
+            msg = 'Detected an attempted to create a table using a name that already exists in the database! Please enter in a name that is not displayed in the dropdown'
+            messages.error(request, msg)
+            return redirect(info)
+        
         
         if uploaderInfo.handleDuplicate == 'N/A':
             checkedForDuplications = False 
@@ -249,11 +261,6 @@ def info(request):
             DBFunctions.insertToStudyGroup(uploaderInfo.groupName, description, studyID)
             
         groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
-        
-        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
-        
-        if data_category_id != -1:
-            uploaderInfo.updateFieldsFromDataCategory(data_category_id)
         
         uploaderInfo.groupID = groupID
         uploaderInfo.dcID = data_category_id

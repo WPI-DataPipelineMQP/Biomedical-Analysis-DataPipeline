@@ -51,6 +51,15 @@ class UploaderInfo:
         self.isTimeSeries = (DataCategory.objects.get(data_category_id=dcID)).is_time_series
         self.hasSubjectNames = (DataCategory.objects.get(data_category_id=dcID)).has_subject_name
         
+    def isExistingDataCategory(self):
+        res = DataCategory.objects.filter(data_category_name=self.categoryName, 
+                                          is_time_series=self.isTimeSeries, 
+                                          subject_organization=self.subjectOrganization).exists()
+        
+        return res
+        
+        
+        
         
     def dataCategoryHandler(self, myMap):
         
@@ -250,8 +259,6 @@ class UploaderInfo:
             df = Helper.transposeDataFrame(df, True)
             
         filename = Helper.modifyFileName(filename)
-        print(organizedColumns)
-        print(df.columns)
         
         if self.hasSubjectNames is True:
             listOfSubjects, listOfSubjectNum = [], []
