@@ -183,6 +183,8 @@ def info(request):
             if user_input == 'y':
                 fields['groupName'] = fields['existingStudyGroup']
         
+        print(fields)
+        print(filenames)
         uploaderInfo = UploaderInfo(studyName)
         uploaderInfo.studyID = studyID
         uploaderInfo.groupName = fields.get('groupName')
@@ -245,7 +247,7 @@ def info(request):
         
         if specialRow is False and Helper.hasAcceptableHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
-            uploaderInfo = {'filenames': filenames}
+            uploaderInfo.uploadedFiles = filenames
             request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
             return redirect(error)
         
