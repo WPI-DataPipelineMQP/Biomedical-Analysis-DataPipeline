@@ -243,12 +243,15 @@ class UploaderInfo:
         columnFlag = False 
         
         df = pd.read_csv(filepath)
-        
+        df.columns = map(str.lower, df.columns)
+        df.columns = df.columns.str.replace(' ', '')
         if self.subjectPerCol is True:
             columnFlag = True
             df = Helper.transposeDataFrame(df, True)
             
         filename = Helper.modifyFileName(filename)
+        print(organizedColumns)
+        print(df.columns)
         
         if self.hasSubjectNames is True:
             listOfSubjects, listOfSubjectNum = [], []

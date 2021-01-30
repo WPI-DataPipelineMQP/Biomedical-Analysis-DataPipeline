@@ -23,7 +23,7 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     errorMessage = None
     
     dcID = uploaderInfo.dcID
-    
+    print(dcID)
     dcObj = DataCategory.objects.get(data_category_id=dcID)
     numOfFiles = len(filenames) + 0.5
     directory_path = 'uploaded_csvs/'

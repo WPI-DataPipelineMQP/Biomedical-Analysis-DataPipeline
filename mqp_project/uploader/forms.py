@@ -2,6 +2,10 @@ from django import forms
 from functools import partial
 from django.utils.safestring import mark_safe
 
+from datapipeline.models import Study, StudyGroup, DataCategory, DataCategoryStudyXref
+
+from .viewHelpers import Helper, DBFunctions
+
 
 class StudyNameForm(forms.Form):
     studyName = forms.CharField(label='Study Name', required=True)
@@ -29,30 +33,70 @@ class StudyInfoForm(forms.Form):
 
 
 class UploaderInfoForm(forms.Form):
-    groupName = forms.CharField(label='Study Group Name', required=False)
-    categoryName = forms.CharField(label='Data Category Name', required=True)
-
-    SUBJECT_CHOICES = [('file', 'Subject per File'), ('row',
+    
+    def __init__(self, *args, **kwargs):
+        YES_NO = [('y', 'Yes'), ('n', 'No')]
+        
+        SUBJECT_CHOICES = [('file', 'Subject per File'), ('row',
                                                       'Subject per Row'), ('column', 'Subject per Column')]
-
-    DUPLICATE_CHOICES = [('replace', 'Replace Duplicates'), ('append',
+        
+        DUPLICATE_CHOICES = [('replace', 'Replace Duplicates'), ('append',
                                                              'Add Duplicates'), ('newFile', 'Try Different File(s)')]
-
-    subjectOrganization = forms.ChoiceField(choices=SUBJECT_CHOICES,
+        studyID = kwargs.pop('id')
+        
+        super(UploaderInfoForm, self).__init__(*args, **kwargs)
+        
+        groupsExist = StudyGroup.objects.filter(study=studyID)
+        
+        studyGroups, dataCategories = [], []
+        
+        if groupsExist:
+            groupObjs = StudyGroup.objects.filter(study=studyID)
+            
+            studyGroups = [(obj.study_group_name, obj.study_group_name) for obj in groupObjs]
+            
+            foundCategories = DBFunctions.getAllDataCategoriesOfStudy(studyID)
+            
+            dataCategories = [(name, name) for name in foundCategories]
+        
+        if len(dataCategories) == 0:
+            self.fields['categoryName'] = forms.CharField(label='Data Category Name', required=True)
+        else:
+            self.fields['existingCategory'] = forms.CharField(label='Existing Data Categories:',
+                                                    widget=forms.Select(choices=dataCategories),
+                                                    required=False)
+            
+            self.fields['categoryName'] = forms.CharField(label='Other Data Category Name', required=False)
+            
+            self.fields['which-category-field'] = forms.ChoiceField(choices=YES_NO,
+                                            widget=forms.RadioSelect(attrs={'required': 'required'}), label="Did you choose an exsiting data category?")
+        
+        if len(studyGroups) == 0:
+            self.fields['groupName'] = forms.CharField(label='Study Group Name', required=False)
+            
+        else:
+            self.fields['existingStudyGroup'] = forms.CharField(label='Existing Study Groups:',
+                                                    widget=forms.Select(choices=studyGroups),
+                                                    required=False)
+            
+            self.fields['groupName'] = forms.CharField(label='Other Study Group Name', required=False)
+            
+            self.fields['which-group-field'] = forms.ChoiceField(choices=YES_NO,
+                                            widget=forms.RadioSelect(attrs={'required': 'required'}), label="Did you choose an exsiting study group?")
+            
+        self.fields['subjectOrganization'] = forms.ChoiceField(choices=SUBJECT_CHOICES,
                                             widget=forms.RadioSelect(attrs={'required': 'required'}), label="What Format Does this Data Category Follow?")
-
-    TIME_SERIES_CHOICES = [('y', 'Yes'), ('n', 'No')]
-
-    isTimeSeries = forms.ChoiceField(choices=TIME_SERIES_CHOICES,
+        
+        self.fields['isTimeSeries'] = forms.ChoiceField(choices=YES_NO,
                                      widget=forms.RadioSelect(attrs={'required': 'required'}), label="Is this Data Category Time Series?")
-
-    handleDuplicate = forms.ChoiceField(choices=DUPLICATE_CHOICES,
+        
+        self.fields['handleDuplicate'] = forms.ChoiceField(choices=DUPLICATE_CHOICES,
                                         widget=forms.RadioSelect(attrs={'class': 'duplicate'}), 
                                         label=mark_safe("<mark>Handling Duplicate Options (<strong>Please Select One of the Options</strong>)</mark>"),
                                         required=False)
-
-    uploadedFiles = forms.FileField(
-        label="Select Files", required=True, widget=forms.ClearableFileInput(attrs={'multiple': True}))
+        
+        self.fields['uploadedFiles'] = forms.FileField(label="Select Files", required=True, widget=forms.ClearableFileInput(attrs={'multiple': True}))
+    
 
 
 class UploadInfoCreationForm(forms.Form):

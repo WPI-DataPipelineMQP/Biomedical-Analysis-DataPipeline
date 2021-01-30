@@ -369,6 +369,8 @@ def extractHeaders(path, subjectOrgVal):
         
     headers = list(df.columns)
     
+    headers = [col.lower().replace(' ', '') for col in headers]
+    
     return headers, hasSubjectNames, subjectPerCol
 
 
