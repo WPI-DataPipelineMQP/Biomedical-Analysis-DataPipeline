@@ -8,6 +8,7 @@ from django.core import serializers
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 from datapipeline.views import home
 from datapipeline.database import DBClient
@@ -47,8 +48,11 @@ def study(request):
             studyName = fields[0].get('value')
             request.session['studyName'] = studyName
             request.session['checkedForDuplications'] = False
-            
-            studyExists = Study.objects.filter(study_name=studyName, owner=request.user.id).exists()
+
+            studyExists = Study.objects.filter(
+                (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
+                study_name=studyName
+            ).exists()
             
             if studyExists is False:
                 return redirect(studyInfo)
@@ -64,7 +68,9 @@ def study(request):
         Helper.clearKeyInSession(request.session, 'dataCategories') 
         Helper.deleteAllDocuments()
         
-        allStudies = Study.objects.filter(owner=request.user.id)
+        allStudies = Study.objects.filter(
+            (Q(visibility="Public (Testing)") | Q(owner=request.user.id))
+        )
         
         studyNames = [ study.study_name for study in allStudies ]
             
@@ -156,7 +162,10 @@ def info(request):
          'studyName': studyName
     }
     
-    studyID = (Study.objects.get(study_name=studyName, owner=request.user.id)).study_id
+    studyID = (Study.objects.get(
+        (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
+        study_name=studyName
+    )).study_id
     #############################################################################################################
     if request.method == 'POST':
         uploaderForm = UploaderInfoForm(request.POST, request.FILES)

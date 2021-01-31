@@ -82,8 +82,8 @@ def populateStudyTable():
     try:
         myCursor = db.cursor()
         study_insert_template = ("""INSERT INTO Study """
-               "(study_name, study_description, is_irb_approved, institutions_involved) "
-               "VALUES (%s, %s, %s, %s)")
+               "(study_name, study_description, is_irb_approved, institutions_involved, visibility) "
+               "VALUES (%s, %s, %s, %s, %s)")
         description = "The goal of our project is to explore relationships between exercise and cognition. " \
                       "We would like to correlate the exercise faculties of physical exertion and movement with" \
                       " the cognitive faculties of attention and memory. We performed our experiment by giving" \
@@ -98,7 +98,7 @@ def populateStudyTable():
                       " the exercise group exerted much more effort during their activity sessions. There was not" \
                       " a statistically significant correlation between heart rate or movement with increased" \
                       " cognitive performance."
-        exercise_study = ('Exercise IQP', description, True, 'Worcester Polytechnic Institute')
+        exercise_study = ('Exercise IQP', description, True, 'Worcester Polytechnic Institute', 'Public (Testing)')
 
         myCursor.execute(study_insert_template, exercise_study)
         print("Study Table populated successfully!")
