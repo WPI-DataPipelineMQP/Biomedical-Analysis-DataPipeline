@@ -1,5 +1,7 @@
 input[type="submit"] {
-  margin-bottom: 30px;
+  float: left;
+  margin-top: 20px;
+  margin-bottom: 20px;
   width: 200px;
 }
 
