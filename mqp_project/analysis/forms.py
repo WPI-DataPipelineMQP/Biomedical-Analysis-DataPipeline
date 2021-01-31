@@ -32,17 +32,19 @@ class CreateChosenBooleanForm(forms.Form):
 class CreateChosenBooleanFormNoBins(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        fields = kwargs.pop('customFields')
-        super(CreateChosenBooleanFormNoBins, self).__init__(*args, **kwargs)
+        choices = kwargs.pop('customFields')
+        super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
-        for i, field in enumerate(fields):
-            self.fields['custom_%s' % i] = forms.BooleanField(
-                label=field, required=False)
-            self.fields['custom_%s' % i].widget.attrs.update({
-                'class': 'checkbox',
-            })
+        radio = forms.RadioSelect(choices=choices)
+
+    #    for i, field in enumerate(fields):
+    #         self.fields['custom_%s' % i] = forms.BooleanField(
+    #             label=field, required=False)
+    #         self.fields['custom_%s' % i].widget.attrs.update({
+    #             'class': 'checkbox',
+    #         })
             #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
-        # print(fields)
+        #print(fields)
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
