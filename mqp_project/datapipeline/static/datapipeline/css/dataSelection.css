@@ -20,11 +20,6 @@ h2.center {
   box-sizing: border-box;
 }
 
-.header-error {
-  color: red;
-  margin-bottom: 30px;
-}
-
 /* Create two equal columns that floats next to each other */
 .column {
   float: left;

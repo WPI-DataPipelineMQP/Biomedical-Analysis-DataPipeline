@@ -6,7 +6,7 @@ import csv
 from django.shortcuts import HttpResponse
 from sqlalchemy import create_engine
 from django.conf import settings
-
+from django.contrib import messages
 from .forms import CreateChosenBooleanForm, CreateChosenBooleanFormWithoutDesc, CreateChosenFilterForm
 from django.http import HttpResponseRedirect
 from django.core import serializers
@@ -46,7 +46,6 @@ def studySelection(request):
     context = {
         'studies_form': studies_form,
         'myCSS': 'studySelection.css',
-        'error': False
     }
 
     if request.method == 'POST':
@@ -99,8 +98,8 @@ def studySelection(request):
 
         #if not, show error message
         else:
-            context['studies_form'] = studies_form
-            context['error'] = True
+            messages.error(request, 'Please select at least one study to start analysis.')
+            return redirect('study_selection')
     
     return render(request, 'datapipeline/studySelection.html', context)
 
@@ -128,7 +127,6 @@ def dataSelection(request):
         'study_names': request.session['study_names'],
         'categories_form': categories_form,
         'study_groups_form': study_groups_form,
-        'error': False
     }
     
     if request.method == 'POST':
@@ -156,18 +154,19 @@ def dataSelection(request):
         study_group_names = ViewHelper.getNameList(study_groups_data)
 
         #checks if at least one category and study group has been selected
-        if len(category_names) > 0 and len(study_group_names) > 0:
-            #if so, move on to next page  
-            request.session['category_names'] = category_names
-            request.session['study_group_names'] = study_group_names
+        if len(category_names) <= 0:
+            #if not, show error message
+            messages.error(request, 'Please select at least one data category.')
+            return redirect('datapipeline-dataSelection')
 
-            return HttpResponseRedirect('/dataSelection-2')
+        if len(study_group_names) <= 0:
+            messages.error(request, 'Please select at least one study group.')
+            return redirect('datapipeline-dataSelection')
 
-        #if not, show error message
-        else:
-            context['categories_form'] = categories_form
-            context['study_groups_form'] = study_groups_form
-            context['error'] = True
+        request.session['category_names'] = category_names
+        request.session['study_group_names'] = study_group_names
+
+        return HttpResponseRedirect('/dataSelection-2')
 
        
     print('\nGot Data Selection Request\n')
@@ -237,32 +236,29 @@ def dataSelectionContinued(request):
                 }
 
         attribute_names = ViewHelper.getNameList(attribute_data)
+
         #checks if at least one attribute has been selected
+        if len(attribute_names) <= 0:
+            #if not, show error message
+            messages.error(request, 'Please select at least one attribute.')
+            return redirect('datapipeline-dataSelection-2')
 
-        if len(attribute_names) > 0:
-            request.session['attribute_names'] = attribute_names
+        request.session['attribute_names'] = attribute_names
 
-            filter_data = {}
-            if filters_form.is_valid():
-                for i, field in enumerate(filters_form.getAllFields()):
-                    filter_data[i] = {
-                        #'name': columns[i]['name'],
-                        'name': field[0],
-                        'value': field[1]
-                    }
-            filter_names = ViewHelper.getNameList(filter_data)
-            filter_values = ViewHelper.getChosenFilters(filter_data)
-            request.session['filter_values'] = filter_values
-            request.session['filter_names'] = filter_names
+        filter_data = {}
+        if filters_form.is_valid():
+            for i, field in enumerate(filters_form.getAllFields()):
+                filter_data[i] = {
+                    #'name': columns[i]['name'],
+                    'name': field[0],
+                    'value': field[1]
+                }
+        filter_names = ViewHelper.getNameList(filter_data)
+        filter_values = ViewHelper.getChosenFilters(filter_data)
+        request.session['filter_values'] = filter_values
+        request.session['filter_names'] = filter_names
 
-
-            return HttpResponseRedirect('/output')
-
-        #if not, show error message
-        else:
-            context['attributes_form'] = attributes_form
-            context['filters_form'] = filters_form
-            context['error'] = True
+        return HttpResponseRedirect('/output')
 
     print('\nGot Data Selection Request\n')
 
