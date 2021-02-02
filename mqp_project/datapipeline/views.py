@@ -41,6 +41,14 @@ def studySelection(request):
     
     request.session['study_fields'] = study_fields
 
+    studies_form = CreateChosenBooleanForm(customFields=study_fields)
+
+    context = {
+        'studies_form': studies_form,
+        'myCSS': 'studySelection.css',
+        'error': False
+    }
+
     if request.method == 'POST':
 
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
@@ -56,44 +64,44 @@ def studySelection(request):
                 }
                 
         study_ids_forquery = ''
-    
+        
         # MAKING THE QUERY TO USE 
         for i, key in enumerate(studies_data):
             study = studies_data[key]
-        
+            
             if study.get('value') is True:
                 if study_ids_forquery != '':
                     study_ids_forquery += 'OR '
-            
+                
                 if i == (len(studies_data) - 1):
                     study_ids_forquery += 'study_id = {}'.format(study['id'])
-                
+                    
                 else:
                     study_ids_forquery += 'study_id = {} '.format(study['id'])
-        
-                  
-        data_categories = DBHandler.getDataCategoriesOfStudies(study_ids_forquery)
-        
-        study_groups = DBHandler.getStudyGroupsOfStudies(study_ids_forquery)
+                    #gets the names to be printed out       
 
-    
-        #gets the names to be printed out                                
         study_names = ViewHelper.getNameList(studies_data, True)
-        
-        request.session['study_names'] = study_names
-        request.session['studies_data'] = studies_data # NOTE: after this edit, do we still need this in the session?
-        request.session['data_categories'] = data_categories
-        request.session['study_groups'] = study_groups
 
-        return HttpResponseRedirect('/dataSelection')
-        #return render(request, 'datapipeline/studySelection.html', context)
+        #checks if any studies have been selected
+        if len(study_names) > 0:
+                    
+            #if so, move on to next page  
+            data_categories = DBHandler.getDataCategoriesOfStudies(study_ids_forquery)
+            
+            study_groups = DBHandler.getStudyGroupsOfStudies(study_ids_forquery)
+            
+            request.session['study_names'] = study_names
+            request.session['studies_data'] = studies_data # NOTE: after this edit, do we still need this in the session?
+            request.session['data_categories'] = data_categories
+            request.session['study_groups'] = study_groups
 
-    studies_form = CreateChosenBooleanForm(customFields=study_fields)
+            return HttpResponseRedirect('/dataSelection')
 
-    context = {
-        'studies_form': studies_form,
-        'myCSS': 'studySelection.css'
-    }
+        #if not, show error message
+        else:
+            context['studies_form'] = studies_form
+            context['error'] = True
+    
     return render(request, 'datapipeline/studySelection.html', context)
 
 
@@ -111,6 +119,17 @@ def dataSelection(request):
         
     if 'study_groups' in request.session:
         study_groups = request.session['study_groups']
+
+    categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
+    study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
+
+    context = {
+        'myCSS': 'dataSelection.css',
+        'study_names': request.session['study_names'],
+        'categories_form': categories_form,
+        'study_groups_form': study_groups_form,
+        'error': False
+    }
     
     if request.method == 'POST':
         categories_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['data_categories'])
@@ -124,10 +143,6 @@ def dataSelection(request):
                     'name': data_categories[i]['name'],
                     'value': field[1]
                 }
-                
-        print(categories_data)
-        category_names = ViewHelper.getNameList(categories_data)
-        request.session['category_names'] = category_names
 
         study_groups_data = {}
         if study_groups_form.is_valid():
@@ -136,29 +151,30 @@ def dataSelection(request):
                     'name': study_groups[i]['name'],
                     'value': field[1]
                 }
-
-        print("\nSTUDY GROUPS DATA")
-        print(study_groups_data)
+                
+        category_names = ViewHelper.getNameList(categories_data)
         study_group_names = ViewHelper.getNameList(study_groups_data)
-        request.session['study_group_names'] = study_group_names
 
+        #checks if at least one category and study group has been selected
+        if len(category_names) > 0 and len(study_group_names) > 0:
+            #if so, move on to next page  
+            request.session['category_names'] = category_names
+            request.session['study_group_names'] = study_group_names
 
-        return HttpResponseRedirect('/dataSelection-2')
+            return HttpResponseRedirect('/dataSelection-2')
 
-        
-    categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
-    study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
+        #if not, show error message
+        else:
+            context['categories_form'] = categories_form
+            context['study_groups_form'] = study_groups_form
+            context['error'] = True
 
-    context = {
-        'myCSS': 'dataSelection.css',
-        'study_names': request.session['study_names'],
-        'categories_form': categories_form,
-        'study_groups_form': study_groups_form
-    }
        
     print('\nGot Data Selection Request\n')
     
     return render(request, 'datapipeline/dataSelection.html', context)
+
+
 
 def dataSelectionContinued(request):
 
@@ -194,6 +210,19 @@ def dataSelectionContinued(request):
     request.session['columnsForAttributeList'] = columnsForAttributeList
     request.session['columnsForFiltersList'] = columnsForFiltersList
 
+    attributes_form = CreateChosenBooleanFormWithoutDesc(customFields=request.session['columnsForAttributeList'])
+    filters_form = CreateChosenFilterForm(customFields=request.session['columnsForFiltersList'])
+
+    context = {
+         'myCSS': 'dataSelection-2.css',
+         'study_names': request.session['study_names'],
+         'category_names': request.session['category_names'],
+         'study_group_names': request.session['study_group_names'],
+         'attributes': attributes_form,
+         'filters': filters_form,
+         'error': False
+    }
+
     if request.method == 'POST':
         attributes_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['columnsForAttributeList'])
         filters_form = CreateChosenFilterForm(request.POST, customFields=request.session['columnsForFiltersList'])
@@ -206,36 +235,34 @@ def dataSelectionContinued(request):
                     'name': columnsForAttributeList[i]['name'],
                     'value': field[1]
                 }
+
         attribute_names = ViewHelper.getNameList(attribute_data)
-        request.session['attribute_names'] = attribute_names
+        #checks if at least one attribute has been selected
 
-        filter_data = {}
-        if filters_form.is_valid():
-            for i, field in enumerate(filters_form.getAllFields()):
-                filter_data[i] = {
-                    #'name': columns[i]['name'],
-                    'name': field[0],
-                    'value': field[1]
-                }
-        filter_names = ViewHelper.getNameList(filter_data)
-        filter_values = ViewHelper.getChosenFilters(filter_data)
-        request.session['filter_values'] = filter_values
-        request.session['filter_names'] = filter_names
+        if len(attribute_names) > 0:
+            request.session['attribute_names'] = attribute_names
+
+            filter_data = {}
+            if filters_form.is_valid():
+                for i, field in enumerate(filters_form.getAllFields()):
+                    filter_data[i] = {
+                        #'name': columns[i]['name'],
+                        'name': field[0],
+                        'value': field[1]
+                    }
+            filter_names = ViewHelper.getNameList(filter_data)
+            filter_values = ViewHelper.getChosenFilters(filter_data)
+            request.session['filter_values'] = filter_values
+            request.session['filter_names'] = filter_names
 
 
-        return HttpResponseRedirect('/output')
+            return HttpResponseRedirect('/output')
 
-    attributes_form = CreateChosenBooleanFormWithoutDesc(customFields=request.session['columnsForAttributeList'])
-    filters_form = CreateChosenFilterForm(customFields=request.session['columnsForFiltersList'])
-
-    context = {
-         'myCSS': 'dataSelection-2.css',
-         'study_names': request.session['study_names'],
-         'category_names': request.session['category_names'],
-         'study_group_names': request.session['study_group_names'],
-         'attributes': attributes_form,
-         'filters': filters_form
-    }
+        #if not, show error message
+        else:
+            context['attributes_form'] = attributes_form
+            context['filters_form'] = filters_form
+            context['error'] = True
 
     print('\nGot Data Selection Request\n')
 

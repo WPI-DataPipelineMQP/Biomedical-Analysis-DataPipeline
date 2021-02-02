@@ -1,6 +1,9 @@
 {% extends "datapipeline/base.html" %}
 {% load static %}
 {% block content %}
+{% if error is True %}
+<h2 class="header-error">Please select at least one study.</h2>
+{% endif %}
 <form method="POST" action="{% url 'datapipeline-studySelection' %}" enctype="multipart/form-data">
     {% csrf_token %}
     <br/>

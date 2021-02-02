@@ -39,7 +39,9 @@
         </li>
     {% endfor %}
 </ul>
-
+{% if error is True %}
+<h2 class="header-error">Please select at least one attribute.</h2>
+{% endif %}
 <form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     {% csrf_token %}
     <h2>What attributes would you like to view?</h2>
