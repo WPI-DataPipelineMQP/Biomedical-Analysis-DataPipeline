@@ -9,10 +9,10 @@ class CreateChosenBooleanForm(forms.Form):
 
 
     def __init__(self, *args, **kwargs):
-        choices = kwargs.pop('customFields')
+        attributes = kwargs.pop('customFields')
         super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
-        radio = forms.RadioSelect(choices=choices)
+        self.fields["radio"] = forms.ChoiceField(widget=forms.RadioSelect, choices=attributes)
 
     #    for i, field in enumerate(fields):
     #         self.fields['custom_%s' % i] = forms.BooleanField(
@@ -32,10 +32,10 @@ class CreateChosenBooleanForm(forms.Form):
 class CreateChosenBooleanFormNoBins(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        choices = kwargs.pop('customFields')
-        super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
+        attributes = kwargs.pop('customFields')
+        super(CreateChosenBooleanFormNoBins, self).__init__(*args, **kwargs)
 
-        radio = forms.RadioSelect(choices=choices)
+        self.fields["radio"] = forms.ChoiceField(widget=forms.RadioSelect, choices=attributes)
 
     #    for i, field in enumerate(fields):
     #         self.fields['custom_%s' % i] = forms.BooleanField(
