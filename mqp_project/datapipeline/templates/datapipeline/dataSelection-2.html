@@ -39,7 +39,6 @@
         </li>
     {% endfor %}
 </ul>
-
 <form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     {% csrf_token %}
     <h2>What attributes would you like to view?</h2>
