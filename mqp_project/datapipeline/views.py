@@ -99,7 +99,7 @@ def studySelection(request):
         #if not, show error message
         else:
             messages.error(request, 'Please select at least one study to start analysis.')
-            return redirect('study_selection')
+            return redirect('/study_selection')
     
     return render(request, 'datapipeline/studySelection.html', context)
 
