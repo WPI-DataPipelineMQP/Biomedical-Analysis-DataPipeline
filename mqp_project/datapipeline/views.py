@@ -403,4 +403,5 @@ def output(request):
         'stat_summary': record_list,
         'myCSS': 'output.css',
     }
+
     return render(request, 'datapipeline/output.html', context)

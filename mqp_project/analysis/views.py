@@ -41,8 +41,9 @@ def make_hist(request):
         hist_data = ViewHelper.getNameList(attribute_data)
         request.session['hist_data'] = hist_data
         return HttpResponseRedirect('/analysis/show_hist')
+    radio_choices = ViewHelper.getRadioChoices(request.session['attribute_names'])
     attributes_form = CreateChosenBooleanForm(
-        customFields=request.session['attribute_names'])
+        customFields=radio_choices)
     context = {"hist_fields": attributes_form}
     return render(request, 'analysis/selectHistColumns.html', context)
 
@@ -94,9 +95,14 @@ def make_scatter(request):
         scatter_data = ViewHelper.getNameList(attribute_data)
         request.session['scatter_data'] = scatter_data
         return HttpResponseRedirect('/analysis/show_scatter')
-    attributes_form = CreateChosenBooleanFormNoBins(
-        customFields=request.session['attribute_names'])
-    context = {"scatter_fields": attributes_form}
+
+    radio_choices = ViewHelper.getRadioChoices(request.session['attribute_names'])
+    x_form = CreateChosenBooleanFormNoBins(
+        customFields=radio_choices)
+    y_form = CreateChosenBooleanFormNoBins(
+        customFields=radio_choices)
+    context = {"scatter_fields_x": x_form,
+                "scatter_fields_y": y_form}
     return render(request, 'analysis/selectScatterColumns.html', context)
 
 

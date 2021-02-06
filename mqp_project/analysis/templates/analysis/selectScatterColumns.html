@@ -6,23 +6,25 @@
 <h4>Select X-Column:</h4>
 <form action="{% url 'analysis-make_scatter' %}" method="POST">
     {% csrf_token %}
-    <ul class="no-bullets">
-        {% for field in scatter_fields %}
-        <li>
+    <!--ul class="no-bullets"-->
+        {% for field in scatter_fields_x %}
+        <!-- <li> -->
             {{ field }}
             <!--label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label-->
-        </li>
+        <!-- </li> -->
         {% endfor %}
-    </ul>
+    <!-- </ul> -->
     <h4>Select Y-Column:</h4>
-    <ul class="no-bullets">
-        {% for field in scatter_fields %}
-        <li>
+    <!-- <ul class="no-bullets"> -->
+        {% for field in scatter_fields_y %}
+        <!-- <li> -->
             {{ field }}
             <!--label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label-->
-        </li>
+        <!-- </li> -->
         {% endfor %}
-    </ul>
+    <!-- </ul> -->
+    <br/>
+    <br/>
     <input type="submit" value="Submit">
 </form>
 
