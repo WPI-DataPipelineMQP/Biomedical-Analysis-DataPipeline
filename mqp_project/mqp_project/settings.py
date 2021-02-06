@@ -171,4 +171,4 @@ DEFAULT_FROM_EMAIL = 'WPI Data Pipeline Team <wpidatapipeline@gmail.com>'
 
 # Celery Settings
 BROKER_URL = config('BROKER_URL')
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND')
+CELERY_RESULT_BACKEND = config('BROKER_URL')

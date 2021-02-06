@@ -1,6 +1,7 @@
 from django.core.files.storage import default_storage
 
-from datapipeline.models import Attribute
+from datapipeline.models import Attribute, DataCategory
+from datapipeline.database import DBClient
 
 from datetime import datetime  
 from dateutil.parser import parse
@@ -220,6 +221,18 @@ def clean(columns, keepOriginal):
     return myMap 
 
 
+def reorderColsByPosition(result):
+    numOfKeys = len(result.keys())
+    
+    orderedByPosition = []
+    
+    for key in result:
+        index = int(result.get(key).get('position'))
+        
+        orderedByPosition.insert(index, key)
+        
+    return orderedByPosition
+
 """Function does the whole process of taking in raw inputs from the form and organizing it in the format that is produced from the clean function (look above)
 
 PARAMS:
@@ -243,18 +256,26 @@ def seperateByName(myList, flag, keepOriginal, retrieveAttribute, dcID):
     result = clean(columns, keepOriginal)
     
     if retrieveAttribute: 
-        for key in result :
-            inner_dict = result.get(key);
+        orderedCols = reorderColsByPosition(result)
         
-            attributeObj = Attribute.objects.filter(attr_name=key, data_category=dcID) 
+        query = DataCategory.objects.filter(data_category_id=dcID)
+        tableName = query[0].dc_table_name 
+        
+        tableCols = DBClient.getTableColumns(tableName)[1:-2]
+        
+        for i in range(0, len(orderedCols), 1):
+            key_name = orderedCols[i] 
+            inner_dict = result.get(key_name)
+            
+            attributeObj = Attribute.objects.filter(attr_name=tableCols[i], data_category=dcID) 
             attributeObj = attributeObj[0]
             attributeType = attributeObj.data_type
         
             inner_dict['dataType'] = attributeType
         
-            result[key] = inner_dict
-        
-    
+            result[key_name] = inner_dict
+
+            
     return result         
        
             
