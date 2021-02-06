@@ -92,8 +92,9 @@ class UploaderInfo:
             print('data category')
             DBFunctions.dropTable(self.tableName)
             raise DatabaseError(errorMessage)
-                
-        cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
+        
+        print(myExtras)
+        cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False, False, self.dcID)
                 
         noErrors, errorMessage = DBFunctions.insertToAttribute(cleanAttributeFormat, self.dcID)
                 
@@ -246,17 +247,28 @@ class UploaderInfo:
         
         return True, None
     
+    def __adjustDataframeColumnNames(self, df):
+        df.columns = map(str.lower, df.columns)
+        df.columns = df.columns.str.replace(' ', '')
+        
+        return df 
+    
     
     def uploadToDatabase(self, filepath, filename, docID, column_info, organizedColumns):
         errorMessage = None
         columnFlag = False 
         
         df = pd.read_csv(filepath)
-        df.columns = map(str.lower, df.columns)
-        df.columns = df.columns.str.replace(' ', '')
+        df = self.__adjustDataframeColumnNames(df)
+
         if self.subjectPerCol is True:
             columnFlag = True
             df = Helper.transposeDataFrame(df, True)
+            df = self.__adjustDataframeColumnNames(df)
+            
+        
+        print(df.head())
+        print("\n")
             
         filename = Helper.modifyFileName(filename)
         
@@ -275,7 +287,8 @@ class UploaderInfo:
                     
                 currID, errorMessage = self.subjectHandler("", num)
                 listOfSubjects.append(currID)
-                
+            
+            print(df.columns)
             df = df.drop(df.columns[0], axis=1) # deleting the subjects column
             df = df[organizedColumns]
             df['subject_id'] = listOfSubjects

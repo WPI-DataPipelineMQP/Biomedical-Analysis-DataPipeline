@@ -1,5 +1,7 @@
 from django.core.files.storage import default_storage
 
+from datapipeline.models import Attribute
+
 from datetime import datetime  
 from dateutil.parser import parse
 import pandas as pd 
@@ -220,26 +222,6 @@ def clean(columns, keepOriginal):
 
 """Function does the whole process of taking in raw inputs from the form and organizing it in the format that is produced from the clean function (look above)
 
-ex:
-
-input: [('X_custom_dataType', '1'), ('X_custom_description', 'string'), ..., ('Y_custom_dataType', '2'), ...]  ==> see next line
-
-output: 
-{
-    'X':
-        {
-            'dataType': 'TEXT',
-            'description': 'string',
-            ...
-        }
-    
-    'Y':
-        {
-            'dataType': 'INT',
-            ...
-        }
-}
-
 PARAMS:
 - myList - a raw list of tuples of the data gathered from the form
 - flag - a int value to decide when to move on to next column. Say if there are 4 fields for each column, flag should be 4
@@ -250,15 +232,28 @@ PARAMS:
 
 return Dictionary (output of clean function)
 """          
-def seperateByName(myList, flag, keepOriginal):
+def seperateByName(myList, flag, keepOriginal, retrieveAttribute, dcID):
 
     columns = [] # will be a 2D array (number of columns x value of flag)
 
     for i in range(0, len(myList), flag):
         currentList = myList[i:i+flag]
         columns.append(currentList)
-
+    
     result = clean(columns, keepOriginal)
+    
+    if retrieveAttribute: 
+        for key in result :
+            inner_dict = result.get(key);
+        
+            attributeObj = Attribute.objects.filter(attr_name=key, data_category=dcID) 
+            attributeObj = attributeObj[0]
+            attributeType = attributeObj.data_type
+        
+            inner_dict['dataType'] = attributeType
+        
+            result[key] = inner_dict
+        
     
     return result         
        

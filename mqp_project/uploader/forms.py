@@ -176,34 +176,22 @@ class UploadPositionForm(forms.Form):
 
         available_positions = [(i, i) for i in range(size)]
 
-        allowed_datatypes = [
-            (1, 'String / Text'),
-            (2, 'Integer'),
-            (3, 'Float / Decimal'),
-            (4, 'Datetime'),
-            (5, 'Boolean')
-        ]
-
         super(UploadPositionForm, self).__init__(*args, **kwargs)
 
         for i, column in enumerate(columns):
             position = '{}_custom_position'.format(column)
-            dataType = '{}_custom_dataType'.format(column)
 
             self.fields[position] = forms.CharField(label="{}'s Position: ".format(column),
                                                     widget=forms.Select(choices=available_positions, attrs={
                                                                         'id': 'mySelection'}),
                                                     required=True,
                                                     initial=i)
-            
-            self.fields[dataType] = forms.CharField(label='Datatype:',
-                                                    widget=forms.Select(choices=allowed_datatypes, attrs={
-                                                                        'id': 'mySelection'}),
-                                                    required=True)
+
 
     def getColumnFields(self):
         for name, value in self.cleaned_data.items():
             yield (name, value)
+
 
 
 class DisabledInputForm(forms.Form):

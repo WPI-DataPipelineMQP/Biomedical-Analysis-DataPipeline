@@ -440,7 +440,9 @@ def finalPrompt(request):
             for (i, val) in form.getColumnFields():
                 myFields.append((i, val)) 
         
-        clean = Helper.seperateByName(myFields, 2, True)     
+        print(myFields)
+        print("\n")
+        clean = Helper.seperateByName(myFields, 1, True, True, dcID)     
         print(clean)  
         
         if Helper.foundDuplicatePositions(clean) is True:
