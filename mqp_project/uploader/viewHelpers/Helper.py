@@ -159,7 +159,7 @@ def getActualDataType(string):
     dataTypeMap = {
         '1' : 'TEXT',
         '2' : 'INT',
-        '3' : 'FLOAT(10,5)',
+        '3' : 'NUMERIC(10,5)',
         '4' : 'DATETIME',
         '5' : 'BOOLEAN'
     }
@@ -171,7 +171,7 @@ def convertToIntValue(string):
     dataTypeMap = {
         'TEXT': 1,
         'INT': 2,
-        'FLOAT(10,5)': 3,
+        'NUMERIC(10,5)': 3,
         'DATETIME': 4,
         'BOOLEAN': 5
     }
@@ -275,7 +275,6 @@ def foundDuplicatePositions(myMap):
 
 
 def getDatetime(string):
-    print(string)
     dateObj = datetime.strptime(string, '%Y-%m-%d').date()
     
     return dateObj
@@ -442,6 +441,17 @@ def cleanCategoryName(name):
         return newName
         
     return name
+
+def passFilenameCheck(files):
+    for file in files:
+        if file.find('_') == -1:
+            return False 
+        
+        else:
+            if len(file[:file.find('_')]) <= 0:
+                return False 
+            
+    return True
     
     
         

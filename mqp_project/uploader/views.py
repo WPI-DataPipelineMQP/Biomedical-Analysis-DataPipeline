@@ -183,14 +183,18 @@ def info(request):
             if user_input == 'y':
                 fields['groupName'] = fields['existingStudyGroup']
         
-        print(fields)
-        print(filenames)
         uploaderInfo = UploaderInfo(studyName)
         uploaderInfo.studyID = studyID
         uploaderInfo.groupName = fields.get('groupName')
         uploaderInfo.subjectOrganization = fields.get('subjectOrganization')
         rawTimeSeries = fields.get('isTimeSeries')
         uploaderInfo.isTimeSeries = True if rawTimeSeries == 'y' else False
+        
+        if (uploaderInfo.subjectOrganization == 'file'):
+            if not Helper.passFilenameCheck(filenames):
+                msg = "Detected an error in the filename of the uploaded files. If the subject organization is by row, please follow the convention when naming the files"
+                messages.error(request, msg) 
+                return redirect(info)
 
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
@@ -337,7 +341,7 @@ def extraInfo(request):
                 myExtras.append((name, val))
         
         if uploaderInfo.specialCase:
-            colName = myFields.get('nameOfValueMeasured')
+            colName = myFields.get('nameOfValueMeasured').lower()
             dataType = myExtras[0][1]
             dataType = Helper.getActualDataType(dataType)
             uploaderInfo.specialInsert = { colName: {'position': '0', 'dataType': dataType} }

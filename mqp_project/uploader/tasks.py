@@ -46,7 +46,6 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
             DBClient.deleteData(uploaderInfo.tableName, docID)
             
         
-        print(filepath)
         if i == 0:
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
             i += 0.5

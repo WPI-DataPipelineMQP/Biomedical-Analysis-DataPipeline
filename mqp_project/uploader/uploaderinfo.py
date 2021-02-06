@@ -266,10 +266,6 @@ class UploaderInfo:
             df = Helper.transposeDataFrame(df, True)
             df = self.__adjustDataframeColumnNames(df)
             
-        
-        print(df.head())
-        print("\n")
-            
         filename = Helper.modifyFileName(filename)
         
         if self.hasSubjectNames is True:
@@ -288,17 +284,28 @@ class UploaderInfo:
                 currID, errorMessage = self.subjectHandler("", num)
                 listOfSubjects.append(currID)
             
-            print(df.columns)
             df = df.drop(df.columns[0], axis=1) # deleting the subjects column
             df = df[organizedColumns]
             df['subject_id'] = listOfSubjects
         
         
         else:
-            subjectID, errorMessage = self.subjectHandler(filename)
+            if self.subjectOrganization == 'file':
+                subjectID, errorMessage = self.subjectHandler(filename)
         
-            df = df[organizedColumns]
-            df['subject_id'] = subjectID
+                df = df[organizedColumns]
+                df['subject_id'] = subjectID
+                
+            else:
+                listOfSubjects = []
+                listOfSubjectNum = list(df.index) 
+                
+                for num in listOfSubjectNum:
+                    currID, errorMessage = self.subjectHandler("", num)
+                    listOfSubjects.append(currID)
+                    
+                df = df[organizedColumns]
+                df['subject_id'] = listOfSubjects
     
         df['doc_id'] = docID
         

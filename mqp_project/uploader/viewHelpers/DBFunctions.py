@@ -118,7 +118,7 @@ def createNewTable(myMap):
         dataTypeMap = {
             '1' : 'TEXT',
             '2' : 'INT',
-            '3' : 'FLOAT(10,5)',
+            '3' : 'NUMERIC(10,5)',
             '4' : 'timestamp',
             '5' : 'BOOLEAN'
         }
