@@ -5,7 +5,7 @@ from datapipeline.forms import CreateChosenBooleanForm
 from datapipeline.viewHelpers import viewsHelper as ViewHelper
 from uploader.viewHelpers import Helper as UploadHelper
 from uploader.viewHelpers import DBFunctions
-from .forms import DataCategorySearchForm
+from .forms import StudySearchForm
 from django.contrib import messages
 from django.db.models import Q
 from datapipeline.models import Study, Subject, StudyGroup, DataCategoryStudyXref, Attribute
@@ -15,7 +15,7 @@ from django.db.models.base import ObjectDoesNotExist
 # 1st screen: Show list of studies and allow user to start selection on them or use links to study page
 def listStudies(request):
     UploadHelper.deleteAllDocuments()
-    dc_searchTerm = None
+    searchTerm = None
 
     # If submit button was clicked to go to selection
     if request.method == 'POST' and 'selection-btn' in request.POST:
@@ -68,15 +68,27 @@ def listStudies(request):
 
         return redirect('datapipeline-dataSelection')
 
-    # if searching for studies with a data category
+    # if searching for studies with specific metadata
     elif request.method == 'POST' and 'searchTerm' in request.POST:
-        dc_search_form = DataCategorySearchForm(request.POST)
-        dc_searchTerm = ""
-        if dc_search_form.is_valid():
-            dc_searchTerm = dc_search_form.cleaned_data['searchTerm']
+        search_form = StudySearchForm(request.POST)
+        searchTerm = ""
+        if search_form.is_valid():
+            searchTerm = search_form.cleaned_data['searchTerm'].lower()
+            searchStudyName = search_form.cleaned_data['studyName']
+            searchStudyDescription = search_form.cleaned_data['studyDescription']
+            searchInstitutionsInvolved = search_form.cleaned_data['institutionsInvolved']
+            searchStudyContact = search_form.cleaned_data['studyContact']
+            searchStudyNotes = search_form.cleaned_data['studyNotes']
+            searchDataCategory = search_form.cleaned_data['dataCategory']
 
         # If search term is blank, reset search
-        if dc_searchTerm == "":
+        if searchTerm == "":
+            return redirect('inventory-listStudies')
+
+        # If no checkboxes were selected, show error
+        if any([searchStudyName, searchStudyDescription, searchInstitutionsInvolved, searchStudyContact,
+                searchStudyNotes, searchDataCategory]) is False:
+            messages.error(request, 'If you are searching, please select at least one type of metadata to search for.')
             return redirect('inventory-listStudies')
 
     # Get request
@@ -86,16 +98,29 @@ def listStudies(request):
             ~(Q(visibility="Private") & ~Q(owner=request.user.id))
         )
 
-    # If using a search term, query for specific studies that contain a data category with a name similar to the search term
-    if dc_searchTerm is not None:
-        studiesWithDc = set() # Uses a set instead of list to prevent duplicate studies listed
+    # If using a search term, query for specific studies with metadata that contains the search term
+    if searchTerm is not None:
+        matchingStudies = set() # Uses a set instead of list to prevent duplicate studies listed
+
+        # Search visible studies for ones that contain the search term within the selected metadata
         for study in studies:
-            dcs = DBFunctions.getAllDataCategoriesOfStudy(study.study_id)
-            for dc in dcs:
-                if dc_searchTerm in dc:
-                    studiesWithDc.add(study)
-                    break
-        studies = studiesWithDc
+            if searchStudyName and study.study_name and searchTerm in study.study_name.lower():
+                matchingStudies.add(study)
+            elif searchStudyDescription and study.study_description and searchTerm in study.study_description.lower():
+                matchingStudies.add(study)
+            elif searchInstitutionsInvolved and study.institutions_involved and searchTerm in study.institutions_involved.lower():
+                matchingStudies.add(study)
+            elif searchStudyContact and study.study_contact and searchTerm in study.study_contact.lower():
+                matchingStudies.add(study)
+            elif searchStudyNotes and study.study_notes and searchTerm in study.study_notes.lower():
+                matchingStudies.add(study)
+            elif searchDataCategory:
+                dcs = DBFunctions.getAllDataCategoriesOfStudy(study.study_id)
+                for dc in dcs:
+                    if searchTerm in dc.lower():
+                        matchingStudies.add(study)
+                        break
+        studies = matchingStudies
 
     for study in studies:
         studies_dict = {}
@@ -110,14 +135,14 @@ def listStudies(request):
     studies_form = CreateChosenBooleanForm(customFields=study_fields)
 
     # Fill in search bar with search term if searching
-    if dc_searchTerm is None:
-        dc_search_form = DataCategorySearchForm()
+    if searchTerm is None:
+        search_form = StudySearchForm()
     else:
-        dc_search_form = DataCategorySearchForm(request.POST)
+        search_form = StudySearchForm(request.POST)
 
     context = {
         'studies_form': studies_form,
-        'dc_search_form': dc_search_form,
+        'search_form': search_form,
         'study_ids': study_ids,
         'myCSS': 'inventoryListStudies.css'
     }

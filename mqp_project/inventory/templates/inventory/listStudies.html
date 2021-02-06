@@ -7,7 +7,15 @@
 
 <form method="POST" action="{% url 'inventory-listStudies' %}">
     {% csrf_token %}
-    {{ dc_search_form }}
+    <ul class="no-bullets">
+        {% for field in search_form %}
+        <li>
+            {{ field }}
+            <label class="field-label"> {{ field.label }}</label>
+        </li>
+        {% endfor %}
+    </ul>
+
     <input type="submit" name="search-btn" value="Search">
 </form>
 

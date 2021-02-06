@@ -75,3 +75,11 @@ label.study-article {
 input[type='text'] {
     margin-left: 10px;
 }
+
+ul.no-bullets {
+  list-style-type: none;
+}
+
+label.field-label {
+  margin-left: 15px;
+}
