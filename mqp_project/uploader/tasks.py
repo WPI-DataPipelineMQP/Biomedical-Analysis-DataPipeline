@@ -23,7 +23,7 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     errorMessage = None
     
     dcID = uploaderInfo.dcID
-    
+    print(dcID)
     dcObj = DataCategory.objects.get(data_category_id=dcID)
     numOfFiles = len(filenames) + 0.5
     directory_path = 'uploaded_csvs/'
@@ -46,7 +46,6 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
             DBClient.deleteData(uploaderInfo.tableName, docID)
             
         
-        print(filepath)
         if i == 0:
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
             i += 0.5

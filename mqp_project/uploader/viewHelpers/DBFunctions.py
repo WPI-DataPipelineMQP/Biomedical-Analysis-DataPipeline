@@ -118,7 +118,7 @@ def createNewTable(myMap):
         dataTypeMap = {
             '1' : 'TEXT',
             '2' : 'INT',
-            '3' : 'FLOAT(10,5)',
+            '3' : 'NUMERIC(10,5)',
             '4' : 'timestamp',
             '5' : 'BOOLEAN'
         }
@@ -176,7 +176,9 @@ def getTableSchema(tableName, dcID):
     
     for i in range(0, len(columns), 1):
         position = ''
-        attributeObj = Attribute.objects.get(attr_name=columns[i], data_category=dcID) 
+        colName = f"'{columns[i]}'"
+        attributeObj = Attribute.objects.filter(attr_name=columns[i], data_category=dcID) 
+        attributeObj = attributeObj[0]
         attributeType = attributeObj.data_type
         if i != ( len(columns)-1 ):
             position = "{} [ position = {}, datatype = {} ], ".format(columns[i], i, attributeType)
