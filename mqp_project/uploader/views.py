@@ -48,16 +48,11 @@ def study(request):
             studyName = fields[0].get('value')
             request.session['studyName'] = studyName
             request.session['checkedForDuplications'] = False
-<<<<<<< HEAD
 
             studyExists = Study.objects.filter(
                 (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
                 study_name=studyName
             ).exists()
-=======
-            
-            studyExists = Study.objects.filter(study_name=studyName).exists()
->>>>>>> adjusting-uploader
             
             if studyExists is False:
                 return redirect(studyInfo)
@@ -167,16 +162,10 @@ def info(request):
          'studyName': studyName
     }
     
-<<<<<<< HEAD
     studyID = (Study.objects.get(
         (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
         study_name=studyName
     )).study_id
-=======
-    studyID = (Study.objects.get(study_name=studyName, owner=request.user.id)).study_id
-    form = UploaderInfoForm(id=studyID)
-    
->>>>>>> adjusting-uploader
     #############################################################################################################
     if request.method == 'POST':        
         defaultGroup = False
