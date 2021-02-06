@@ -166,6 +166,8 @@ def info(request):
         (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
         study_name=studyName
     )).study_id
+    
+    form = UploaderInfoForm(id=studyID)
     #############################################################################################################
     if request.method == 'POST':        
         defaultGroup = False
