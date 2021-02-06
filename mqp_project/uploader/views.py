@@ -194,7 +194,12 @@ def info(request):
             if not Helper.passFilenameCheck(filenames):
                 msg = "Detected an error in the filename of the uploaded files. If the subject organization is by row, please follow the convention when naming the files"
                 messages.error(request, msg) 
-                return redirect(info)
+                
+                if not checkedForDuplications:
+                    uploaderForm.fields['handleDuplicate'].widget = forms.HiddenInput()
+                context['form'] = uploaderForm 
+                
+                return render(request, 'uploader/info.html', context)
 
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
@@ -207,7 +212,12 @@ def info(request):
         elif data_category_id == -1 and fields.get('which-category-field') == 'y':
             msg = 'Detected an attempted to create a table using a name that already exists in the database! Please enter in a name that is not displayed in the dropdown'
             messages.error(request, msg)
-            return redirect(info)
+            
+            if not checkedForDuplications:
+                uploaderForm.fields['handleDuplicate'].widget = forms.HiddenInput()
+            context['form'] = uploaderForm 
+                
+            return render(request, 'uploader/info.html', context)
         
         
         if uploaderInfo.handleDuplicate == 'N/A':
