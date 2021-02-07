@@ -391,7 +391,7 @@ def output(request):
         #print(records)
         record_list = list(records)
         record_list.insert(0, header)
-    print(record_list)
+    #print(record_list)
 
     #saved to session for exporting
     request.session['args'] = args

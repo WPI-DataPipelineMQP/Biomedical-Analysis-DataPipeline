@@ -23,7 +23,7 @@ def make_hist(request):
 
     if request.method == 'POST':
         attributes_form = CreateChosenBooleanForm(
-            request.POST, customFields=request.session['attribute_names'])
+            request.POST, customFields=request.session['radio_choices'])
         # process the data
         attribute_data = {}
         if attributes_form.is_valid():
@@ -42,6 +42,7 @@ def make_hist(request):
         request.session['hist_data'] = hist_data
         return HttpResponseRedirect('/analysis/show_hist')
     radio_choices = ViewHelper.getRadioChoices(request.session['attribute_names'])
+    request.session['radio_choices'] = radio_choices
     attributes_form = CreateChosenBooleanForm(
         customFields=radio_choices)
     context = {"hist_fields": attributes_form}
@@ -83,7 +84,7 @@ def make_scatter(request):
 
     if request.method == 'POST':
         attributes_form = CreateChosenBooleanFormNoBins(
-            request.POST, customFields=request.session['attribute_names'])
+            request.POST, customFields=request.session['radio_choices'])
         # process the data
         attribute_data = {}
         if attributes_form.is_valid():
@@ -97,6 +98,7 @@ def make_scatter(request):
         return HttpResponseRedirect('/analysis/show_scatter')
 
     radio_choices = ViewHelper.getRadioChoices(request.session['attribute_names'])
+    request.session['radio_choices'] = radio_choices
     x_form = CreateChosenBooleanFormNoBins(
         customFields=radio_choices)
     y_form = CreateChosenBooleanFormNoBins(
