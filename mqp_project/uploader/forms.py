@@ -8,7 +8,27 @@ from .viewHelpers import Helper, DBFunctions
 
 
 class StudyNameForm(forms.Form):
-    studyName = forms.CharField(label='Study Name', required=True)
+    
+    def __init__(self, *args, **kwargs):
+        all_studies = kwargs.pop('studies')
+        
+        super(StudyNameForm, self).__init__(*args, **kwargs)
+        
+        YES_NO = [('y', 'Yes'), ('n', 'No')]
+    
+        if len(all_studies) > 0: 
+            self.fields['existingStudies'] = forms.CharField(label='Existing Studies:',
+                                              widget=forms.Select(choices=all_studies),
+                                              required=False)
+    
+            self.fields['otherStudy'] = forms.CharField(label='Other Study Name', required=False)
+        
+            self.fields['which_study_field'] = forms.ChoiceField(choices=YES_NO,
+                                                  widget=forms.RadioSelect(attrs={'required': 'required'}),
+                                                  label="Did you choose an exsiting study name?")
+        
+        else:
+            self.fields['otherStudy'] = forms.CharField(label='Enter aStudy Name', required=True)
 
 
 class StudyInfoForm(forms.Form):

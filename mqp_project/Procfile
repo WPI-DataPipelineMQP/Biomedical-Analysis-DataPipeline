@@ -1,1 +1,2 @@
 web: gunicorn mqp_project.wsgi
+worker: celery -A mqp_project worker --loglevel=info

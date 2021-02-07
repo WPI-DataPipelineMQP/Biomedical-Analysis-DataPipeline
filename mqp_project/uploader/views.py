@@ -31,33 +31,54 @@ def study(request):
          'myCSS': 'uploaderStudy.css',
     }
     
+    allStudies = Study.objects.filter(
+            (Q(visibility="Public (Testing)") | Q(owner=request.user.id))
+        )
+        
+    studyNames = [ (study.study_name,study.study_name) for study in allStudies ]
+    
+    form = StudyNameForm(studies=studyNames)
+    
+    
     #############################################################################################################
     if request.method == 'POST':
-        studyNameForm = StudyNameForm(request.POST)
-        fields = []
+        studyNameForm = StudyNameForm(request.POST, studies=studyNames)
+        fields = {}
         
         if studyNameForm.is_valid():
             for field in studyNameForm.fields:
                 if studyNameForm.cleaned_data[field]:
-                    fields.append(
-                        {
-                            'name': field,
-                            'value': studyNameForm[field].data
-                        }
-                    )
-            studyName = fields[0].get('value')
-            request.session['studyName'] = studyName
-            request.session['checkedForDuplications'] = False
+                    fields[field] = studyNameForm[field].data 
+        
 
-            studyExists = Study.objects.filter(
-                (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
-                study_name=studyName
-            ).exists()
+        studyName = fields.get('otherStudy', '')
+        
+        if 'which_study_field' in fields.keys():
+            user_input = fields['which_study_field'] 
+            if user_input == 'y':
+                studyName = fields['existingStudies']
+                
+            else:
+                if len(studyName) == 0:
+                    msg = 'Detected an Empty Study Name. If you are adding a new study, please enter one in' 
+                    messages.error(request, msg)
+                    
+                    context['form'] = studyNameForm 
+                    
+                    return render(request, 'uploader/studyName.html', context)  
+                
+        request.session['studyName'] = studyName
+        
+        studyExists = Study.objects.filter(
+            (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
+            study_name=studyName
+        ).exists()
+        
+        if studyExists is False:
+            return redirect(studyInfo)
             
-            if studyExists is False:
-                return redirect(studyInfo)
-            
-            return redirect(info)
+        return redirect(info)
+    
             
     #############################################################################################################           
     elif request.method == 'GET':
@@ -67,19 +88,10 @@ def study(request):
         Helper.clearKeyInSession(request.session, 'studyGroups')
         Helper.clearKeyInSession(request.session, 'dataCategories') 
         Helper.deleteAllDocuments()
-        
-        allStudies = Study.objects.filter(
-            (Q(visibility="Public (Testing)") | Q(owner=request.user.id))
-        )
-        
-        studyNames = [ study.study_name for study in allStudies ]
-            
-        context['studies'] = studyNames
+
         
     #############################################################################################################
         
-    form = StudyNameForm()
-    
     context['form'] = form 
     
     return render(request, 'uploader/studyName.html', context)
