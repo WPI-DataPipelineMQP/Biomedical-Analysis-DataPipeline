@@ -83,7 +83,7 @@ def make_scatter(request):
         attribute_names = request.session['attribute_names']
 
     if request.method == 'POST':
-        attributes_form = CreateChosenBooleanFormNoBins(
+        attributes_form = CreateChosenBooleanFormScatter(
             request.POST, customFields=request.session['radio_choices'])
         # process the data
         attribute_data = {}
@@ -94,17 +94,15 @@ def make_scatter(request):
                     'value': field[1]}
         # could we change this to  just get the dict and not the namelist?
         scatter_data = ViewHelper.getNameList(attribute_data)
+        print(scatter_data)
         request.session['scatter_data'] = scatter_data
         return HttpResponseRedirect('/analysis/show_scatter')
 
     radio_choices = ViewHelper.getRadioChoices(request.session['attribute_names'])
     request.session['radio_choices'] = radio_choices
-    x_form = CreateChosenBooleanFormNoBins(
+    attributes_form = CreateChosenBooleanFormScatter(
         customFields=radio_choices)
-    y_form = CreateChosenBooleanFormNoBins(
-        customFields=radio_choices)
-    context = {"scatter_fields_x": x_form,
-                "scatter_fields_y": y_form}
+    context = {"scatter_fields": attributes_form}
     return render(request, 'analysis/selectScatterColumns.html', context)
 
 

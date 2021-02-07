@@ -29,13 +29,14 @@ class CreateChosenBooleanForm(forms.Form):
             yield (name, value)
 
 
-class CreateChosenBooleanFormNoBins(forms.Form):
+class CreateChosenBooleanFormScatter(forms.Form):
 
     def __init__(self, *args, **kwargs):
         attributes = kwargs.pop('customFields')
-        super(CreateChosenBooleanFormNoBins, self).__init__(*args, **kwargs)
+        super(CreateChosenBooleanFormScatter, self).__init__(*args, **kwargs)
 
-        self.fields["radio"] = forms.ChoiceField(choices=attributes)
+        self.fields["x_radio"] = forms.ChoiceField(choices=attributes)
+        self.fields["y_radio"] = forms.ChoiceField(choices=attributes)
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
