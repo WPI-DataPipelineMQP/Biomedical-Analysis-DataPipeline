@@ -17,8 +17,8 @@ h3.center {
 
 input[type="submit"] {
   float: right;
-  margin-top: 50px;
-  margin-right: 80px;
+  margin-top: -48px;
+  margin-right: 10px;
   width: 100px;
 }
 
