@@ -176,16 +176,12 @@ def getTableSchema(tableName, dcID):
     
     for i in range(0, len(columns), 1):
         position = ''
-        colName = f"'{columns[i]}'"
-        attributeObj = Attribute.objects.filter(attr_name=columns[i], data_category=dcID) 
-        attributeObj = attributeObj[0]
-        attributeType = attributeObj.data_type
         if i != ( len(columns)-1 ):
-            position = "{} [ position = {}, datatype = {} ], ".format(columns[i], i, attributeType)
+            position = "{} [ position = {} ], ".format(columns[i], i)
             
             
         else:
-            position = "{} [ position = {}, datatype = {} ]".format(columns[i], i, attributeType)
+            position = "{} [ position = {} ]".format(columns[i], i)
             
         string += position
         

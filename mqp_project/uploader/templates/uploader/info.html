@@ -1,7 +1,7 @@
 {% extends "datapipeline/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-
+{% load static %}
 {% if studyName %}
 <h3>Enter Info for {{ studyName }}</h3>
 {% endif %}
@@ -19,17 +19,16 @@
             <h3>Download Example Files</h3>
             <ul class="list-group">
                 <li class="list-group-item list-group-item-light">
-                    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstleyVEVO" target="_blank">Click here for example file of Subject per File</a>
+                    <a href="{% static 'datapipeline/csvs/subject1_exampleFile.csv' %}" download>Click here for example file of Subject per File</a>
                 </li>
                 <li class="list-group-item list-group-item-light">
-                    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstleyVEVO" target="_blank">Click here for example file of Subject per Row
-                    </a>
+                    <a href="{% static 'datapipeline/images/green.png' %}" download>Click here for example file of Subject per Row</a>
                 </li>
                 <li class="list-group-item list-group-item-light">
-                    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstleyVEVO" target="_blank">Click here for example file of Subject per Row that includes subject names</a>
+                    <a href="https://alligrater.github.io/FlappyBinbin/index.html" target="_blank">Click here for example file of Subject per Row that includes subject names</a>
                 </li>
                 <li class="list-group-item list-group-item-light">
-                    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstleyVEVO" target="_blank">Click here for example file of Subject per Column</a>
+                    <a href="{% static 'datapipeline/csvs/exampleSubjectColumn.csv' %}" download>Click here for example file of Subject per Column</a>
                 </li>
             </ul>
         </div>

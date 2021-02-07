@@ -21,14 +21,14 @@ class StudyNameForm(forms.Form):
                                               widget=forms.Select(choices=all_studies),
                                               required=False)
     
-            self.fields['otherStudy'] = forms.CharField(label='Other Study Name', required=False)
+            self.fields['otherStudy'] = forms.CharField(label='Other Study Name:', required=False)
         
             self.fields['which_study_field'] = forms.ChoiceField(choices=YES_NO,
                                                   widget=forms.RadioSelect(attrs={'required': 'required'}),
                                                   label="Did you choose an exsiting study name?")
         
         else:
-            self.fields['otherStudy'] = forms.CharField(label='Enter aStudy Name', required=True)
+            self.fields['otherStudy'] = forms.CharField(label='Enter a Study Name:', required=True)
 
 
 class StudyInfoForm(forms.Form):
