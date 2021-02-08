@@ -49,7 +49,7 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
         if i == 0:
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
             i += 0.5
-            progress_recorder.set_progress(i, numOfFiles, description="Uploading")
+            progress_recorder.set_progress(i, numOfFiles, description="Uploading...")
 
         if specialFlag is True: 
             print('Starting...')

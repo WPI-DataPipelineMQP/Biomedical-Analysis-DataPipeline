@@ -6,7 +6,7 @@ from datapipeline.database import DBClient
 from datetime import datetime  
 from dateutil.parser import parse
 import pandas as pd 
-import csv, os
+import csv, os, re
 
 import random
 
@@ -456,10 +456,10 @@ def getFieldsFromInfoForm(uploaderForm, files):
     return fields, filenames
 
 def cleanCategoryName(name):
-    if '-' in name:
-        newName = name.replace('-', '_')
-        
-        return newName
+    
+    name = re.sub(r'[^A-Za-z0-9]+', '', name)
+    
+    print(name)
         
     return name
 

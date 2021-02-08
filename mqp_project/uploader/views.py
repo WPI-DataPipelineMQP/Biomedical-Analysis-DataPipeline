@@ -20,8 +20,7 @@ from .forms import UploaderInfoForm, StudyNameForm, UploadInfoCreationForm, Uplo
 from .tasks import ProcessUpload
 from .uploaderinfo import UploaderInfo
 
-import celery, jsonpickle
-import json
+import celery, jsonpickle, re, json
 
 
 # FIRST PAGE
@@ -221,8 +220,9 @@ def info(request):
                 context['form'] = uploaderForm 
                 
                 return render(request, 'uploader/info.html', context)
-
+            
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
+        print(uploaderInfo.categoryName)
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
         
         data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
