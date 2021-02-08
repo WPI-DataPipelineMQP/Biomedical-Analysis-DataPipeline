@@ -3,14 +3,14 @@
 {% block content %}
 <h2>Scatter Plot Selection:</h2>
 <br />
-<h4>Select X-Column (left) and Y-Column (right):</h4>
+<h4>Select one column for the x-axis and one for the y-axis:</h4>
 <form action="{% url 'analysis-make_scatter' %}" method="POST">
     {% csrf_token %}
     <!--ul class="no-bullets"-->
         {% for field in scatter_fields %}
         <!-- <li> -->
+            <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
             {{ field }}
-            <!--label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label-->
         <!-- </li> -->
         {% endfor %}
     <!-- </ul> -->
@@ -23,7 +23,6 @@
         <!-- </li> -->
         <!-- {% endfor %}
  -->    <!-- </ul> -->
-    <br/>
     <br/>
     <input type="submit" value="Submit">
 </form>

@@ -35,8 +35,8 @@ class CreateChosenBooleanFormScatter(forms.Form):
         attributes = kwargs.pop('customFields')
         super(CreateChosenBooleanFormScatter, self).__init__(*args, **kwargs)
 
-        self.fields["x_radio"] = forms.ChoiceField(choices=attributes)
-        self.fields["y_radio"] = forms.ChoiceField(choices=attributes)
+        self.fields["x_radio"] = forms.ChoiceField(widget=forms.RadioSelect,choices=attributes,label="X-Axis")
+        self.fields["y_radio"] = forms.ChoiceField(widget=forms.RadioSelect,choices=attributes,label="Y-Axis")
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
