@@ -1,25 +1,25 @@
 {% extends "datapipeline/base.html" %}
 {% block content %}
 
-<h1>{{ study.name }}</h1>
+<h1>{{ study.study_name }}</h1>
 
 <p><b>Owner: </b> {{ study.owner }}</p>
-<p><b>Description: </b> {{ study.description}}</p>
+<p><b>Description: </b> {{ study.study_description}}</p>
 <p><b>Total Participants: </b>{{ study.total_subjects }}</p>
 <p><b>IRB Status: </b>{{ study.irb }}</p>
-<p><b>Institutions Involved: </b>{{ study.inst }}</p>
-<p><b>Study Start Date: </b>{{ study.start }}</p>
-<p><b>Study End Date: </b>{{ study.end }}</p>
-<p><b>Contact: </b>{{ study.contact }}</p>
+<p><b>Institutions Involved: </b>{{ study.institutions_involved }}</p>
+<p><b>Study Start Date: </b>{{ study.study_start_date }}</p>
+<p><b>Study End Date: </b>{{ study.study_end_date }}</p>
+<p><b>Contact: </b>{{ study.study_contact }}</p>
 <p><b>Visibility: </b> {{ study.visibility }}</p>
-<p><b>Notes: </b>{{ study.notes }}</p>
+<p><b>Notes: </b>{{ study.study_notes }}</p>
 
 <h2>Study Groups ({{study.total_groups }})</h2>
 <ul class="flex-container">
     {% for studygroup in studygroups %}
         <li class="flex-item">
-            <h3>{{ studygroup.name }}</h3>
-            <p><b>Description: </b>{{ studygroup.description }}</p>
+            <h3>{{ studygroup.study_group_name }}</h3>
+            <p><b>Description: </b>{{ studygroup.study_group_description }}</p>
             <p><b>Total Participants: </b>{{ studygroup.total_subjects }}</p>
         </li>
     {% endfor %}
@@ -30,8 +30,8 @@
 <ul class="flex-container">
     {% for datacategory in datacategories %}
         <li class="flex-item">
-            <h3>{{ datacategory.name }}</h3>
-            <p><b>Description: </b>{{ datacategory.description }}</p>
+            <h3>{{ datacategory.data_category_name }}</h3>
+            <p><b>Description: </b>{{ datacategory.dc_description }}</p>
             <p><b>Total Rows of Data: </b>{{ datacategory.total_records }}</p>
             <p><b>Time Series: </b>{{ datacategory.time_series }}</p>
 
@@ -47,7 +47,7 @@
                 <tbody>
                     {% for attribute in datacategory.attributes %}
                         <tr>
-                            <td>{{ attribute.name }}</td>
+                            <td>{{ attribute.attr_name }}</td>
                             <td>{{ attribute.attr_description }}</td>
                             <td>{{ attribute.data_type }}</td>
                             <td>{{ attribute.unit }}</td>

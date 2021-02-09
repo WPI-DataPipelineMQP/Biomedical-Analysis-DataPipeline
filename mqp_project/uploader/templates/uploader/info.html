@@ -1,39 +1,40 @@
 {% extends "datapipeline/base.html" %}
-{% load static %}
 {% load crispy_forms_tags %}
 {% block content %}
+{% load static %}
+{% if studyName %}
+<h3>Enter Info for {{ studyName }}</h3>
+{% endif %}
+
 <div class="row">
-    <div class="column">
-        {% if studyName %}
-        <h1>Enter Info for {{ studyName }}</h1>
-        {% endif %}
+    <div class="col-md-7">
         <form method="POST" action="{% url 'uploader-uploaderInfo' %}" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form | crispy }}
             <input type="submit" value="Next">
         </form>
     </div>
-    {% if studyGroups or dataCategories%}
-    <div class="column" style="background-color:#bbb;">
-        <h3 class="uploaderInfo">Existing Study Groups for {{ studyName }}</h3>
-        <ul class="uploaderInfo">
-            {% for studyGroup in studyGroups %}
-            <li class="uploaderInfo">{{ studyGroup }}</li>
-            {% endfor %}
-        </ul>
-        <br/><br/><br/>
-        <h3 class="uploaderInfo">Existing Data Categories for {{ studyName }}</h3>
-        <ul class="uploaderInfo">
-            {% for dc in dataCategories %}
-            <li class="uploaderInfo">{{ dc }}</li>
-            {% endfor %}
-        </ul>
+    <div class="col-md-5">
+        <div class="content-section">
+            <h3>Download Example Files</h3>
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-light">
+                    <a href="{% static 'datapipeline/csvs/subject1_exampleFile.csv' %}" download>Click here for example file of Subject per File</a>
+                </li>
+                <li class="list-group-item list-group-item-light">
+                    <a href="{% static 'datapipeline/images/green.png' %}" download>Click here for example file of Subject per Row</a>
+                </li>
+                <li class="list-group-item list-group-item-light">
+                    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstleyVEVO" target="_blank">Click here for example file of Subject per Row that includes subject names</a>
+                </li>
+                <li class="list-group-item list-group-item-light">
+                    <a href="{% static 'datapipeline/csvs/subject1_exampleFile.csv' %}" target="_blank">Click here for example file of Subject per Column</a>
+                </li>
+            </ul>
+        </div>
+        
     </div>
-    {% else %}
-    <div class="column" style="background-color:#bbb;">
-        <h3 class="center">No Info Found For {{ studyName }}</h3>
-    </div>
-    {% endif %}
 </div>
+        
 
 {% endblock content %}

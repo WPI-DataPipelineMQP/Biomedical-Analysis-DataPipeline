@@ -8,6 +8,7 @@ from django.core import serializers
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 from datapipeline.views import home
 from datapipeline.database import DBClient
@@ -30,30 +31,54 @@ def study(request):
          'myCSS': 'uploaderStudy.css',
     }
     
+    allStudies = Study.objects.filter(
+            (Q(visibility="Public (Testing)") | Q(owner=request.user.id))
+        )
+        
+    studyNames = [ (study.study_name,study.study_name) for study in allStudies ]
+    
+    form = StudyNameForm(studies=studyNames)
+    
+    
     #############################################################################################################
     if request.method == 'POST':
-        studyNameForm = StudyNameForm(request.POST)
-        fields = []
+        studyNameForm = StudyNameForm(request.POST, studies=studyNames)
+        fields = {}
         
         if studyNameForm.is_valid():
             for field in studyNameForm.fields:
                 if studyNameForm.cleaned_data[field]:
-                    fields.append(
-                        {
-                            'name': field,
-                            'value': studyNameForm[field].data
-                        }
-                    )
-            studyName = fields[0].get('value')
-            request.session['studyName'] = studyName
-            request.session['checkedForDuplications'] = False
+                    fields[field] = studyNameForm[field].data 
+        
+
+        studyName = fields.get('otherStudy', '')
+        
+        if 'which_study_field' in fields.keys():
+            user_input = fields['which_study_field'] 
+            if user_input == 'y':
+                studyName = fields['existingStudies']
+                
+            else:
+                if len(studyName) == 0:
+                    msg = 'Detected an Empty Study Name. If you are adding a new study, please enter one in' 
+                    messages.error(request, msg)
+                    
+                    context['form'] = studyNameForm 
+                    
+                    return render(request, 'uploader/studyName.html', context)  
+                
+        request.session['studyName'] = studyName
+        
+        studyExists = Study.objects.filter(
+            (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
+            study_name=studyName
+        ).exists()
+        
+        if studyExists is False:
+            return redirect(studyInfo)
             
-            studyExists = Study.objects.filter(study_name=studyName, owner=request.user.id).exists()
-            
-            if studyExists is False:
-                return redirect(studyInfo)
-            
-            return redirect(info)
+        return redirect(info)
+    
             
     #############################################################################################################           
     elif request.method == 'GET':
@@ -63,17 +88,10 @@ def study(request):
         Helper.clearKeyInSession(request.session, 'studyGroups')
         Helper.clearKeyInSession(request.session, 'dataCategories') 
         Helper.deleteAllDocuments()
-        
-        allStudies = Study.objects.filter(owner=request.user.id)
-        
-        studyNames = [ study.study_name for study in allStudies ]
-            
-        context['studies'] = studyNames
+
         
     #############################################################################################################
         
-    form = StudyNameForm()
-    
     context['form'] = form 
     
     return render(request, 'uploader/studyName.html', context)
@@ -156,34 +174,72 @@ def info(request):
          'studyName': studyName
     }
     
-    studyID = (Study.objects.get(study_name=studyName, owner=request.user.id)).study_id
+    studyID = (Study.objects.get(
+        (Q(visibility="Public (Testing)") | Q(owner=request.user.id)),
+        study_name=studyName
+    )).study_id
+    
+    form = UploaderInfoForm(id=studyID)
     #############################################################################################################
-    if request.method == 'POST':
-        uploaderForm = UploaderInfoForm(request.POST, request.FILES)
-                
+    if request.method == 'POST':        
+        defaultGroup = False
+        uploaderForm = UploaderInfoForm(request.POST, request.FILES, id=studyID)
+        
         if uploaderForm.is_valid():
             files = request.FILES.getlist('uploadedFiles')
             
             fields, filenames = Helper.getFieldsFromInfoForm(uploaderForm, files)
         
+        if 'which-category-field' in fields.keys():
+            user_input = fields['which-category-field'] 
+            if user_input == 'y':
+                fields['categoryName'] = fields['existingCategory']
+        
+        if 'groupName' not in fields.keys():
+            defaultGroup = True
+            fields['groupName'] = '(default)'
+            
+        if 'which-group-field' in fields.keys():
+            user_input = fields['which-group-field'] 
+            if user_input == 'y':
+                fields['groupName'] = fields['existingStudyGroup']
         
         uploaderInfo = UploaderInfo(studyName)
         uploaderInfo.studyID = studyID
+        uploaderInfo.groupName = fields.get('groupName')
         uploaderInfo.subjectOrganization = fields.get('subjectOrganization')
         rawTimeSeries = fields.get('isTimeSeries')
         uploaderInfo.isTimeSeries = True if rawTimeSeries == 'y' else False
-
-        # If group name is a blank string, treat as default group
-        if fields.get('groupName') is None:
-            defaultGroup = True
-            uploaderInfo.groupName = "(default)"
-            print("Default group")
-        else:
-            defaultGroup = False
-            uploaderInfo.groupName = fields.get('groupName')
+        
+        if (uploaderInfo.subjectOrganization == 'file'):
+            if not Helper.passFilenameCheck(filenames):
+                msg = "Detected an error in the filename of the uploaded files. If the subject organization is by row, please follow the convention when naming the files"
+                messages.error(request, msg) 
+                
+                if not checkedForDuplications:
+                    uploaderForm.fields['handleDuplicate'].widget = forms.HiddenInput()
+                context['form'] = uploaderForm 
+                
+                return render(request, 'uploader/info.html', context)
 
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
+        
+        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
+        
+        if data_category_id != -1:
+            uploaderInfo.updateFieldsFromDataCategory(data_category_id)
+            
+        elif data_category_id == -1 and fields.get('which-category-field') == 'y':
+            msg = 'Detected an attempted to create a table using a name that already exists in the database! Please enter in a name that is not displayed in the dropdown'
+            messages.error(request, msg)
+            
+            if not checkedForDuplications:
+                uploaderForm.fields['handleDuplicate'].widget = forms.HiddenInput()
+            context['form'] = uploaderForm 
+                
+            return render(request, 'uploader/info.html', context)
+        
         
         if uploaderInfo.handleDuplicate == 'N/A':
             checkedForDuplications = False 
@@ -195,11 +251,9 @@ def info(request):
                     duplicateFiles.append(filename)
                     
             if len(duplicateFiles) > 0:
-                context['studyGroups'] = request.session['studyGroups']
-                context['dataCategories'] = request.session['dataCategories']
                 uploaderForm.fields['handleDuplicate'].required = True
                 context['form'] = uploaderForm 
-                
+                print('Found Duplicate File!')
                 Helper.deleteAllDocuments()
                 dups = ', '.join(duplicateFiles)
                 allFiles = ', '.join(filenames)
@@ -220,7 +274,6 @@ def info(request):
                 
             specialFlag = True
         
-        print('Special Flag', specialFlag)
         uploaderInfo.specialCase = specialFlag 
 
         # READING THE CSV FILE
@@ -229,7 +282,7 @@ def info(request):
         
         if specialRow is False and Helper.hasAcceptableHeaders(path) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
-            uploaderInfo = {'filenames': filenames}
+            uploaderInfo.uploadedFiles = filenames
             request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
             return redirect(error)
         
@@ -243,12 +296,8 @@ def info(request):
         if groupID == -1 and defaultGroup:
             description = "This is the default study group if no study group is specified."
             DBFunctions.insertToStudyGroup(uploaderInfo.groupName, description, studyID)
+            
         groupID = DBFunctions.getGroupID(uploaderInfo.groupName, studyID)
-        
-        data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
-        
-        if data_category_id != -1:
-            uploaderInfo.updateFieldsFromDataCategory(data_category_id)
         
         uploaderInfo.groupID = groupID
         uploaderInfo.dcID = data_category_id
@@ -262,7 +311,6 @@ def info(request):
         
         # CONDITIONS IF EXTRA INFORMATION IS NEEDED
         if (groupID == -1) or (data_category_id == -1):
-            print('here')
             return redirect(extraInfo)
             
         else:
@@ -274,25 +322,9 @@ def info(request):
         print('\nGot Uploader Info Request\n')
         request.session['checkedForDuplications'] = False
         Helper.deleteAllDocuments()
-        groupsExist = StudyGroup.objects.filter(study=studyID)
-        
-        studyGroups = []
-        
-        if groupsExist:
-            groupObjs = StudyGroup.objects.filter(study=studyID)
-            
-            studyGroups = [obj.study_group_name for obj in groupObjs]
-            
-        dataCategories = DBFunctions.getAllDataCategoriesOfStudy(studyID)
-        
-        context['studyGroups'] = studyGroups
-        request.session['studyGroups'] = studyGroups
-        context['dataCategories'] = dataCategories
-        request.session['dataCategories'] = dataCategories
     
     #############################################################################################################
     
-    form = UploaderInfoForm()
     form.fields['handleDuplicate'].widget = forms.HiddenInput()
     context['form'] = form
     
@@ -340,7 +372,7 @@ def extraInfo(request):
                 myExtras.append((name, val))
         
         if uploaderInfo.specialCase:
-            colName = myFields.get('nameOfValueMeasured')
+            colName = myFields.get('nameOfValueMeasured').lower()
             dataType = myExtras[0][1]
             dataType = Helper.getActualDataType(dataType)
             uploaderInfo.specialInsert = { colName: {'position': '0', 'dataType': dataType} }
@@ -443,7 +475,10 @@ def finalPrompt(request):
             for (i, val) in form.getColumnFields():
                 myFields.append((i, val)) 
         
-        clean = Helper.seperateByName(myFields, 2, True)       
+        print(myFields)
+        print("\n")
+        clean = Helper.seperateByName(myFields, 1, True, True, dcID)     
+        print(clean)  
         
         if Helper.foundDuplicatePositions(clean) is True:
             context['error'] = True

@@ -15,6 +15,9 @@
             </li>
             {% endfor %}
         </ul>
+        {% if error is True %}
+        <h2 class="header-error">Please select at least one data category and at least one study group.</h2>
+        {% endif %}
         <h2>What data from this study would you like to view?</h2>
         <form action="{% url 'datapipeline-dataSelection' %}" method="POST">
             {% csrf_token %}

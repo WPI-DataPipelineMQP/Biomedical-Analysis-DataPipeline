@@ -51,6 +51,15 @@ class UploaderInfo:
         self.isTimeSeries = (DataCategory.objects.get(data_category_id=dcID)).is_time_series
         self.hasSubjectNames = (DataCategory.objects.get(data_category_id=dcID)).has_subject_name
         
+    def isExistingDataCategory(self):
+        res = DataCategory.objects.filter(data_category_name=self.categoryName, 
+                                          is_time_series=self.isTimeSeries, 
+                                          subject_organization=self.subjectOrganization).exists()
+        
+        return res
+        
+        
+        
         
     def dataCategoryHandler(self, myMap):
         
@@ -83,8 +92,9 @@ class UploaderInfo:
             print('data category')
             DBFunctions.dropTable(self.tableName)
             raise DatabaseError(errorMessage)
-                
-        cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False)
+        
+        print(myExtras)
+        cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False, False, self.dcID)
                 
         noErrors, errorMessage = DBFunctions.insertToAttribute(cleanAttributeFormat, self.dcID)
                 
@@ -237,16 +247,24 @@ class UploaderInfo:
         
         return True, None
     
+    def __adjustDataframeColumnNames(self, df):
+        df.columns = map(str.lower, df.columns)
+        df.columns = df.columns.str.replace(' ', '')
+        
+        return df 
+    
     
     def uploadToDatabase(self, filepath, filename, docID, column_info, organizedColumns):
         errorMessage = None
         columnFlag = False 
         
         df = pd.read_csv(filepath)
-        
+        df = self.__adjustDataframeColumnNames(df)
+
         if self.subjectPerCol is True:
             columnFlag = True
             df = Helper.transposeDataFrame(df, True)
+            df = self.__adjustDataframeColumnNames(df)
             
         filename = Helper.modifyFileName(filename)
         
@@ -265,17 +283,29 @@ class UploaderInfo:
                     
                 currID, errorMessage = self.subjectHandler("", num)
                 listOfSubjects.append(currID)
-                
+            
             df = df.drop(df.columns[0], axis=1) # deleting the subjects column
             df = df[organizedColumns]
             df['subject_id'] = listOfSubjects
         
         
         else:
-            subjectID, errorMessage = self.subjectHandler(filename)
+            if self.subjectOrganization == 'file':
+                subjectID, errorMessage = self.subjectHandler(filename)
         
-            df = df[organizedColumns]
-            df['subject_id'] = subjectID
+                df = df[organizedColumns]
+                df['subject_id'] = subjectID
+                
+            else:
+                listOfSubjects = []
+                listOfSubjectNum = list(df.index) 
+                
+                for num in listOfSubjectNum:
+                    currID, errorMessage = self.subjectHandler("", num)
+                    listOfSubjects.append(currID)
+                    
+                df = df[organizedColumns]
+                df['subject_id'] = listOfSubjects
     
         df['doc_id'] = docID
         

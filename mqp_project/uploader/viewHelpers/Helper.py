@@ -1,5 +1,8 @@
 from django.core.files.storage import default_storage
 
+from datapipeline.models import Attribute, DataCategory
+from datapipeline.database import DBClient
+
 from datetime import datetime  
 from dateutil.parser import parse
 import pandas as pd 
@@ -157,7 +160,7 @@ def getActualDataType(string):
     dataTypeMap = {
         '1' : 'TEXT',
         '2' : 'INT',
-        '3' : 'FLOAT(10,5)',
+        '3' : 'NUMERIC(10,5)',
         '4' : 'DATETIME',
         '5' : 'BOOLEAN'
     }
@@ -169,7 +172,7 @@ def convertToIntValue(string):
     dataTypeMap = {
         'TEXT': 1,
         'INT': 2,
-        'FLOAT(10,5)': 3,
+        'NUMERIC(10,5)': 3,
         'DATETIME': 4,
         'BOOLEAN': 5
     }
@@ -218,27 +221,19 @@ def clean(columns, keepOriginal):
     return myMap 
 
 
-"""Function does the whole process of taking in raw inputs from the form and organizing it in the format that is produced from the clean function (look above)
-
-ex:
-
-input: [('X_custom_dataType', '1'), ('X_custom_description', 'string'), ..., ('Y_custom_dataType', '2'), ...]  ==> see next line
-
-output: 
-{
-    'X':
-        {
-            'dataType': 'TEXT',
-            'description': 'string',
-            ...
-        }
+def reorderColsByPosition(result):
+    numOfKeys = len(result.keys())
     
-    'Y':
-        {
-            'dataType': 'INT',
-            ...
-        }
-}
+    orderedByPosition = []
+    
+    for key in result:
+        index = int(result.get(key).get('position'))
+        
+        orderedByPosition.insert(index, key)
+        
+    return orderedByPosition
+
+"""Function does the whole process of taking in raw inputs from the form and organizing it in the format that is produced from the clean function (look above)
 
 PARAMS:
 - myList - a raw list of tuples of the data gathered from the form
@@ -250,16 +245,37 @@ PARAMS:
 
 return Dictionary (output of clean function)
 """          
-def seperateByName(myList, flag, keepOriginal):
+def seperateByName(myList, flag, keepOriginal, retrieveAttribute, dcID):
 
     columns = [] # will be a 2D array (number of columns x value of flag)
 
     for i in range(0, len(myList), flag):
         currentList = myList[i:i+flag]
         columns.append(currentList)
-
+    
     result = clean(columns, keepOriginal)
     
+    if retrieveAttribute: 
+        orderedCols = reorderColsByPosition(result)
+        
+        query = DataCategory.objects.filter(data_category_id=dcID)
+        tableName = query[0].dc_table_name 
+        
+        tableCols = DBClient.getTableColumns(tableName)[1:-2]
+        
+        for i in range(0, len(orderedCols), 1):
+            key_name = orderedCols[i] 
+            inner_dict = result.get(key_name)
+            
+            attributeObj = Attribute.objects.filter(attr_name=tableCols[i], data_category=dcID) 
+            attributeObj = attributeObj[0]
+            attributeType = attributeObj.data_type
+        
+            inner_dict['dataType'] = attributeType
+        
+            result[key_name] = inner_dict
+
+            
     return result         
        
             
@@ -280,7 +296,6 @@ def foundDuplicatePositions(myMap):
 
 
 def getDatetime(string):
-    print(string)
     dateObj = datetime.strptime(string, '%Y-%m-%d').date()
     
     return dateObj
@@ -369,6 +384,8 @@ def extractHeaders(path, subjectOrgVal):
         
     headers = list(df.columns)
     
+    headers = [col.lower().replace(' ', '') for col in headers]
+    
     return headers, hasSubjectNames, subjectPerCol
 
 
@@ -445,6 +462,17 @@ def cleanCategoryName(name):
         return newName
         
     return name
+
+def passFilenameCheck(files):
+    for file in files:
+        if file.find('_') == -1:
+            return False 
+        
+        else:
+            if len(file[:file.find('_')]) <= 0:
+                return False 
+            
+    return True
     
     
         
