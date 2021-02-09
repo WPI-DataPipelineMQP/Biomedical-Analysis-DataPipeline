@@ -23,7 +23,7 @@ def make_hist(request):
 
     if request.method == 'POST':
         attributes_form = CreateChosenBooleanForm(
-            request.POST, customFields=request.session['attribute_names'])
+            request.POST, customFields=request.session['radio_choices'])
         # process the data
         attribute_data = {}
         if attributes_form.is_valid():
@@ -41,8 +41,10 @@ def make_hist(request):
         hist_data = ViewHelper.getNameList(attribute_data)
         request.session['hist_data'] = hist_data
         return HttpResponseRedirect('/analysis/show_hist')
+    radio_choices = ViewHelper.getRadioChoices(request.session['attribute_names'])
+    request.session['radio_choices'] = radio_choices
     attributes_form = CreateChosenBooleanForm(
-        customFields=request.session['attribute_names'])
+        customFields=radio_choices)
     context = {"hist_fields": attributes_form}
     return render(request, 'analysis/selectHistColumns.html', context)
 
@@ -81,8 +83,8 @@ def make_scatter(request):
         attribute_names = request.session['attribute_names']
 
     if request.method == 'POST':
-        attributes_form = CreateChosenBooleanFormNoBins(
-            request.POST, customFields=request.session['attribute_names'])
+        attributes_form = CreateChosenBooleanFormScatter(
+            request.POST, customFields=request.session['radio_choices'])
         # process the data
         attribute_data = {}
         if attributes_form.is_valid():
@@ -92,10 +94,14 @@ def make_scatter(request):
                     'value': field[1]}
         # could we change this to  just get the dict and not the namelist?
         scatter_data = ViewHelper.getNameList(attribute_data)
+        print(scatter_data)
         request.session['scatter_data'] = scatter_data
         return HttpResponseRedirect('/analysis/show_scatter')
-    attributes_form = CreateChosenBooleanFormNoBins(
-        customFields=request.session['attribute_names'])
+
+    radio_choices = ViewHelper.getRadioChoices(request.session['attribute_names'])
+    request.session['radio_choices'] = radio_choices
+    attributes_form = CreateChosenBooleanFormScatter(
+        customFields=radio_choices)
     context = {"scatter_fields": attributes_form}
     return render(request, 'analysis/selectScatterColumns.html', context)
 
