@@ -10,6 +10,5 @@ urlpatterns = [
     path('finalPrompt/', views.finalPrompt, name='uploader-uploaderFinalPrompt'),
     path('uploading/', views.upload, name='uploader-uploading'),
     path('error/', views.error, name='uploader-uploaderError'),
-    path('success/', views.success, name='uploader-uploaderSuccess'),
-    url(r'^s3direct/', include('s3direct.urls'))
+    path('success/', views.success, name='uploader-uploaderSuccess')
 ]

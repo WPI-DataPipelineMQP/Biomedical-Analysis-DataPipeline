@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     'celery',
     'celery_progress',
     'storages',
-    's3direct',
 ]
 
 MIDDLEWARE = [
