@@ -3,17 +3,17 @@
 {% block content %}
 <h2>Histogram:</h2>
 <br />
-<h3>Select Bin Number and 1 Column:</h3>
+<h3>Select number of bins and one column:</h3>
 <form action="{% url 'analysis-make_hist' %}" method="POST">
     {% csrf_token %}
-    <ul class="no-bullets">
+    <!-- <ul class="no-bullets"> -->
         {% for field in hist_fields %}
-        <li>
+        <!-- <li> -->
             {{ field }}
-            <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
-        </li>
+            <!--label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label-->
+        <!-- </li> -->
         {% endfor %}
-    </ul>
+    <!-- </ul> -->
     <input type="submit" value="Submit">
 </form>
 {% endblock content %}

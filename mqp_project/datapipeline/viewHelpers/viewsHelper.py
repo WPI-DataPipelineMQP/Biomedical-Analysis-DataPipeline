@@ -57,3 +57,10 @@ def returnProperType(val):
     else:
         stringVal = '"{}"'.format(val)
         return stringVal
+
+def getRadioChoices(attributes):
+    choices = []
+    for i, attr in enumerate(attributes):
+        tup = (i, attr)
+        choices.append(tup)
+    return choices

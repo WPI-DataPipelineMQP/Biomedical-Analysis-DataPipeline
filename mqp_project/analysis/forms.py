@@ -8,17 +8,20 @@ class CreateChosenBooleanForm(forms.Form):
     bins = forms.IntegerField(initial=10, min_value=1)
 
     def __init__(self, *args, **kwargs):
-        fields = kwargs.pop('customFields')
+        attributes = kwargs.pop('customFields')
+        print("hello! " + str(attributes))
         super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
-        for i, field in enumerate(fields):
-            self.fields['custom_%s' % i] = forms.BooleanField(
-                label=field, required=False)
-            self.fields['custom_%s' % i].widget.attrs.update({
-                'class': 'checkbox',
-            })
+        self.fields["radio"] = forms.ChoiceField(widget=forms.RadioSelect, choices=attributes)
+
+    #    for i, field in enumerate(fields):
+    #         self.fields['custom_%s' % i] = forms.BooleanField(
+    #             label=field, required=False)
+    #         self.fields['custom_%s' % i].widget.attrs.update({
+    #             'class': 'checkbox',
+    #         })
             #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
-        # print(fields)
+        #print(fields)
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
@@ -26,20 +29,14 @@ class CreateChosenBooleanForm(forms.Form):
             yield (name, value)
 
 
-class CreateChosenBooleanFormNoBins(forms.Form):
+class CreateChosenBooleanFormScatter(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        fields = kwargs.pop('customFields')
-        super(CreateChosenBooleanFormNoBins, self).__init__(*args, **kwargs)
+        attributes = kwargs.pop('customFields')
+        super(CreateChosenBooleanFormScatter, self).__init__(*args, **kwargs)
 
-        for i, field in enumerate(fields):
-            self.fields['custom_%s' % i] = forms.BooleanField(
-                label=field, required=False)
-            self.fields['custom_%s' % i].widget.attrs.update({
-                'class': 'checkbox',
-            })
-            #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
-        # print(fields)
+        self.fields["x_radio"] = forms.ChoiceField(widget=forms.RadioSelect,choices=attributes,label="X-Axis")
+        self.fields["y_radio"] = forms.ChoiceField(widget=forms.RadioSelect,choices=attributes,label="Y-Axis")
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
