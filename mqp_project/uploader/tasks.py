@@ -67,6 +67,7 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
         
         else:
             Helper.deleteFile(file) 
+            
                    
         # Sleep for 1 second
         time.sleep(0.1)

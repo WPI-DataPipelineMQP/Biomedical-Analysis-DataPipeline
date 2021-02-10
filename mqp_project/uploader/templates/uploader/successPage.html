@@ -29,7 +29,7 @@
 <div class="form">
     <form method="POST" action="{% url 'uploader-uploaderSuccess' %}" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="submit" value="Go Back to Home" name="finished">
+        <input type="submit" value="Back to Dashboard" name="finished">
         <input class="left-space" type="submit" value="Add More to Study" name="continue">
         
     </form>
