@@ -2,11 +2,15 @@ from django.core.files.storage import default_storage
 
 from datapipeline.models import Attribute, DataCategory
 from datapipeline.database import DBClient
+from django.conf import settings
 
 from datetime import datetime  
 from dateutil.parser import parse
+from io import StringIO
 import pandas as pd 
 import csv, os, re
+
+import boto3 
 
 import random
 
@@ -38,16 +42,15 @@ def pathIsBroken(session, uploadInfoFlag=False):
     return True
 
 
-"""Function will delete the file with the provided filepath
+def getAllKeysInS3():
+    s3 = boto3.resource('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+    bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
+    
+    keys = [file.key for file in bucket.objects.all()]
+    
+    return keys
 
-filepath - a string of the filepath of the file to be deleted
-
-returns None
-"""
-def deleteFile(filepath):
-    os.remove(filepath)
-
-
+    
 """Function that deletes all the documents in the uploaded_csv folder
 
 LOGIC:
@@ -56,15 +59,22 @@ LOGIC:
 returns None
 """
 def deleteAllDocuments():
+    s3 = boto3.resource('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+    bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
     
-    directory_path = 'uploaded_csvs/'
+    for file in bucket.objects.all():
+        key = file.key
+        
+        s3.Object(settings.AWS_STORAGE_BUCKET_NAME, key).delete()
+  
+      
+def deleteFile(file):
+    s3 = boto3.resource('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+    bucket_name = settings.AWS_STORAGE_BUCKET_NAME 
+    key = 'uploaded_csvs/' + file
+    s3.Object(bucket_name, key).delete()
     
-    uploadedFiles = os.listdir(directory_path)
-    
-    for file in uploadedFiles:
-        if file.endswith('.csv'):
-            filepath = directory_path + file
-            os.remove(filepath)
+        
         
 """Function that removes uploaderInfo key from the session
 
@@ -351,9 +361,21 @@ def hasDate(string):
     except ValueError:
         return False 
     
-        
-def hasAcceptableHeaders(filepath):
-    df = pd.read_csv(filepath)
+def getDataFrame(filename):
+    filename = "uploaded_csvs/" + filename
+    client = boto3.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+    bucket_name = settings.AWS_STORAGE_BUCKET_NAME 
+    
+    csv_obj = client.get_object(Bucket=bucket_name, Key=filename)
+    body = csv_obj['Body']
+    csv_string = body.read().decode('utf-8')
+    
+    df = pd.read_csv(StringIO(csv_string)) 
+    
+    return df
+    
+    
+def hasAcceptableHeaders(df):
     
     unnamedCols = any(col == True for col in df.columns.str.contains('^Unnamed'))
     
@@ -371,8 +393,7 @@ def hasAcceptableHeaders(filepath):
     return True
 
 
-def extractHeaders(path, subjectOrgVal):
-    df = pd.read_csv(path) 
+def extractHeaders(df, subjectOrgVal):
     
     hasSubjectNames = False 
     subjectPerCol = False 
@@ -414,11 +435,8 @@ def replaceWithNameOfValue(extras, name):
 
 
 def getUploadResults(filenames):
-    directory_path = 'uploaded_csvs/'
-    
-    filesLeft = os.listdir(directory_path)
-    
-    filesLeft.remove('.gitignore')
+
+    filesLeft = getAllKeysInS3()
     
     if len(filesLeft) == 0:
         return filenames, ['none'] 
@@ -436,19 +454,19 @@ def getUploadResults(filenames):
         
     return filesUploaded, filesLeft 
 
-
+    
 def getFieldsFromInfoForm(uploaderForm, files):
     fields, filenames = {}, []
     
     for field in uploaderForm.fields:
         if uploaderForm.cleaned_data[field]:
             if field == 'uploadedFiles':
-                path = 'uploaded_csvs/'
+                path = settings.UPLOAD_PATH
                 for file in files:
-                    filepath = path + file.name
+                    
                     filenames.append(file.name)
+                    filepath = "uploaded_csvs/" + file.name
                     default_storage.save(filepath, file)
-                            
                         
             else:
                 fields[field] = uploaderForm[field].data

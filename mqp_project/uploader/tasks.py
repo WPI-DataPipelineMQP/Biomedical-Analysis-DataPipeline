@@ -26,14 +26,13 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     print(dcID)
     dcObj = DataCategory.objects.get(data_category_id=dcID)
     numOfFiles = len(filenames) + 0.5
-    directory_path = 'uploaded_csvs/'
+    directory_path = settings.UPLOAD_PATH
 
     print('Task started')
     
     print('Start')
     
     for i, file in enumerate(filenames):
-        filepath = directory_path + file
         
         newdoc = None
         
@@ -50,13 +49,14 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
             i += 0.5
             progress_recorder.set_progress(i, numOfFiles, description="Uploading...")
-
+            
+        df = Helper.getDataFrame(file)
         if specialFlag is True: 
             print('Starting...')
-            noError, errorMessage = uploaderInfo.specialUploadToDatabase(filepath, docID, columnInfo) 
+            noError, errorMessage = uploaderInfo.specialUploadToDatabase(df, docID, columnInfo) 
             
         else:
-            noError, errorMessage = uploaderInfo.uploadToDatabase(filepath, file, docID, columnInfo, organizedColumns)
+            noError, errorMessage = uploaderInfo.uploadToDatabase(df, file, docID, columnInfo, organizedColumns)
                 
         if noError is False:
             if newdoc is not None:
@@ -65,8 +65,8 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
             raise Exception(errorMessage)
         
         else:
-            Helper.deleteFile(filepath)
-        
+            Helper.deleteFile(file) 
+                   
         # Sleep for 1 second
         time.sleep(0.1)
         

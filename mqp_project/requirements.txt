@@ -21,3 +21,6 @@ gunicorn
 django_heroku
 mysql-connector
 whitenoise
+django-storages
+boto3
+boto

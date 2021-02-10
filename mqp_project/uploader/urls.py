@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, include
+from django.conf.urls import url
 from . import views
 
 urlpatterns = [
@@ -10,4 +11,5 @@ urlpatterns = [
     path('uploading/', views.upload, name='uploader-uploading'),
     path('error/', views.error, name='uploader-uploaderError'),
     path('success/', views.success, name='uploader-uploaderSuccess'),
+    url(r'^s3direct/', include('s3direct.urls'))
 ]

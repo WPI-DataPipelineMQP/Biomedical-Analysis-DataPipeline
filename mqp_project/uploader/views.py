@@ -9,6 +9,7 @@ from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.conf import settings
 
 from datapipeline.views import home
 from datapipeline.database import DBClient
@@ -185,9 +186,11 @@ def info(request):
         uploaderForm = UploaderInfoForm(request.POST, request.FILES, id=studyID)
         
         if uploaderForm.is_valid():
+            print('IS VALID')
             files = request.FILES.getlist('uploadedFiles')
             
             fields, filenames = Helper.getFieldsFromInfoForm(uploaderForm, files)
+            
         
         if 'which-category-field' in fields.keys():
             user_input = fields['which-category-field'] 
@@ -222,7 +225,7 @@ def info(request):
                 return render(request, 'uploader/info.html', context)
             
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
-        print(uploaderInfo.categoryName)
+        
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
         
         data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
@@ -278,15 +281,16 @@ def info(request):
 
         # READING THE CSV FILE
         firstFile = filenames[0]
-        path = 'uploaded_csvs/{}'.format(firstFile)
         
-        if specialRow is False and Helper.hasAcceptableHeaders(path) is False:
+        df = Helper.getDataFrame(firstFile)
+        
+        if specialRow is False and Helper.hasAcceptableHeaders(df) is False:
             request.session['errorMessage'] = "No Headers Were Detected in the CSV File"
             uploaderInfo.uploadedFiles = filenames
             request.session['uploaderInfo'] = jsonpickle.encode(uploaderInfo)
             return redirect(error)
         
-        headers, hasSubjectNames, subjectPerCol = Helper.extractHeaders(path, uploaderInfo.subjectOrganization)
+        headers, hasSubjectNames, subjectPerCol = Helper.extractHeaders(df, uploaderInfo.subjectOrganization)
         
         uploaderInfo.headers = headers
         
@@ -548,7 +552,8 @@ def upload(request):
         if uploaderInfo.specialInsert != '':
             positionInfo = uploaderInfo.specialInsert
             specialFlag = True
-
+            
+        print(filenames)
         task = ProcessUpload.delay(filenames, jsonpickle.encode(uploaderInfo), positionInfo, specialFlag)
         
         print (f'Celery Task ID: {task.task_id}')
@@ -593,7 +598,7 @@ def error(request):
         if request.session.get('uploaderInfo', None) != None:
             uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
             filenames = uploaderInfo.uploadedFiles
-
+        
             uploaded, notUploaded = Helper.getUploadResults(filenames)
             
             context['uploaded'] = uploaded 
@@ -624,7 +629,6 @@ def success(request):
         if request.session.get('uploaderInfo', None) != None:
             uploaderInfo = jsonpickle.decode(request.session['uploaderInfo'])
             filenames = uploaderInfo.uploadedFiles
-
             uploaded, notUploaded = Helper.getUploadResults(filenames)
             
             context['uploaded'] = uploaded 

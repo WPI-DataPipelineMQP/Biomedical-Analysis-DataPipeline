@@ -31,6 +31,9 @@ class UploaderInfo:
     def getAllAttributes(self):
         
         return self.__dict__
+    
+    def addToSuccess(self, file):
+        self.success.append(file)
         
         
     def documentExists(self, filename):
@@ -197,14 +200,12 @@ class UploaderInfo:
         return df  
     
     
-    def specialUploadToDatabase(self, file, docID, column_info):
+    def specialUploadToDatabase(self, df, docID, column_info):
         
         columnHeaders = DBClient.getTableColumns(self.tableName)
         
         columnName = column_info[0][0]
         dt = column_info[0][1]
-        
-        df = pd.read_csv(file)
         
         if self.subjectPerCol is True:
             df = Helper.transposeDataFrame(df, True)
@@ -254,11 +255,10 @@ class UploaderInfo:
         return df 
     
     
-    def uploadToDatabase(self, filepath, filename, docID, column_info, organizedColumns):
+    def uploadToDatabase(self, df, filename, docID, column_info, organizedColumns):
         errorMessage = None
         columnFlag = False 
         
-        df = pd.read_csv(filepath)
         df = self.__adjustDataframeColumnNames(df)
 
         if self.subjectPerCol is True:
