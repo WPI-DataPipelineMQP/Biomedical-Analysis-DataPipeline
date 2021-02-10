@@ -1,5 +1,8 @@
-indicator ,Subject1,Subject2,Subject3,Subject4
-Column1,2,6,10,14
-Column2,3,7,11,15
-Column3,4,8,12,16
-Column4,1,5,9,13
+indicator ,Subject1,Subject2,Subject3,Subject4,,
+Column1,2,6,10,14,,
+Column2,3,7,11,15,,
+Column3,4,8,12,16,,
+Column4,1,5,9,13,,
+,,,,,,
+,,,,,,NOTE TO USER:
+,,,,,,"In the top-leftmost cell (first cell), it says ‘indicator’. This indicator can be of any value of characters or text, it just cannot be blank."

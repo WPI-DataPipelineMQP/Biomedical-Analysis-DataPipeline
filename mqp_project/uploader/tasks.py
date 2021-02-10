@@ -10,7 +10,7 @@ from datapipeline.database import DBClient
 from .models import Document
 import jsonpickle
 
-@shared_task(bind=True)
+@shared_task(bind=True, max_retries=10)
 def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     
     uploaderInfo = jsonpickle.decode(uploaderInfo)
@@ -49,7 +49,8 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
             i += 0.5
             progress_recorder.set_progress(i, numOfFiles, description="Uploading...")
-            
+        
+        print(file)
         df = Helper.getDataFrame(file)
         if specialFlag is True: 
             print('Starting...')

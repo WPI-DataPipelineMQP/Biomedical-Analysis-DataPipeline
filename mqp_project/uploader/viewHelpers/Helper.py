@@ -366,6 +366,7 @@ def getDataFrame(filename):
     client = boto3.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME 
     
+    print(filename)
     csv_obj = client.get_object(Bucket=bucket_name, Key=filename)
     body = csv_obj['Body']
     csv_string = body.read().decode('utf-8')

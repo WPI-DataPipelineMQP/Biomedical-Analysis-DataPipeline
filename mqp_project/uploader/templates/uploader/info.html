@@ -15,22 +15,51 @@
         </form>
     </div>
     <div class="col-md-5">
-        <div class="content-section">
-            <h3>Download Example Files</h3>
-            <ul class="list-group">
-                <li class="list-group-item list-group-item-light">
-                    <a href="{% static 'datapipeline/csvs/subject1_exampleFile.csv' %}" download>Click here for example file of Subject per File</a>
-                </li>
-                <li class="list-group-item list-group-item-light">
-                    <a href="{% static 'datapipeline/images/green.png' %}" download>Click here for example file of Subject per Row</a>
-                </li>
-                <li class="list-group-item list-group-item-light">
-                    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstleyVEVO" target="_blank">Click here for example file of Subject per Row that includes subject names</a>
-                </li>
-                <li class="list-group-item list-group-item-light">
-                    <a href="{% static 'datapipeline/csvs/subject1_exampleFile.csv' %}" download>Click here for example file of Subject per Column</a>
-                </li>
-            </ul>
+        <div class="row">
+            <div class="content-section">
+                <h4>Download Example Files</h4>
+                <ul class="list-group">
+                    <li class="list-group-item list-group-item-light">
+                        <a href="{% static 'datapipeline/csvs/subject1_exampleFile.csv' %}" download>Click here for example file of Subject per File</a>
+                    </li>
+                    <li class="list-group-item list-group-item-light">
+                        <a href="{% static 'datapipeline/csvs/exampleSubjectRow.csv' %}" download>Click here for example file of Subject per Row</a>
+                    </li>
+                    <li class="list-group-item list-group-item-light">
+                        <a href="{% static 'datapipeline/csvs/exampleSubjectRowTS.csv' %}" download>Click here for example file of Subject per Row that is Time Series</a>
+                    </li>
+                    <li class="list-group-item list-group-item-light">
+                        <a href="{% static 'datapipeline/csvs/exampleSubjectColumn.csv' %}" download>Click here for example file of Subject per Column</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="content-section">
+                <h4>Important Notes About Example Files</h4>
+                <ul class="list-group">
+                    <li class="list-group-item list-group-item-light black">
+                        To ensure that the data will be uploaded to the database successfully, it is advised to closely match the format of the example 
+                        csv file that corresponds to the paticular format chosen by the user.
+                    </li>
+                    <li class="list-group-item list-group-item-light black">
+                        In each example file, it includes a note to the user to help the user understand what is being presented in the example files
+                    </li>
+                    <li class="list-group-item list-group-item-light black">
+                        When downloading a file, <strong>pay attention to the filename</strong>. If it includes an "_" in the filename, please follow that file 
+                        naming convention when uploading files of that particular format.
+                    </li>
+                    <li class="list-group-item list-group-item-light black">
+                        For Subject Per Row files, to identify a subject it <strong>must</strong> have the subject identifier be in the first column
+                    </li>
+                    <li class="list-group-item list-group-item-light black">
+                        Subject Per Column files <strong>must</strong> include a subject identifier
+                    </li>
+                    <li class="list-group-item list-group-item-light black">
+                        For Subject Per Column files, to identify a subject it <strong>must</strong> have the subject identifier be in the first row
+                    </li>
+                </ul>
+            </div>
         </div>
         
     </div>

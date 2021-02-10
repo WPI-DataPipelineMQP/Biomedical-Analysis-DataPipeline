@@ -3,28 +3,22 @@
 }
 
 h1 {
+    text-align: left;
     margin-bottom: 40px;
-}
-
-h3.uploaderInfo {
-    margin-left: 1.5em;
-    margin-bottom: 20px;
-}
-
-h3.center {
-    text-align: center;
 }
 
 input[type="submit"] {
   float: right;
   margin-top: -48px;
-  margin-right: 10px;
   width: 100px;
 }
 
-mark {
-  background-color: #fff3cd;
+ul {
+    margin-left: auto;
+    margin-right: auto;
+    color: black;
 }
+
 
 .content-section {
   background-color: #E0E0E0;
@@ -34,7 +28,6 @@ mark {
   margin-bottom: 20px;
 }
 
-li {
-  text-align: left;
-  color: blue;
+.black {
+  color: black;
 }

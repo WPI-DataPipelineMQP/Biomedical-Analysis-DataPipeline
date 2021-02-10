@@ -1,0 +1,15 @@
+Subject1,1,2,3,4,5,,
+Subject2,1,2,3,4,5,,
+Subject3,1,2,3,4,5,,
+Subject4,1,2,3,4,5,,
+Subject5,1,2,3,4,5,,
+Subject6,1,2,3,4,5,,
+Subject7,1,2,3,4,5,,
+Subject8,1,2,3,4,5,,
+Subject9,1,2,3,4,5,,
+Subject10,1,2,3,4,5,,
+Subject11,1,2,3,4,5,,
+,,,,,,,
+,,,,,,,NOTE TO USER:
+,,,,,,,"If each row is labeled with a subject indicator, it must be included in the first column. Also, in this file format, column headers are not expected to be included. "
+,,,,,,,"The subject column is not required to be included. If the user does not have a subject identifier for each row, this subject column will not be included"

@@ -1,10 +1,12 @@
-Column 1,Column 2,Column 3,Column 4,Column 5
-VVXVV,0,1,1895,1
-BBBBB,1,3,2000,2
-BBBBB,1,1,749,3
-XXBXX,0,1,530,4
-VVXVV,0,1,832,5
-XXBXX,0,1,538,6
-XXVXX,0,2,815,7
-CCXCC,1,1,816,8
-VVCVV,0,1,594,9
+Column 1,Column 2,Column 3,Column 4,Column 5,,
+VVXVV,0,1,1895,1,,
+BBBBB,1,3,2000,2,,
+BBBBB,1,1,749,3,,
+XXBXX,0,1,530,4,,
+VVXVV,0,1,832,5,,
+XXBXX,0,1,538,6,,
+XXVXX,0,2,815,7,,
+CCXCC,1,1,816,8,,
+VVCVV,0,1,594,9,,
+,,,,,,NOTE TO USER: 
+,,,,,,Take notice that the filename is “subject1_exampleFile.csv”. User’s upload filenames should include a subject identifier followed by an “_”
