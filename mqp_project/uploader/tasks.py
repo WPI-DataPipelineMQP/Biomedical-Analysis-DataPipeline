@@ -50,8 +50,12 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
             i += 0.5
             progress_recorder.set_progress(i, numOfFiles, description="Uploading...")
         
-        print(file)
+        
         df = Helper.getDataFrame(file)
+        
+        if df is None:
+            raise Exception(f"S3 Key: {file} Not Found!")
+        
         if specialFlag is True: 
             print('Starting...')
             noError, errorMessage = uploaderInfo.specialUploadToDatabase(df, docID, columnInfo) 

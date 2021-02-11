@@ -366,14 +366,17 @@ def getDataFrame(filename):
     client = boto3.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME 
     
-    print(filename)
-    csv_obj = client.get_object(Bucket=bucket_name, Key=filename)
-    body = csv_obj['Body']
-    csv_string = body.read().decode('utf-8')
+    try: 
+        csv_obj = client.get_object(Bucket=bucket_name, Key=filename)
+        body = csv_obj['Body']
+        csv_string = body.read().decode('utf-8')
     
-    df = pd.read_csv(StringIO(csv_string)) 
+        df = pd.read_csv(StringIO(csv_string)) 
     
-    return df
+        return df
+    
+    except:
+        return None
     
     
 def hasAcceptableHeaders(df):
