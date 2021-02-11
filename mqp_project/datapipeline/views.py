@@ -1,3 +1,5 @@
+
+
 from django.shortcuts import render
 import json
 import pandas as pd
@@ -429,3 +431,23 @@ def output(request):
     }
 
     return render(request, 'datapipeline/output.html', context)
+
+#from: https://stackoverflow.com/questions/39919012/django-python-show-pdf-in-a-template
+# from django.shortcuts import render
+# from django.http import FileResponse, Http404
+# def pdf(request):
+#     try:
+#         return FileResponse(open('datapipeline/pdfs/CS4120_Homework1_bmclean.pdf', 'rb'), content_type='application/pdf')
+#     # except FileNotFoundError:
+#     #     raise Http404('not found')
+#     except:
+#         raise Http404('not found')
+# def main(request):
+#     return render(request,'datapipeline/helpManual.html')
+
+# def userManual(request):
+#     with open('datapipeline/pdfs/CS4120_Homework1_bmclean.pdf', 'rb') as pdf:
+#         response = HttpResponse(pdf.read(), content_type='application/pdf')
+#         response['Content-Disposition'] = 'inline;filename=some_file.pdf'
+#         return response
+#     pdf.closed

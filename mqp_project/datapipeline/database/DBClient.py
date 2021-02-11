@@ -103,7 +103,7 @@ def buildQuery(args):
     if args['order-by'] != None :
         stmt += "ORDER BY " + args['order-by'] + " "
 
-
+    print("STATEMENT: " + stmt)
     return stmt
 
 
