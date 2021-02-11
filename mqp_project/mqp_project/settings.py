@@ -172,3 +172,12 @@ DEFAULT_FROM_EMAIL = 'WPI Data Pipeline Team <wpidatapipeline@gmail.com>'
 # Celery Settings
 BROKER_URL = config('BROKER_URL')
 CELERY_RESULT_BACKEND = config('BROKER_URL')
+
+# For embedded PDF
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+# path to the MEDIA directory
+#MEDIA_ROOT = '/Users/Bridget/PycharmProjects/Biomedical-Analysis-DataPipeline_new/mqp_project/mqp_project/static/datapipeline/pdfs/CS4120_Homework1_bmclean.pdf'
+#MEDIA_ROOT = '/mqp_project/mqp_project/static/datapipeline/pdfs/CS4120_Homework1_bmclean.pdf'
+MEDIA_ROOT = '/home/' #PROBABLY HAVE TO CHANGE THIS TO A DIFFERENT FILE PATH TO HOST ON HEROKU?
+# URL to use to open MEDIA
+MEDIA_URL = '/media/'

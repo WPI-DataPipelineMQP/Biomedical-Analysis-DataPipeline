@@ -1,6 +1,7 @@
 {% extends "datapipeline/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
+{% load static %}
     <form method="POST">
         {% csrf_token %}
         <fieldset class="form-group">
@@ -18,4 +19,5 @@
             Don't have an account? <a class="ml-2" href="{% url 'users-register' %}">Register Here</a>
         </small>
     </div>
+<a href="{% static 'datapipeline/pdfs/Help_Page.pdf#page=4' %}" open>Click here to view the Help Page</a>
 {% endblock content %}

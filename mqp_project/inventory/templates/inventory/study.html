@@ -1,5 +1,6 @@
 {% extends "datapipeline/base.html" %}
 {% block content %}
+{% load static %}
 
 <h1>{{ study.study_name }}</h1>
 
@@ -59,6 +60,6 @@
         </li>
     {% endfor %}
 </ul>
-
+<a href="{% static 'datapipeline/pdfs/Help_Page.pdf#page=30' %}" open>Click here to view the Help Page</a>
 
 {% endblock content %}
