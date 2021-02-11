@@ -7,3 +7,4 @@ data/
 dump.rdb
 env.txt
 .env.txt
+venv/
