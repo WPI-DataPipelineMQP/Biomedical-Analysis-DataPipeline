@@ -191,7 +191,6 @@ def info(request):
             
             fields, filenames = Helper.getFieldsFromInfoForm(uploaderForm, files)
             
-        
         if 'which-category-field' in fields.keys():
             user_input = fields['which-category-field'] 
             if user_input == 'y':
