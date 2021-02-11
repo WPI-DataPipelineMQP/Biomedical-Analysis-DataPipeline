@@ -24,6 +24,7 @@ def home(request):
     UploadHelper.deleteAllDocuments()
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
 
+
 def studySelection(request):
     UploadHelper.deleteAllDocuments()
     study_fields = []

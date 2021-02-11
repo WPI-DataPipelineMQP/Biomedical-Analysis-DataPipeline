@@ -167,7 +167,6 @@ def info(request):
         return redirect(study)
     
     studyName = request.session['studyName']
-    checkedForDuplications = request.session['checkedForDuplications']
     
     context = {
          'myCSS': 'uploaderInfo.css',
@@ -181,7 +180,8 @@ def info(request):
     
     form = UploaderInfoForm(id=studyID)
     #############################################################################################################
-    if request.method == 'POST':        
+    if request.method == 'POST':
+        checkedForDuplications = request.session['checkedForDuplications']        
         defaultGroup = False
         uploaderForm = UploaderInfoForm(request.POST, request.FILES, id=studyID)
         
