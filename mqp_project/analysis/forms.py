@@ -9,7 +9,6 @@ class CreateChosenBooleanForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         attributes = kwargs.pop('customFields')
-        print("hello! " + str(attributes))
         super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
         self.fields["radio"] = forms.ChoiceField(widget=forms.RadioSelect, choices=attributes)

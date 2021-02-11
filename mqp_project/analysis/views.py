@@ -29,15 +29,16 @@ def make_hist(request):
         if attributes_form.is_valid():
             for i, field in enumerate(attributes_form.getAllFields()):
                 if i == 0:
+                    #bins
                     attribute_data[i] = {
                         # flipped these values to make the dict indexing work, will need to change
                         'name': field[1],
                         'value': 'bins'}
                 else:
+                    #attribute
                     attribute_data[i] = {
-                        'name': attribute_names[i-1],
-                        'value': field[1]}
-        # could we change this to  just get the dict and not the namelist?
+                        'name': field[1],
+                        'value': 'attr'}
         hist_data = ViewHelper.getNameList(attribute_data)
         request.session['hist_data'] = hist_data
         return HttpResponseRedirect('/analysis/show_hist')
@@ -55,7 +56,8 @@ def show_hist(request):
     df = pd.read_sql_query(sql=buildQuery(
         request.session['args']), con=engine)
     # adjust column name from front end selection (remove study label)
-    col_name = request.session['hist_data'][1]
+    col_num = int(request.session['hist_data'][1])
+    col_name = request.session['attribute_names'][col_num]
     
     if col_name.find('.') != -1:
         col_list = col_name.split('.')
@@ -90,11 +92,10 @@ def make_scatter(request):
         if attributes_form.is_valid():
             for i, field in enumerate(attributes_form.getAllFields()):
                 attribute_data[i] = {
-                    'name': attribute_names[i],
-                    'value': field[1]}
+                    'name': field[1],
+                    'value': 'attr' + field[1]}
         # could we change this to  just get the dict and not the namelist?
         scatter_data = ViewHelper.getNameList(attribute_data)
-        print(scatter_data)
         request.session['scatter_data'] = scatter_data
         return HttpResponseRedirect('/analysis/show_scatter')
 
@@ -109,13 +110,20 @@ def make_scatter(request):
 def show_scatter(request):
     engine = sql.create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=buildQuery(request.session['args']), con=engine)
-    xcol_name = request.session['scatter_data'][0]
-    xcol_list = xcol_name.split('.')
-    xcol = xcol_list[1]
 
-    ycol_name = request.session['scatter_data'][1]
+    xcol_num = int(request.session['scatter_data'][0])
+    xcol_name = request.session['attribute_names'][xcol_num]
+    xcol_list = xcol_name.split('.')
+    xcol = xcol_list[0]
+    if len(xcol_list) > 1:
+        xcol = xcol_list[1]
+
+    ycol_num = int(request.session['scatter_data'][1])
+    ycol_name = request.session['attribute_names'][ycol_num]
     ycol_list = ycol_name.split('.')
-    ycol = ycol_list[1]
+    ycol = ycol_list[0]
+    if len(ycol_list) > 1:
+        ycol = ycol_list[1]
 
     # scatter plot
     plt.scatter(x=df[xcol], y=df[ycol])
