@@ -83,3 +83,8 @@ ul.no-bullets {
 label.field-label {
   margin-left: 15px;
 }
+
+/* Added to hide path from listStudies.html to the 2nd page of study analysis */
+input.checkbox {
+    visibility:hidden
+}
