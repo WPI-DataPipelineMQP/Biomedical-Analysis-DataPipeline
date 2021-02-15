@@ -40,7 +40,7 @@ if len(dcID) == 0:
 dcID = dcID[0][0]
 print(dcID)
 
-dcXrefID = f"SELECT data_study_id FROM DataCategoryStudyXref WHERE dc_category_id = {dcID}"
+dcXrefID = f"SELECT dc_study_id FROM DataCategoryStudyXref WHERE data_category_id = {dcID}"
 
 dcXrefID = myCursor.fetchall()
 

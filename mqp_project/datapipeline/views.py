@@ -155,6 +155,9 @@ def dataSelection(request):
                 
         category_names = ViewHelper.getNameList(categories_data)
         study_group_names = ViewHelper.getNameList(study_groups_data)
+        
+        print("MY STUDY GROUPS\n")
+        print(study_group_names)
 
         #checks if at least one category and study group has been selected
         if len(category_names) <= 0:
@@ -183,7 +186,7 @@ def dataSelectionContinued(request):
     category_names = []
     if 'category_names' in request.session:
         category_names = request.session['category_names']
-
+    
     columnsForAttributeList = []
     columnsForFiltersList = []
     for table in category_names:

@@ -137,16 +137,17 @@ def studyInfo(request):
         
             # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
             if Helper.validDates(startDate, endDate):
-                newStudy = Study.objects.create(study_name=studyName,
-                                                owner=request.user,
-                                                study_description=studyDescription, 
-                                                is_irb_approved=hasIRB, 
-                                                institutions_involved=institutions, 
-                                                study_start_date=startDate, 
-                                                study_end_date=endDate, 
-                                                study_contact=contactInfo,
-                                                visibility=visibility,
-                                                study_notes=notes)
+                if Study.objects.filter(study_name=studyName, owner=request.user).exists() is False:
+                    newStudy = Study.objects.create(study_name=studyName,
+                                                    owner=request.user,
+                                                    study_description=studyDescription, 
+                                                    is_irb_approved=hasIRB, 
+                                                    institutions_involved=institutions, 
+                                                    study_start_date=startDate, 
+                                                    study_end_date=endDate, 
+                                                    study_contact=contactInfo,
+                                                    visibility=visibility,
+                                                    study_notes=notes)
             
                 return redirect(info)
             
@@ -214,7 +215,7 @@ def info(request):
         
         if (uploaderInfo.subjectOrganization == 'file'):
             if not Helper.passFilenameCheck(filenames):
-                msg = "Detected an error in the filename of the uploaded files. If the subject organization is by row, please follow the convention when naming the files"
+                msg = "Detected an error in the filename of the uploaded files. If the format is by Subject per File, please follow the convention when naming the files"
                 messages.error(request, msg) 
                 
                 if not checkedForDuplications:

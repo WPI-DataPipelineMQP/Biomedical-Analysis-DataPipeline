@@ -55,7 +55,7 @@ def returnProperType(val):
         return val
 
     else:
-        stringVal = '"{}"'.format(val)
+        stringVal = "'{}'".format(val)
         return stringVal
 
 def getRadioChoices(attributes):
