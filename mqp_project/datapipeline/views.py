@@ -325,10 +325,10 @@ def make_conds(dictOfConds, study_group_names):
         seperator = " ("
         stripped = item.split(seperator, 1)[0]
         if first == True:
-            stry += ' AND (StudyGroup.study_group_name = "'+stripped+'"'
+            stry += " AND (StudyGroup.study_group_name = '"+stripped+"'"
             first = False
         else:
-            stry += ' OR StudyGroup.study_group_name = "'+stripped+'"'
+            stry += " OR StudyGroup.study_group_name = '"+stripped+"'"
     stry += ")"
     return stry
 
@@ -397,6 +397,7 @@ def output(request):
         'group-by': None,
         'order-by': None
     }
+    print(args)
     result = DBClient.executeQuery(args, 1)
 
     # Set up stats summary
