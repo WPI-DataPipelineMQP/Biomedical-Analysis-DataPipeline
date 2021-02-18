@@ -57,7 +57,6 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
             raise Exception(f"S3 Key: {file} Not Found!")
         
         if specialFlag is True: 
-            print('Starting...')
             noError, errorMessage = uploaderInfo.specialUploadToDatabase(df, docID, columnInfo) 
             
         else:

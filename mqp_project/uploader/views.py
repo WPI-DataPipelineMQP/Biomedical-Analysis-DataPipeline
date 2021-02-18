@@ -215,11 +215,16 @@ def info(request):
         
         if (uploaderInfo.subjectOrganization == 'file'):
             if not Helper.passFilenameCheck(filenames):
-                msg = "Detected an error in the filename of the uploaded files. If the format is by Subject per File, please follow the convention when naming the files"
+                msg = "Detected an error in the filename of the uploaded files. \
+                    If the format is by Subject per File, please follow the convention when naming the files. \
+                    Please reupload the file with the correct file name"
                 messages.error(request, msg) 
                 
                 if not checkedForDuplications:
                     uploaderForm.fields['handleDuplicate'].widget = forms.HiddenInput()
+                    
+                Helper.deleteAllDocuments()
+                
                 context['form'] = uploaderForm 
                 
                 return render(request, 'uploader/info.html', context)
@@ -480,9 +485,11 @@ def finalPrompt(request):
                 myFields.append((i, val)) 
         
         print(myFields)
-        print("\n")
         clean = Helper.seperateByName(myFields, 1, True, True, dcID)     
-        print(clean)  
+
+        if clean is None:
+            request.session['errorMessage'] = "Invalid number of columns found in uploaded CSV file"
+            return redirect(error)
         
         if Helper.foundDuplicatePositions(clean) is True:
             context['error'] = True

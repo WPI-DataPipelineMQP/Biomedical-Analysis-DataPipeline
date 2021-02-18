@@ -268,6 +268,8 @@ class UploaderInfo:
             
         filename = Helper.modifyFileName(filename)
         
+        df.columns = self.headers
+        
         if self.hasSubjectNames is True:
             listOfSubjects, listOfSubjectNum = [], []
             
@@ -292,7 +294,6 @@ class UploaderInfo:
         else:
             if self.subjectOrganization == 'file':
                 subjectID, errorMessage = self.subjectHandler(filename)
-        
                 df = df[organizedColumns]
                 df['subject_id'] = subjectID
                 
