@@ -26,15 +26,22 @@ def home(request):
     UploadHelper.deleteAllDocuments()
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
 
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates form listing studies for template studySelection.html
+#  then gets selected study's data categories and study ID to display for next page
+######################################
 def studySelection(request):
     UploadHelper.deleteAllDocuments()
     study_fields = []
 
+    #Get list of studies available to user, based on permissions
     studies = Study.objects.filter(
         ~(Q(visibility="Private") & ~Q(owner=request.user.id))
     )
 
+    #Display form with study information
     for study in studies:
         studies_dict = {}
         studies_dict["name"] = study.study_name
@@ -43,20 +50,16 @@ def studySelection(request):
         study_fields.append(studies_dict)
     
     request.session['study_fields'] = study_fields
-
     studies_form = CreateChosenBooleanForm(customFields=study_fields)
-
     context = {
         'studies_form': studies_form,
         'myCSS': 'studySelection.css',
     }
 
+    #When form is submitted
     if request.method == 'POST':
-
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
-
         studies_data = {}
-
         if studies_form.is_valid():
             for i, field in enumerate(studies_form.getAllFields()):
                 studies_data[i] = {
@@ -64,10 +67,9 @@ def studySelection(request):
                     'value': field[1],
                     'id': study_fields[i]["id"]
                 }
-                
+
+        # MAKING THE QUERY TO USE
         study_ids_forquery = ''
-        
-        # MAKING THE QUERY TO USE 
         for i, key in enumerate(studies_data):
             study = studies_data[key]
             
@@ -107,8 +109,15 @@ def studySelection(request):
     return render(request, 'datapipeline/studySelection.html', context)
 
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates form listing data categories and study groups for template dataSelection.html
+#  then saves selected data categories and study groups to session
+######################################
 def dataSelection(request):
 
+    #Get study data saved in session and create boolean forms of data categories and study groups
     studies_data = []
     data_categories = []
     study_groups = []
@@ -131,7 +140,8 @@ def dataSelection(request):
         'categories_form': categories_form,
         'study_groups_form': study_groups_form,
     }
-    
+
+    #When form is submitted
     if request.method == 'POST':
         categories_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['data_categories'])
         study_groups_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['study_groups'])
@@ -177,7 +187,12 @@ def dataSelection(request):
     return render(request, 'datapipeline/dataSelection.html', context)
 
 
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates form listing attributes and filters for template dataSelection-2.html
+#  then saves selected attributes and filters to session
+######################################
 def dataSelectionContinued(request):
 
     category_names = []
@@ -188,8 +203,9 @@ def dataSelectionContinued(request):
     columnsForFiltersList = []
     for table in category_names:
         column_dict = {}
-        result = DBClient.getTableColumns(table)
-        
+        result = DBClient.getTableColumns(table) #get all attributes from selected data categories
+
+        #add the columns we need to lists so we can add them to the form
         for column_name in result:
             if(column_name == "data_id" or column_name == "subject_id" or column_name == "doc_id"):
                 pass
@@ -212,6 +228,7 @@ def dataSelectionContinued(request):
     request.session['columnsForAttributeList'] = columnsForAttributeList
     request.session['columnsForFiltersList'] = columnsForFiltersList
 
+    #create the form
     attributes_form = CreateChosenBooleanFormWithoutDesc(customFields=request.session['columnsForAttributeList'])
     filters_form = CreateChosenFilterForm(customFields=request.session['columnsForFiltersList'])
 
@@ -225,6 +242,7 @@ def dataSelectionContinued(request):
          'error': False
     }
 
+    #When form is submitted
     if request.method == 'POST':
         attributes_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['columnsForAttributeList'])
         filters_form = CreateChosenFilterForm(request.POST, customFields=request.session['columnsForFiltersList'])
@@ -267,6 +285,12 @@ def dataSelectionContinued(request):
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
 
+######################################
+# Input: lodt - list of strings representing data category (table) names
+# Returns: str - string for JOIN statement in a query
+# Description: Helper function, not associated with a template
+# Given a list of data category names, join them all together by subject_id
+######################################
 def make_join(lodt):
     str = ""
     str += "studygroup JOIN subject ON studygroup.study_group_id = subject.study_group_id JOIN "
@@ -279,7 +303,14 @@ def make_join(lodt):
             ".subject_id = " + lodt[2] + ".subject_id"
     return str
 
-
+######################################
+# Input: dictOfConds - dictionary of dictionary, inner dictionary has
+# "name" and "value" of form fields from filter form.
+# study_group_names - name of study groups selected for viewing
+# Returns: str - string for JOIN statement in a query
+# Description: Helper function, not associated with a template
+# Given a list of data category names, join them all together by subject_id
+######################################
 def make_conds(dictOfConds, study_group_names):
     symbols = {
         'equal': '=',
@@ -317,7 +348,6 @@ def make_conds(dictOfConds, study_group_names):
                 properDataTypeVal = ViewHelper.returnProperType(filter['value'])
                 stry += properDataTypeVal
     first = True
-    print('HERE', stry)
     for item in study_group_names:
         seperator = " ("
         stripped = item.split(seperator, 1)[0]
@@ -329,6 +359,11 @@ def make_conds(dictOfConds, study_group_names):
     stry += ")"
     return stry
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates and writes a ".csv" of the selected data
+######################################
 def export_data(request):
     print('Exporting data')
 
@@ -345,6 +380,11 @@ def export_data(request):
 
     return response
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates and writes a ".csv" of the selected data's summary statistics
+######################################
 def export_summary(request):
     print('Exporting summary')
 
@@ -358,6 +398,12 @@ def export_summary(request):
 
     return response
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Executes final query and displays the selected data
+# and the summary statistics of that data for template output.html
+######################################
 def output(request):
     study_names = []
     if 'category_names' in request.session:
