@@ -1,7 +1,6 @@
 from django import forms
 
 # Dynamic form that uses customFields arg to create boolean fields with given names and labels
-# taken from Django practice repo
 
 
 class CreateChosenBooleanForm(forms.Form):
@@ -11,6 +10,7 @@ class CreateChosenBooleanForm(forms.Form):
         attributes = kwargs.pop('customFields')
         super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
+        #here, we put all attributes as choices in the same field
         self.fields["radio"] = forms.ChoiceField(widget=forms.RadioSelect, choices=attributes)
 
     #    for i, field in enumerate(fields):
@@ -34,6 +34,7 @@ class CreateChosenBooleanFormScatter(forms.Form):
         attributes = kwargs.pop('customFields')
         super(CreateChosenBooleanFormScatter, self).__init__(*args, **kwargs)
 
+        #we need two of the same question, so they are in the form as two different fields
         self.fields["x_radio"] = forms.ChoiceField(widget=forms.RadioSelect,choices=attributes,label="X-Axis")
         self.fields["y_radio"] = forms.ChoiceField(widget=forms.RadioSelect,choices=attributes,label="Y-Axis")
 

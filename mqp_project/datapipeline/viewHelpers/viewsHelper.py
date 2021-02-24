@@ -66,6 +66,11 @@ def returnProperType(val):
         stringVal = '"{}"'.format(val)
         return stringVal
 
+######################################
+# Input: List
+# Returns: List
+# Description: Turns a list of names into a list of tuples with an auto-incrementing ID so it is compatible with a ChoiceField
+######################################
 def getRadioChoices(attributes):
     choices = []
     for i, attr in enumerate(attributes):
