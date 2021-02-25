@@ -15,7 +15,11 @@ import io
 import urllib
 import base64
 
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Renders form to create a histogram in selectHistColumns.html
+######################################
 def make_hist(request):
     attribute_names = []
 
@@ -64,6 +68,11 @@ def make_hist(request):
     return render(request, 'analysis/selectHistColumns.html', context)
 
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Displays a histogram
+######################################
 def show_hist(request):
     # create dataframe based on previous query
     engine = sql.create_engine(settings.DB_CONNECTION_URL)
@@ -94,6 +103,11 @@ def show_hist(request):
     return render(request, 'analysis/showHist.html', {'data': uri})
 
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Renders form to create a scatter plot in selectScatterColumns.html
+######################################
 def make_scatter(request):
     attribute_names = []
 
@@ -131,8 +145,13 @@ def make_scatter(request):
 
     return render(request, 'analysis/selectScatterColumns.html', context)
 
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Displays the scatter plot
+######################################
 def show_scatter(request):
+    # create dataframe based on previous query
     engine = sql.create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=buildQuery(request.session['args']), con=engine)
 
@@ -164,6 +183,8 @@ def show_scatter(request):
     plt.close()
     return render(request, 'analysis/showScatter.html', {'data': uri})
 
+
+#---METHODS FROM COMMAND LINE APPLICATION---
 
 # user clarification for datatype
 # TODO: change print statement to an alert/prompt

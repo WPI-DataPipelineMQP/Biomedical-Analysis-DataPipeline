@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Data Selection</h1>
 
-<!--WITH FORM OBJECTS-->
+<!--List Studies, Catagories, and Groups Chosen-->
 <ul>
     {% for study in study_names %}
         <li>
@@ -39,8 +39,11 @@
         </li>
     {% endfor %}
 </ul>
+
+<!--Attribute and Filter Form-->
 <form action="{% url 'datapipeline-dataSelection-2' %}" method="POST">
     {% csrf_token %}
+    
     <h2>What attributes would you like to view?</h2>
         <ul class="no-bullets">
             {% for field in attributes%}

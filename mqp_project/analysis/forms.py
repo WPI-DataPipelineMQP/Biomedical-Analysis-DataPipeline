@@ -14,9 +14,9 @@ class CreateChosenBooleanForm(forms.Form):
         #here, we put all attributes as choices in the same field
         self.fields["radio"] = forms.ChoiceField(widget=forms.RadioSelect, choices=attributes)
 
+    #retrieves all fields in the form and their values one by one
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
-            # if name.startswith('custom_'):
             yield (name, value)
 
 
@@ -32,5 +32,4 @@ class CreateChosenBooleanFormScatter(forms.Form):
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
-            # if name.startswith('custom_'):
             yield (name, value)

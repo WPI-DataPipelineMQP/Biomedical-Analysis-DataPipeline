@@ -4,6 +4,7 @@
 <div class="row">
     <div class="column">
         <h1>Data Selection</h1>
+        <!--List of chosen studies-->
         <ul>
             {% for study in study_names %}
             <li>
@@ -15,9 +16,8 @@
             </li>
             {% endfor %}
         </ul>
-        {% if error is True %}
-        <h2 class="header-error">Please select at least one data category and at least one study group.</h2>
-        {% endif %}
+
+        <!--Category and Study Group Form-->
         <h2>What data from this study would you like to view?</h2>
         <form action="{% url 'datapipeline-dataSelection' %}" method="POST">
             {% csrf_token %}
@@ -41,6 +41,8 @@
             <input type="submit" value="Submit">
         </form>
     </div>
+    
+    <!--Instruction Box-->
     <div class="column" style="background-color:#bbb;">
         <h2 class="center">Understanding the Number Next to the Name</h2>
         <p>

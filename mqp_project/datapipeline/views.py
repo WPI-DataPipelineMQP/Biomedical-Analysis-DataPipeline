@@ -20,8 +20,11 @@ from .database import DBClient, DBHandler
 from django.db.models import Q
 from .models import Study
 
-# Create your views here.
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Returns to the dashboard, removes documents in the uploader if there are any
+######################################
 def home(request):
     UploadHelper.deleteAllDocuments()
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
