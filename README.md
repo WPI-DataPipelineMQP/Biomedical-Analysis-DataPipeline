@@ -6,7 +6,7 @@ This project was created over the course of 1.5 semesters as part of Worcester P
 
 ## Installing Python Dependencies
 
-- Install the python dependencies that this program requires. The dependencies are defined in the requirements.txt file so just follow the command below
+- Install the python dependencies that this program requires. This application uses Python 3. The dependencies are defined in the requirements.txt file so just follow the command below
 
 ```console
 $ pip3 install -r requirements.txt
@@ -14,7 +14,7 @@ $ pip3 install -r requirements.txt
 
 ## Config Environment Variables
 
-- Obtain the most up-to-date .env file for running this program. It contains sensitive information and other development specific environment settings. Ensure the file is saved as a .env file and not .txt.
+- Obtain the most up-to-date .env file for running this program. It contains sensitive information and other development specific environment settings. Ensure the file is saved as a .env file and not .txt. It should just be called ".env". If you do not have this file, refer to the Developer Guide below on how to create one.
 
 - Move this file to be within the Biomedical-Analysis-DataPipeline (root) directory
 
@@ -45,11 +45,33 @@ $ celery -A mqp_project worker --loglevel=info
 
 - After running the command, you can now run the project normally
 
+### macOS Instructions
+- Install redis if not already installed. This can be done with Homebrew using the following command:
+
+
+```console
+$ brew install redis
+```
+
+- Run redis. This is done with the following command:
+
+
+```console
+$ brew services start redis
+```
+
+- After the redis server is running successfully, navigate to the mqp_project directory in a terminal separate from the redis server. Run the following command:
+
+```console
+$ celery -A mqp_project worker --loglevel=info
+```
+
+- After running the command, you can now run the project normally
 
 ### Windows Instructions
 - Install redis. This is easier to do through the Windows subsystem for linux by running ```$ sudo apt-get install redis-server```. Otherwise, there are a large amount of unofficial windows versions of redis that can be found online and should work as well.
 
-- In a separate terminal run the redis server 
+- Run the redis server with the following command:
 
 ```console
 $ redis-server
@@ -77,12 +99,14 @@ This section provides additional information and advice for potential future dev
 - [These video tutorials](https://www.youtube.com/watch?v=UmljXZIypDc&feature=youtu.be&list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p) are very helpful for learning Django.
 
 
-### .Env file
+### .env file
 - The .env file externally stores sensitive or development specific environment variables that would otherwise be directly put in settings.py. For this reason, .env is purposely included in .gitignore and should be distributed to team members through less public means.
 - An example of what the .env file would look like for this project is included in the example.env.txt file
 - [This link](https://simpleisbetterthancomplex.com/2015/11/26/package-of-the-week-python-decouple.html) provides more information about setting up the .env file and accessing environment variables using the Decouple Python package
 - One of the variables in .env is the secret key. This is used for cryptographic signing and general security so it should be hidden. It basically just needs to be a unique string so using a generator like [this](https://miniwebtool.com/django-secret-key-generator/) should be sufficient.
+- It may be useful to have different .env files if you have multiple databases or other settings that you are switching between frequently.
 
 ### Email Address for Password Reset Feature
 - Currently, the password reset system utilizes a gmail account. Future developers should consider creating a new account or maybe even using an automated email service. 
-- [This tutorial](https://youtu.be/-tyBEsHSv7w) provides additional information on setting up an email address for this.
+- [This tutorial](https://youtu.be/-tyBEsHSv7w) provides additional information on setting up an email address for this. 
+- If the email address needs to be changed, it would likely only require changes in the .env file and settings.py
