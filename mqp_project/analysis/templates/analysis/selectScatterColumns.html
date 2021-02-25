@@ -6,27 +6,14 @@
 <h4>Select one column for the x-axis and one for the y-axis:</h4>
 <form action="{% url 'analysis-make_scatter' %}" method="POST">
     {% csrf_token %}
-    <!--ul class="no-bullets"-->
         {% for field in scatter_fields %}
-        <!-- <li> -->
+            <!--prints out the label: X-Axis or Y-Axis-->
             <label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label>
             {{ field }}
-        <!-- </li> -->
         {% endfor %}
-    <!-- </ul> -->
-   <!--  <h4>Select Y-Column:</h4> -->
-    <!-- <ul class="no-bullets"> -->
-       <!--  {% for field in scatter_fields %} -->
-        <!-- <li> -->
-           <!--  {{ field }} -->
-            <!--label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label-->
-        <!-- </li> -->
-        <!-- {% endfor %}
- -->    <!-- </ul> -->
     <br/>
     <input type="submit" value="Submit">
 </form>
 <a href="{% static 'datapipeline/pdfs/Help_Page.pdf#page=16' %}" open>Click here to view the Help Page</a>
-
 
 {% endblock content %}

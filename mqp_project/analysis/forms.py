@@ -4,6 +4,7 @@ from django import forms
 
 
 class CreateChosenBooleanForm(forms.Form):
+    #field for the number of bins
     bins = forms.IntegerField(initial=10, min_value=1)
 
     def __init__(self, *args, **kwargs):
@@ -12,15 +13,6 @@ class CreateChosenBooleanForm(forms.Form):
 
         #here, we put all attributes as choices in the same field
         self.fields["radio"] = forms.ChoiceField(widget=forms.RadioSelect, choices=attributes)
-
-    #    for i, field in enumerate(fields):
-    #         self.fields['custom_%s' % i] = forms.BooleanField(
-    #             label=field, required=False)
-    #         self.fields['custom_%s' % i].widget.attrs.update({
-    #             'class': 'checkbox',
-    #         })
-            #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
-        #print(fields)
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
