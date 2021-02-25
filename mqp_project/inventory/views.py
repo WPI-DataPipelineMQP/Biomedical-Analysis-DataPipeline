@@ -12,19 +12,31 @@ from datapipeline.models import Study, Subject, StudyGroup, DataCategoryStudyXre
 from django.contrib.auth.models import User
 from django.db.models.base import ObjectDoesNotExist
 
-# 1st screen: Show list of studies and allow user to start selection on them or use links to study page
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Lists studies on template listStudies.html
+#  and allows user to search by metadata and use links to go to specific study pages
+# NOTE: This page was built off of the studySelection page in datapipeline directory with
+# the aim that users would be also able to go right into the selection process from this page as well.
+# The button and checkboxes for this functionality were taken out very late into development due
+# to frequent user confusion but the back end code is left over just in case.
+######################################
 def listStudies(request):
     UploadHelper.deleteAllDocuments()
     searchTerm = None
 
-    # If submit button was clicked to go to selection
+    # If submit button was clicked to go to selection. Everything within this if statement is currently unused
     if request.method == 'POST' and 'selection-btn' in request.POST:
+
+        # save dictionary of studies to the session
         study_fields = request.session['study_fields']
 
+        # create the dynamic form
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
 
+        # gather the data from the form
         studies_data = {}
-
         if studies_form.is_valid():
             for i, field in enumerate(studies_form.getAllFields()):
                 studies_data[i] = {
@@ -33,9 +45,8 @@ def listStudies(request):
                     'id': study_fields[i]["id"]
                 }
 
-        study_ids_forquery = ''
-
         # MAKING THE QUERY TO USE
+        study_ids_forquery = ''
         for i, key in enumerate(studies_data):
             study = studies_data[key]
 
@@ -61,8 +72,6 @@ def listStudies(request):
         study_names = ViewHelper.getNameList(studies_data, True)
 
         request.session['study_names'] = study_names
-        request.session[
-            'studies_data'] = studies_data  # NOTE: after this edit, do we still need this in the session?
         request.session['data_categories'] = data_categories
         request.session['study_groups'] = study_groups
 
@@ -73,7 +82,7 @@ def listStudies(request):
         search_form = StudySearchForm(request.POST)
         searchTerm = ""
         if search_form.is_valid():
-            searchTerm = search_form.cleaned_data['searchTerm'].lower()
+            searchTerm = search_form.cleaned_data['searchTerm'].lower() # Make lower case to remove case sensitivity
             searchStudyName = search_form.cleaned_data['studyName']
             searchStudyDescription = search_form.cleaned_data['studyDescription']
             searchInstitutionsInvolved = search_form.cleaned_data['institutionsInvolved']
@@ -81,7 +90,7 @@ def listStudies(request):
             searchStudyNotes = search_form.cleaned_data['studyNotes']
             searchDataCategory = search_form.cleaned_data['dataCategory']
 
-        # If search term is blank, reset search
+        # If search term is blank, reset search and refresh page
         if searchTerm == "":
             return redirect('inventory-listStudies')
 
@@ -92,8 +101,10 @@ def listStudies(request):
             return redirect('inventory-listStudies')
 
     # Get request
-    study_fields = []
-    study_ids = []
+    study_fields = [] # Dictionary of study name, description and, id used in selection form
+    study_ids = [] # Parallel list of study ids for each study, used for creating links to study pages
+
+    # Get list of studies available to user, based on permissions
     studies = Study.objects.filter(
             ~(Q(visibility="Private") & ~Q(owner=request.user.id))
         )
@@ -104,6 +115,9 @@ def listStudies(request):
 
         # Search visible studies for ones that contain the search term within the selected metadata
         for study in studies:
+
+            # For each meta data field, check if the checkbox was selected, the study's field is not null
+            # and the search term is within the study's field (after making lower case to remove case sensitivity)
             if searchStudyName and study.study_name and searchTerm in study.study_name.lower():
                 matchingStudies.add(study)
             elif searchStudyDescription and study.study_description and searchTerm in study.study_description.lower():
@@ -148,14 +162,23 @@ def listStudies(request):
     }
     return render(request, 'inventory/listStudies.html', context)
 
-# 2nd Screen: Show metadata on study, study groups, data categories, attributes
+######################################
+# Input: HTTPRequest
+# id - study id of study you want to view. This will be in the url
+# Returns: HTTPResponse
+# Description: Lists metadata on a given study on template study.html
+# # including its study groups, data categories, and attributes
+# If the study cannot be viewed or does not exist, it displays an error on template error.html
+######################################
 def studySummary(request, id):
+
+    # Display error page if study with given id does not exist
     try:
         study = Study.objects.get(pk=id)
     except ObjectDoesNotExist:
         return render(request, 'inventory/error.html', {'error': 'Study not found!'})
 
-    # Check permission on study
+    # Check permission on study and display error if study is private and not owned by logged in user
     if not Study.objects.filter(~(Q(visibility="Private") & ~Q(owner=request.user.id)), study_id=id):
         return render(request, 'inventory/error.html', {'error': 'You do not have permission to view this study!'.format(id)})
 
@@ -196,7 +219,14 @@ def studySummary(request, id):
     }
     return render(request, 'inventory/study.html', context)
 
-# Query number of records in a data table which belongs to a given study. Needs to use raw sql due to use of dynamic tables
+######################################
+# Input: study - study model object
+# data_category - name of data category table
+# Returns: Total number of rows of data within a data category that belongs to a specific study
+# Description: Query number of records in a data table which belongs to a given study.
+# This uses a raw sql query since the data categories use dynamically created tables which cannot be mapped to
+# to Django models.
+######################################
 def getNumberOfDataRecords(study, data_category):
     args = {
         'selectors': '*',
@@ -212,7 +242,11 @@ def getNumberOfDataRecords(study, data_category):
     result = DBClient.executeQuery(args, 0)
     return "{:,}".format(len(result))
 
-# Convert attribute.data_type to a presentable type for user
+######################################
+# Input: dt - string SQL data type of an attribute (attribute.data_type)
+# Returns: string of formatted data type
+# Description: Given a SQL data type, converts it to a more presentable data type for the user
+######################################
 def getFormattedDataType(dt):
     if 'VARCHAR' in dt or 'TEXT' in dt:
         return 'Text'
