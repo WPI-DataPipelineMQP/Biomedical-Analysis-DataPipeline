@@ -15,7 +15,8 @@ import io
 import urllib
 import base64
 
-
+# script for histogram prompt where user selects bin number and attribute
+# calls session data from selection output
 def make_hist(request):
     attribute_names = []
     if 'attribute_names' in request.session:
@@ -49,7 +50,8 @@ def make_hist(request):
     context = {"hist_fields": attributes_form}
     return render(request, 'analysis/selectHistColumns.html', context)
 
-
+# script for displaying histogram
+# calls session data from make_hist
 def show_hist(request):
     # create dataframe based on previous query
     engine = sql.create_engine(settings.DB_CONNECTION_URL)
@@ -78,7 +80,8 @@ def show_hist(request):
     uri = urllib.parse.quote(string)
     return render(request, 'analysis/showHist.html', {'data': uri})
 
-
+# script for scatter plot prompt where user selects attributes
+# calls session data from selection output
 def make_scatter(request):
     attribute_names = []
     if 'attribute_names' in request.session:
@@ -106,11 +109,13 @@ def make_scatter(request):
     context = {"scatter_fields": attributes_form}
     return render(request, 'analysis/selectScatterColumns.html', context)
 
-
+# script for displaying scatter plot
+# calls session data from make_scatter
 def show_scatter(request):
     engine = sql.create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=buildQuery(request.session['args']), con=engine)
-
+    
+    #format attribute names to be used as dataframe columns
     xcol_num = int(request.session['scatter_data'][0])
     xcol_name = request.session['attribute_names'][xcol_num]
     xcol_list = xcol_name.split('.')
@@ -125,7 +130,8 @@ def show_scatter(request):
     if len(ycol_list) > 1:
         ycol = ycol_list[1]
 
-    # scatter plot
+    # scatter plot on django
+    # url: https://medium.com/@mdhv.kothari99/matplotlib-into-django-template-5def2e159997
     plt.scatter(x=df[xcol], y=df[ycol])
     plt.title(xcol + ' vs. ' + ycol)
     plt.xlabel(xcol)
@@ -139,48 +145,3 @@ def show_scatter(request):
     plt.close()
     return render(request, 'analysis/showScatter.html', {'data': uri})
 
-
-# user clarification for datatype
-# TODO: change print statement to an alert/prompt
-
-
-def clarifyDataType(dt):
-    if dt == np.object:
-        print('\nDatatype Clarification\n'
-              '[1] String / text\n'
-              '[2] Integer\n'
-              '[3] Float / Decimal\n'
-              '[4] Datetime\n\n'
-              'Please type 1, 2, 3 or 4\n')
-
-        myDt = int(input('\nEnter this column\'s Datatype: '))
-
-        return myDt
-
-    elif np.issubdtype(dt, np.datetime64):
-        return 4
-
-    return -1
-
-# data type validation for scatter plots
-# TODO: change print statements to alerts
-
-
-def validateColsDataType(col, axis, df, dateFlag, myList):
-    dataType = df[col].dtypes
-
-    exactType = clarifyDataType(dataType)
-
-    if exactType == 1:
-        print("Can't Use String!")
-        sys.exit(1)
-
-    elif exactType == 4:
-        dateFlag = True
-        myList.append(axis)
-        name = 'timestamp_{}'.format(axis)
-        df[name] = pd.to_datetime(df[col]).apply(lambda date: date.timestamp())
-
-        col = name
-
-    return col, df, dateFlag, myList
