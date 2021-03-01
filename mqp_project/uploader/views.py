@@ -24,7 +24,9 @@ from .uploaderinfo import UploaderInfo
 import celery, jsonpickle, re, json
 
 
-# FIRST PAGE
+'''
+Handles back end for gathering the study to upload to
+'''
 @login_required
 def study(request):
     context = {
@@ -97,7 +99,10 @@ def study(request):
     return render(request, 'uploader/studyName.html', context)
 
 
-# PAGE IF STUDY DOESN'T EXIST IN STUDY TABLE
+'''
+If study does not exist in database, this method will be called which is in charge of collecting the meta data
+for the new study and adding it to the database
+'''
 @login_required
 def studyInfo(request):
     
@@ -138,6 +143,7 @@ def studyInfo(request):
             # VERIFIES THAT STARTING DATE IS NOT AFTER ENDING DATE
             if Helper.validDates(startDate, endDate):
                 if Study.objects.filter(study_name=studyName, owner=request.user).exists() is False:
+                    # doing a insert to the Study table through using Django Models
                     newStudy = Study.objects.create(study_name=studyName,
                                                     owner=request.user,
                                                     study_description=studyDescription, 
@@ -160,7 +166,10 @@ def studyInfo(request):
     return render(request, 'uploader/studyInfo.html', context)
 
 
-# PAGE THAT GETS THE UPLOADED CSV FILES
+'''
+This is the method that is in charge of handling the backend of the info page. At this page it will need to check to make sure the 
+uploaded documents are acceptable and detect if the user is uploading duplicate files.
+'''
 @login_required
 def info(request):
     
@@ -187,11 +196,16 @@ def info(request):
         uploaderForm = UploaderInfoForm(request.POST, request.FILES, id=studyID)
         
         if uploaderForm.is_valid():
-            print('IS VALID')
             files = request.FILES.getlist('uploadedFiles')
             
             fields, filenames = Helper.getFieldsFromInfoForm(uploaderForm, files)
             
+        '''
+        The following 3 if statements are to check if user chose an existing data category and/or study group or 
+        decided to add a new one
+        
+        NOTE: certain fields found will help in the detection. Refer to the uploader/forms.py for reference
+        '''
         if 'which-category-field' in fields.keys():
             user_input = fields['which-category-field'] 
             if user_input == 'y':
@@ -213,6 +227,7 @@ def info(request):
         rawTimeSeries = fields.get('isTimeSeries')
         uploaderInfo.isTimeSeries = True if rawTimeSeries == 'y' else False
         
+        # this block checks for any uploaded files that are not named correctly
         if (uploaderInfo.subjectOrganization == 'file'):
             if not Helper.passFilenameCheck(filenames):
                 msg = "Detected an error in the filename of the uploaded files. \
@@ -228,13 +243,15 @@ def info(request):
                 context['form'] = uploaderForm 
                 
                 return render(request, 'uploader/info.html', context)
-            
+        
+        
         uploaderInfo.categoryName = Helper.cleanCategoryName(fields.get('categoryName'))
         
         uploaderInfo.handleDuplicate = fields.get('handleDuplicate', 'N/A')
         
         data_category_id = DBFunctions.getDataCategoryIDIfExists(uploaderInfo.categoryName, uploaderInfo.isTimeSeries, uploaderInfo.subjectOrganization, studyID)
         
+        # checking if data category already exists
         if data_category_id != -1:
             uploaderInfo.updateFieldsFromDataCategory(data_category_id)
             
@@ -248,10 +265,11 @@ def info(request):
                 
             return render(request, 'uploader/info.html', context)
         
-        
+        # reset the checkedForDuplications flag to put user back into loop for detecting duplicate files
         if uploaderInfo.handleDuplicate == 'N/A':
             checkedForDuplications = False 
         
+        # this block handles duplicate files
         if checkedForDuplications is False or uploaderInfo.handleDuplicate == 'newFile':
             duplicateFiles = []
             for filename in filenames:
@@ -276,6 +294,7 @@ def info(request):
         specialFlag = False
         specialRow = False
         
+        # checking for a special case that will be needed to be treated differently
         if uploaderInfo.isTimeSeries and (uploaderInfo.subjectOrganization == 'row' or uploaderInfo.subjectOrganization == 'column'):
             if uploaderInfo.subjectOrganization == 'row':
                 specialRow = True 
@@ -284,7 +303,6 @@ def info(request):
         
         uploaderInfo.specialCase = specialFlag 
 
-        # READING THE CSV FILE
         firstFile = filenames[0]
         
         df = Helper.getDataFrame(firstFile)
@@ -339,6 +357,10 @@ def info(request):
     
     return render(request, 'uploader/info.html', context)
 
+'''
+This method handles the backend when the user is entering something new to the database that the system needs 
+to collect meta data on
+'''
 @login_required
 def extraInfo(request):
     
@@ -371,7 +393,7 @@ def extraInfo(request):
         form = UploadInfoCreationForm(request.POST, dynamicFields=headers)
         form.reset()
         
-        myFields, myExtras = {}, []
+        myFields, myExtras = {}, []     # making it easier to read the raw collected data 
         
         if form.is_valid():
             for (i, val) in form.getAllFields():
@@ -380,6 +402,7 @@ def extraInfo(request):
             for (name, val) in form.getExtraFields():
                 myExtras.append((name, val))
         
+        # handles a special case scenario (is heartrate == True and Subject per Row)
         if uploaderInfo.specialCase:
             colName = myFields.get('nameOfValueMeasured').lower()
             dataType = myExtras[0][1]
@@ -388,9 +411,9 @@ def extraInfo(request):
             myExtras = Helper.replaceWithNameOfValue(myExtras, colName)
             
         if subjectRule == 'column':
-            myFields['hasSubjectID'] = 'y'
+            myFields['hasSubjectID'] = 'y'      # automatic yes
             
-
+        # makes any necessary inserts to the StudyGroup table
         if groupID == -1:
             description = myFields.get('studyGroupDescription')
             
@@ -399,10 +422,10 @@ def extraInfo(request):
             groupID = DBFunctions.getGroupID(groupName, studyID)
             
             uploaderInfo.groupID = groupID
-
-
+            
+        # makes any necessary inserts to the DataCategory table
         if dcID == -1:
-            errorMessage = uploaderInfo.handleMissingDataCategoryID(subjectRule, [myFields, myExtras])
+            errorMessage = uploaderInfo.handleMissingDataCategoryID(myFields, myExtras)
             
             if errorMessage is not None:
                 request.session['errorMessage'] = errorMessage + " Please review the guidelines carefully and make sure your files follow them."
@@ -417,9 +440,8 @@ def extraInfo(request):
     
     #############################################################################################################     
     elif request.method == 'GET':
-        case1 = False
+        # if statements will determine which meta data will be shown to the user to be filled out        
         if uploaderInfo.specialCase:
-            print('FOUND CASE 1')
             form.fields['nameOfValueMeasured'].required = True
             
             context['case1'] = True
@@ -432,17 +454,13 @@ def extraInfo(request):
 
 
         if groupID == -1:
-            print('FOUND CASE 2')
             form.fields['studyGroupDescription'].required = True 
             context['case2'] = True 
 
         if dcID == -1:
-            print('FOUND CASE 3')
             form.fields['dataCategoryDescription'].required = True
             context['case3'] = True
 
-                 
-        print('\nGot Uploader Extra Info Request\n')
         
     #############################################################################################################
         
@@ -451,6 +469,10 @@ def extraInfo(request):
     return render(request, 'uploader/extraInfo.html', context)
 
 
+'''
+This handles the backend for the page that asks for the user to position the columns from the uploaded files
+to their corresponding columns within the database table
+'''
 @login_required
 def finalPrompt(request):
     
@@ -484,8 +506,8 @@ def finalPrompt(request):
             for (i, val) in form.getColumnFields():
                 myFields.append((i, val)) 
         
-        print(myFields)
-        clean = Helper.seperateByName(myFields, 1, True, True, dcID)     
+        
+        clean = Helper.seperateByName(myFields, 1, True, True, dcID)   # cleans the raw data to be easier to parse through
 
         if clean is None:
             request.session['errorMessage'] = "Invalid number of columns found in uploaded CSV file"
@@ -518,6 +540,11 @@ def finalPrompt(request):
     
     return render(request, 'uploader/finalPrompt.html', context)
 
+'''
+This method handles the backend for the actual uploading process. It will use all the collected information
+to make the upload to the database. It will do the uploading asynchronously by putting the functionality 
+into a task
+'''
 @login_required
 def upload(request):
     
@@ -555,12 +582,13 @@ def upload(request):
     elif request.method == 'POST':
         
         specialFlag = False 
-
+        
+        # checks if uploading needs to handle it differently
         if uploaderInfo.specialInsert != '':
             positionInfo = uploaderInfo.specialInsert
             specialFlag = True
             
-        print(filenames)
+        # calling the async function to upload the data
         task = ProcessUpload.delay(filenames, jsonpickle.encode(uploaderInfo), positionInfo, specialFlag)
         
         print (f'Celery Task ID: {task.task_id}')
@@ -583,6 +611,10 @@ def upload(request):
         
     return render(request, 'uploader/uploading.html', context) 
 
+'''
+This handles the backend for the error page. Essentially it will display the error message and also 
+provide information to the user of which of the uploaded files were uploaded successfully or not
+'''
 @login_required
 def error(request):
     context = {
@@ -614,6 +646,10 @@ def error(request):
         
     return render(request, 'uploader/errorPage.html', context) 
 
+'''
+This handles the backend of the success page. It simply just informs the user that the uploaded files were
+uploaded successfully.
+'''
 @login_required
 def success(request):
     context = {

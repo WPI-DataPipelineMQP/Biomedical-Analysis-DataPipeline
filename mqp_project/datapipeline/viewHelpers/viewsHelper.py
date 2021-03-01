@@ -11,23 +11,31 @@ def getJSONVersion(raw_list):
 
     return dictionaries
 
-
+######################################
+# Input: Dictionary, Boolean
+# Returns: List
+# Description: Gathers the list of names from the data produced by a dynamic boolean form
+######################################
 def getNameList(data, forStudy=False):
     res = []
-    print('Data')
-    print(data)
-    print()
+    # print('Data')
+    # print(data)
+    # print()
     for key in data:
         currDict = data.get(key)
+        #if the item was selected
         if currDict.get('value'):
 
-            studyName = currDict.get('name')
+            #add the name of the item
+            name = currDict.get('name')
 
+            #if it is a study, 
             if forStudy is True:
                 studyID = currDict.get('id')
-                studyName += " (Study ID = {})".format(studyID)
+                name += " (Study ID = {})".format(studyID)
 
-            res.append(studyName)
+            #add to the list of names
+            res.append(name)
     return res
 
 
@@ -58,6 +66,11 @@ def returnProperType(val):
         stringVal = "'{}'".format(val)
         return stringVal
 
+######################################
+# Input: List
+# Returns: List
+# Description: Turns a list of names into a list of tuples with an auto-incrementing ID so it is compatible with a ChoiceField
+######################################
 def getRadioChoices(attributes):
     choices = []
     for i, attr in enumerate(attributes):

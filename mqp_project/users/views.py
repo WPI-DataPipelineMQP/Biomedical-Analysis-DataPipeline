@@ -4,7 +4,11 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-# Register new user
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Handles form for registering a new user on template login.html
+######################################
 def register(request):
 
     if request.method == 'POST':
@@ -20,9 +24,18 @@ def register(request):
             return redirect(settings.LOGIN_REDIRECT_URL)
 
         form = UserRegisterForm()
-    return render(request, 'users/register.html', {'form': form})
 
-# View or update profile page
+    context = {
+        'form': form
+    }
+
+    return render(request, 'users/register.html', context)
+
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Handles form for viewing or updating profile info on template profile.html
+######################################
 @login_required
 def profile(request):
     if request.method == 'POST':
@@ -36,14 +49,18 @@ def profile(request):
     else:
         form = UserUpdateForm(instance=request.user)
 
-
     context = {
         'form': form
     }
 
     return render(request, 'users/profile.html', context)
 
-# Page for deleting user. Deletes the user when the request is POST
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Handles form for deleting user on template delete.html
+# The user is deleted when the request is POST
+######################################
 @login_required
 def delete(request):
     if request.method == 'POST':
@@ -54,7 +71,11 @@ def delete(request):
 
     return render(request, 'users/delete.html')
 
-# Redirect to login page and show success message after password reset
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Redirects to login page and shows success message after password reset
+######################################
 def password_reset_complete(request):
     messages.success(request, "Your password was reset successfully! Please log in with your new password.")
     return redirect('users-login')

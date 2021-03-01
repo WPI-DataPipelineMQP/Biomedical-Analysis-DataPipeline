@@ -10,6 +10,11 @@ from datapipeline.database import DBClient
 from .models import Document
 import jsonpickle
 
+###
+# Description: handles the actual uploading to the database. By defining it as a task, it allows the action to be done asynchronously
+# PARAMS: filenames (String), uploaderInfo (UploaderInfo), positionInfo (Dictionary), specialFlag (Boolean)
+# RETURN: String - a simple message saying the upload was successful (if True)
+###
 @shared_task(bind=True, max_retries=10)
 def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     
@@ -23,9 +28,9 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
     errorMessage = None
     
     dcID = uploaderInfo.dcID
-    print(dcID)
+
     dcObj = DataCategory.objects.get(data_category_id=dcID)
-    numOfFiles = len(filenames) + 0.5
+    numOfFiles = len(filenames) + 0.5   # adds the 0.5 to account for the initial indicator that is automatically added to progress bar
     directory_path = settings.UPLOAD_PATH
 
     print('Task started')
@@ -47,8 +52,8 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
         
         if i == 0:
             columnInfo, organizedColumns = Helper.getInfo(positionInfo)
-            i += 0.5
-            progress_recorder.set_progress(i, numOfFiles, description="Uploading...")
+            i += 0.5    # adds 0.5 to get the progress bar starting rather than start it at 0 (no progress shows at 0)
+            progress_recorder.set_progress(i, numOfFiles, description="Uploading...")   # updates the progress bar on the client side
         
         
         df = Helper.getDataFrame(file)
@@ -75,7 +80,7 @@ def ProcessUpload(self, filenames, uploaderInfo, positionInfo, specialFlag):
         # Sleep for 1 second
         time.sleep(0.1)
         
-        progress_recorder.set_progress(i, numOfFiles, description="Uploading")
+        progress_recorder.set_progress(i, numOfFiles, description="Uploading...")  # updates the progress bar on the client side
         
         
     return 'Upload was successful'

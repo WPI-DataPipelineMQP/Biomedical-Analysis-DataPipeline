@@ -20,21 +20,31 @@ from .database import DBClient, DBHandler
 from django.db.models import Q
 from .models import Study
 
-# Create your views here.
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Returns to the dashboard, removes documents in the uploader if there are any
+######################################
 def home(request):
     UploadHelper.deleteAllDocuments()
     return render(request, 'datapipeline/home.html', {'myCSS': 'home.css'})
 
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates form listing studies for template studySelection.html
+#  then gets selected study's data categories and study ID to display for next page
+######################################
 def studySelection(request):
     UploadHelper.deleteAllDocuments()
     study_fields = []
 
+    #Get list of studies available to user, based on permissions
     studies = Study.objects.filter(
         ~(Q(visibility="Private") & ~Q(owner=request.user.id))
     )
 
+    #Display form with study information
     for study in studies:
         studies_dict = {}
         studies_dict["name"] = study.study_name
@@ -42,32 +52,39 @@ def studySelection(request):
         studies_dict["id"] = study.study_id
         study_fields.append(studies_dict)
     
+    #save dictionary of studies to the session
     request.session['study_fields'] = study_fields
 
+    #create dynamic form with the studies
     studies_form = CreateChosenBooleanForm(customFields=study_fields)
-
+    
+    #this is passed to the template so the form and css can be displayed when the webpage is loaded
     context = {
         'studies_form': studies_form,
         'myCSS': 'studySelection.css',
     }
 
+    #When form is submitted
     if request.method == 'POST':
 
+        #create the dynamic form
         studies_form = CreateChosenBooleanForm(request.POST, customFields=study_fields)
-
+        
+        #gather the data from the form
         studies_data = {}
-
         if studies_form.is_valid():
             for i, field in enumerate(studies_form.getAllFields()):
+                #name - name of study
+                #value - true if checked, false otherwise
+                #id - study ID
                 studies_data[i] = {
                     'name': study_fields[i]['name'],
                     'value': field[1],
                     'id': study_fields[i]["id"]
                 }
-                
+
+        # MAKING THE QUERY TO USE
         study_ids_forquery = ''
-        
-        # MAKING THE QUERY TO USE 
         for i, key in enumerate(studies_data):
             study = studies_data[key]
             
@@ -80,8 +97,8 @@ def studySelection(request):
                     
                 else:
                     study_ids_forquery += 'study_id = {} '.format(study['id'])
-                    #gets the names to be printed out       
-
+        
+        #gets the study names to be printed out       
         study_names = ViewHelper.getNameList(studies_data, True)
 
         #checks if any studies have been selected
@@ -93,7 +110,6 @@ def studySelection(request):
             study_groups = DBHandler.getStudyGroupsOfStudies(study_ids_forquery)
             
             request.session['study_names'] = study_names
-            request.session['studies_data'] = studies_data # NOTE: after this edit, do we still need this in the session?
             request.session['data_categories'] = data_categories
             request.session['study_groups'] = study_groups
 
@@ -107,21 +123,25 @@ def studySelection(request):
     return render(request, 'datapipeline/studySelection.html', context)
 
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates form listing data categories and study groups for template dataSelection.html
+#  then saves selected data categories and study groups to session
+######################################
 def dataSelection(request):
 
-    studies_data = []
     data_categories = []
     study_groups = []
     
-    if 'studies_data' in request.session:
-        studies_data = request.session['studies_data']
-    
+    #if there are data categories and study groups saved to the session, get them
     if 'data_categories' in request.session:
         data_categories = request.session['data_categories']
         
     if 'study_groups' in request.session:
         study_groups = request.session['study_groups']
 
+    #create boolean forms of data categories and study groups
     categories_form = CreateChosenBooleanFormWithoutDesc(customFields=data_categories)
     study_groups_form = CreateChosenBooleanFormWithoutDesc(customFields=study_groups)
 
@@ -131,8 +151,11 @@ def dataSelection(request):
         'categories_form': categories_form,
         'study_groups_form': study_groups_form,
     }
-    
+
+    #When form is submitted
     if request.method == 'POST':
+
+        #create forms
         categories_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['data_categories'])
         study_groups_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['study_groups'])
 
@@ -153,6 +176,7 @@ def dataSelection(request):
                     'value': field[1]
                 }
                 
+        #create list of names
         category_names = ViewHelper.getNameList(categories_data)
         study_group_names = ViewHelper.getNameList(study_groups_data)
         
@@ -169,6 +193,7 @@ def dataSelection(request):
             messages.error(request, 'Please select at least one study group.')
             return redirect('datapipeline-dataSelection')
 
+        #save to the session
         request.session['category_names'] = category_names
         request.session['study_group_names'] = study_group_names
 
@@ -180,19 +205,28 @@ def dataSelection(request):
     return render(request, 'datapipeline/dataSelection.html', context)
 
 
-
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates form listing attributes and filters for template dataSelection-2.html
+#  then saves selected attributes and filters to session
+######################################
 def dataSelectionContinued(request):
-
     category_names = []
+
+    #get data category names if still saved in session
     if 'category_names' in request.session:
         category_names = request.session['category_names']
     
     columnsForAttributeList = []
     columnsForFiltersList = []
+
+    #create list of attributes in each of the tables
     for table in category_names:
         column_dict = {}
-        result = DBClient.getTableColumns(table)
-        
+        result = DBClient.getTableColumns(table) #get all attributes from selected data categories
+
+        #add the columns we need to lists so we can add them to the form
         for column_name in result:
             if(column_name == "data_id" or column_name == "subject_id" or column_name == "doc_id"):
                 pass
@@ -205,7 +239,7 @@ def dataSelectionContinued(request):
                 columnsForAttributeList.append(column_dict)
                 columnsForFiltersList.append(column_dict)
 
-    #add these because they are always shown by default
+    #add subject number and study group because they are always shown by default
     subject_num_dict = {"name": "subject_number", "table": "Subject"}
     study_group_dict = {"name": "study_group_name", "table": "StudyGroup"}
     columnsForAttributeList.append(subject_num_dict)
@@ -215,6 +249,7 @@ def dataSelectionContinued(request):
     request.session['columnsForAttributeList'] = columnsForAttributeList
     request.session['columnsForFiltersList'] = columnsForFiltersList
 
+    #create the forms
     attributes_form = CreateChosenBooleanFormWithoutDesc(customFields=request.session['columnsForAttributeList'])
     filters_form = CreateChosenFilterForm(customFields=request.session['columnsForFiltersList'])
 
@@ -228,11 +263,12 @@ def dataSelectionContinued(request):
          'error': False
     }
 
+    #When form is submitted
     if request.method == 'POST':
         attributes_form = CreateChosenBooleanFormWithoutDesc(request.POST, customFields=request.session['columnsForAttributeList'])
         filters_form = CreateChosenFilterForm(request.POST, customFields=request.session['columnsForFiltersList'])
 
-        #process the data
+        #process the attribute data
         attribute_data = {}
         if attributes_form.is_valid():
             for i, field in enumerate(attributes_form.getAllFields()):
@@ -241,6 +277,7 @@ def dataSelectionContinued(request):
                     'value': field[1]
                 }
 
+        #create list of attribute names
         attribute_names = ViewHelper.getNameList(attribute_data)
 
         #checks if at least one attribute has been selected
@@ -249,8 +286,7 @@ def dataSelectionContinued(request):
             messages.error(request, 'Please select at least one attribute.')
             return redirect('datapipeline-dataSelection-2')
 
-        request.session['attribute_names'] = attribute_names
-
+        #process the filter data
         filter_data = {}
         if filters_form.is_valid():
             for i, field in enumerate(filters_form.getAllFields()):
@@ -259,8 +295,13 @@ def dataSelectionContinued(request):
                     'name': field[0],
                     'value': field[1]
                 }
+
+        #get the filter names and their values
         filter_names = ViewHelper.getNameList(filter_data)
         filter_values = ViewHelper.getChosenFilters(filter_data)
+
+        #save data to the session
+        request.session['attribute_names'] = attribute_names
         request.session['filter_values'] = filter_values
         request.session['filter_names'] = filter_names
 
@@ -270,6 +311,12 @@ def dataSelectionContinued(request):
 
     return render(request, 'datapipeline/dataSelection-2.html', context)
 
+######################################
+# Input: lodt - list of strings representing data category (table) names
+# Returns: str - string for JOIN statement in a query
+# Description: Helper function, not associated with a template
+# Given a list of data category names, join them all together by subject_id
+######################################
 def make_join(lodt):
     str = ""
     str += "studygroup JOIN subject ON studygroup.study_group_id = subject.study_group_id JOIN "
@@ -282,7 +329,14 @@ def make_join(lodt):
             ".subject_id = " + lodt[2] + ".subject_id"
     return str
 
-
+######################################
+# Input: dictOfConds - dictionary of dictionary, inner dictionary has
+# "name" and "value" of form fields from filter form.
+# study_group_names - name of study groups selected for viewing
+# Returns: str - string for JOIN statement in a query
+# Description: Helper function, not associated with a template
+# Given a list of data category names, join them all together by subject_id
+######################################
 def make_conds(dictOfConds, study_group_names):
     symbols = {
         'equal': '=',
@@ -320,7 +374,6 @@ def make_conds(dictOfConds, study_group_names):
                 properDataTypeVal = ViewHelper.returnProperType(filter['value'])
                 stry += properDataTypeVal
     first = True
-    print('HERE', stry)
     for item in study_group_names:
         seperator = " ("
         stripped = item.split(seperator, 1)[0]
@@ -332,6 +385,11 @@ def make_conds(dictOfConds, study_group_names):
     stry += ")"
     return stry
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates and writes a ".csv" of the selected data
+######################################
 def export_data(request):
     print('Exporting data')
 
@@ -339,15 +397,23 @@ def export_data(request):
 
     response['Content-Disposition'] = 'attachment; filename="study_data.csv"'
 
+    #get the data
     result = DBClient.executeQuery(request.session['args'], 1)
 
     writer = csv.writer(response)
+    #write the headers
     writer.writerow(request.session['attribute_names'])
+    #each line in the query
     for row in result:
         writer.writerow(row)
 
     return response
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Creates and writes a ".csv" of the selected data's summary statistics
+######################################
 def export_summary(request):
     print('Exporting summary')
 
@@ -357,11 +423,21 @@ def export_summary(request):
     engine = create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=DBClient.buildQuery(request.session['args']), con=engine)
     stat_summary = df.describe().apply(lambda s: s.apply(lambda x: format(x, 'g')))
+
+    #create the csv
     stat_summary.to_csv(path_or_buf=response)
 
     return response
 
+######################################
+# Input: HTTPRequest
+# Returns: HTTPResponse
+# Description: Executes final query and displays the selected data
+# and the summary statistics of that data for template output.html
+######################################
 def output(request):
+
+    #get all items from the session
     study_names = []
     if 'category_names' in request.session:
         study_names = request.session['study_names']
@@ -382,12 +458,7 @@ def output(request):
     if 'filter_values' in request.session:
         filter_values = request.session['filter_values']
         
-    # if "StudyGroup.study_group_name" not in attribute_names and "study_group_name" not in attribute_names:
-    #     attribute_names.append("StudyGroup.study_group_name")
-        
-    # if "Subject.subject_number" not in attribute_names and "subject_number" not in attribute_names:
-    #     attribute_names.append("Subject.subject_number")
-
+    #get arguments to create query in DBClient
     args = {
         'selectors': ', '.join(attribute_names),
         'from': make_join(category_names),
@@ -397,14 +468,15 @@ def output(request):
         'group-by': None,
         'order-by': None
     }
-    print(args)
+
+    #get the data
     result = DBClient.executeQuery(args, 1)
 
     # Set up stats summary
     engine = create_engine(settings.DB_CONNECTION_URL)
     df = pd.read_sql_query(sql=DBClient.buildQuery(args), con=engine)
 
-    print(df.dtypes)
+    #print(df.dtypes)
     correctType = False
     for datatype in df.dtypes:
         if datatype == np.int64 or datatype == np.float64:

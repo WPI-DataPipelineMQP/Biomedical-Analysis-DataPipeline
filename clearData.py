@@ -2,6 +2,12 @@ import psycopg2
 from decouple import config
 import sys
 
+# Script to clear all data from the database and then repopulate it with test data.
+# While working on this project, we often used anonymous data from one of Professor Claypool’s and
+# Professor Lammert’s previous IQPs called “The Effects of Exercise on Cognitive on Performance” for testing purposes.
+# This script has many functions for repopulating different tables, with some of the functions currently being unused
+
+
 db = None
 HOST = config('DATABASE_HOST')
 USER = config('DATABASE_USER')
@@ -9,6 +15,7 @@ PASSWORD = config('DATABASE_PASSWORD')
 DATABASE_NAME = config('DATABASE_NAME')
 PORT = config('DATABASE_PORT')
 
+# Connect to database
 db = psycopg2.connect(
     host = HOST,
     user = USER,
@@ -26,6 +33,7 @@ else :
 
 myCursor = db.cursor()
 
+# Clear contents of all tables. Currently does not affect dynamic data category tables so these need to be dropped manually
 #myCursor.execute("SET FOREIGN_KEY_CHECKS = 0")
 myCursor.execute("DROP TABLE IF EXISTS flanker_1")
 myCursor.execute("DROP TABLE IF EXISTS corsi_1")
@@ -39,6 +47,7 @@ myCursor.execute('TRUNCATE StudyGroup RESTART IDENTITY CASCADE')
 myCursor.execute('TRUNCATE Study RESTART IDENTITY CASCADE')
 #myCursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
+# Recreate dynamic data category tables for Exercise IQP test data
 myCursor.execute("CREATE TABLE heartrate_1(" +
                              "data_id SERIAL," +
                              "date_time timestamp," +
@@ -77,7 +86,11 @@ myCursor.execute("CREATE TABLE flanker_1(" +
                              'CONSTRAINT FK_Flanker_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE' +
                              ")")
 
-# Populate study table with Exercise IQP
+######################################
+# Input: None
+# Returns: None
+# Description: Populates study table with Exercise IQP
+######################################
 def populateStudyTable():
     try:
         myCursor = db.cursor()
@@ -107,7 +120,12 @@ def populateStudyTable():
         print(e)
         print("ERROR: Issue Found When Populating Study Table")
 
-# Populate study group table with control group and experimental group
+
+######################################
+# Input: None
+# Returns: None
+# Description: Populate study group table with control group and experimental group
+######################################
 def populateStudyGroupTable():
     try:
         myCursor = db.cursor()
@@ -133,7 +151,12 @@ def populateStudyGroupTable():
         print(e)
         print("ERROR: Issue Found When Populating StudyGroup Table")
 
-
+######################################
+# Input: template - String of SQL statement with placeholder values
+# args - tuple of arguments for the placeholders in the template
+# Returns: Boolean based on whether SQL statement ran successfully
+# Description: Executes insert SQL statements using a template and tuple of arguments
+######################################
 def executeCommand(template, args):
     try:
         myCursor = db.cursor()
@@ -144,8 +167,11 @@ def executeCommand(template, args):
         print(e)
         return False
 
-
-# Populate subject table with all experimental and control group subjects
+######################################
+# Input: None
+# Returns: None
+# Description: Populate subject table with all experimental and control group subjects
+######################################
 def populateSubjectTable():
     try:
         for i in range(1, 34):
@@ -159,7 +185,12 @@ def populateSubjectTable():
         print(e)
         print("ERROR: Issue Found When Populating Subject Table")
 
-# Add individual subject
+######################################
+# Input: subject_number - String of the Subject_number for new subject
+# studyGroup_id - int of the id of the study group that the new subject belongs to
+# Returns: None
+# Description: Insert subject into Subject table given their subject number and the id of their study group
+######################################
 def addSubject(subject_number, studyGroup_id):
     subject_insert_template = ("""INSERT INTO Subject """
                                "(subject_number, study_group_id) "
@@ -167,7 +198,12 @@ def addSubject(subject_number, studyGroup_id):
     subject = (subject_number, studyGroup_id)
     executeCommand(subject_insert_template, subject)
 
-# Populate demographics table with randomly generated data for each subject
+
+######################################
+# Input: None
+# Returns: None
+# Description: Populate demographics table with randomly generated data for each subject
+######################################
 def populateDemographicsTable():
     try:
         for i in range(1, 71):
@@ -178,7 +214,11 @@ def populateDemographicsTable():
         print(e)
         print("ERROR: Issue Found When Populating Demographic Table")
 
-# Generate random demographic data for individual subject
+######################################
+# Input: subject_id - int of the Subject id for a given subject
+# Returns: None
+# Description: Generates random demographic data for individual subject. Currently unused.
+######################################
 def addDemographic(subject_id):
     demographic_insert_template = ("""INSERT INTO Demographics """
                                "(subject_id, age, sex, race, ethnicity, school_year, phone_num, address, "
@@ -199,7 +239,11 @@ def addDemographic(subject_id):
     demographic = (subject_id, age, sex, race, ethnicity, school_year, phone_num, address, height, weight, med_history)
     executeCommand(demographic_insert_template, demographic)
 
-# Populate data category table with Heart rate type
+######################################
+# Input: None
+# Returns: None
+# Description: Populates data category table with heartrate, corsi, and flanker
+######################################
 def populateDataCategoryTable():
     try:
         myCursor = db.cursor()
@@ -230,7 +274,11 @@ def populateDataCategoryTable():
         print(e)
         print("ERROR: Issue Found When Populating DataCategory Table")
 
-# Populate datacategory_study_xref table with Heart rate type and Exercise IQP
+######################################
+# Input: None
+# Returns: None
+# Description: Populates datacategory_study_xref table with heartrate, corsi, and flanker for Exercise IQP
+######################################
 def populateDataCategoryStudyXrefTable():
     try:
         myCursor = db.cursor()
@@ -255,7 +303,12 @@ def populateDataCategoryStudyXrefTable():
         print(e)
         print("ERROR: Issue Found When Populating DataCategoryStudyXref Table")
 
-# Populate heart rate table with 1 record for control subject 1 and 1 record for experimental subject 1
+######################################
+# Input: None
+# Returns: None
+# Description: Populate heart rate table with 1 record for control subject 1 and 1 record for experimental subject 1
+# Currently unused.
+######################################
 def populateHeartRateTable():
     try:
         myCursor = db.cursor()
@@ -283,8 +336,11 @@ def populateHeartRateTable():
         print(e)
         print("ERROR: Issue Found When Populating HeartRate Table")
 
-
-# Populate attribute table with info for every column in the HeartRate, Corsi, and Flanker tables
+######################################
+# Input: None
+# Returns: None
+# Description: Populate attribute table with info for every column in the HeartRate, Corsi, and Flanker tables
+######################################
 def populateAttributeTable():
     try:
         myCursor = db.cursor()
@@ -334,18 +390,11 @@ def populateAttributeTable():
         print("ERROR: Issue Found When Populating Attribute Table")
 
 
-# should be removed once we add functionality for determining study automatically, either through analyzing files/folders or having the user specify
+# Functions that are actually called when running this script
 populateStudyTable()
-
-# should be removed once we add functionality for determining samples automatically, either through analyzing files/folders or having the user specify
 populateStudyGroupTable()
-
-# should be removed once we add functionality for determining data types automatically, either through analyzing files/folders or having the user specify
 populateDataCategoryTable()
-
-# should be removed once we add functionality for associating projects with data types automatically, either through analyzing files/folders or having the user specify
 populateDataCategoryStudyXrefTable()
-
 populateAttributeTable()
 
 db.close()

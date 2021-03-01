@@ -83,9 +83,11 @@ def createTable(stmt, table_name, verbose=0):
     return True, None 
         
 
-
-
-
+######################################
+# Input: Dictionary
+# Returns: String
+# Description: Builds the query needed to process a selection
+######################################
 def buildQuery(args):
     stmt = "SELECT " + args['selectors'] + " "
     stmt += "FROM " + args['from'] + " "
@@ -107,6 +109,11 @@ def buildQuery(args):
     return stmt
 
 
+######################################
+# Input: Dictionary, Boolean
+# Returns: List
+# Description: Builds the query needed to process a selection
+######################################
 def executeQuery(args, verbose=0):
     try:
         with connection.cursor() as cursor:
@@ -115,10 +122,13 @@ def executeQuery(args, verbose=0):
             if verbose == 1:
                 print(stmt)
             
+            #build the query
             stmt = buildQuery(args)
             
+            #execute query
             cursor.execute(stmt)
-            
+
+            #put results into a list
             result = cursor.fetchall()
             
             if not result:
@@ -126,9 +136,6 @@ def executeQuery(args, verbose=0):
             
             return result
 
-    # except:
-    #     print('ERROR IN SELECT')
-    #     return []
     except mysql.connector.Error as e:
         print(e)
     

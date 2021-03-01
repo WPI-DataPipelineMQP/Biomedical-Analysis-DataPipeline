@@ -1,5 +1,7 @@
 from django import forms
 
+#symbols used in filter form
+#for numbers and datetimes
 Integer_Symbols = [
     ('', None),
     ('equal', '='),
@@ -9,25 +11,24 @@ Integer_Symbols = [
     ('lessorequal', '<='),
     ('greaterorequal', '>='),
 ]
+#for other data types
 NonInteger_Symbols = [
     ('equal', '='),
     ('notequal', '!='),
 ]
 
 # Dynamic form that uses customFields arg to create boolean fields with given names and labels
-#taken from Django practice repo
 class CreateChosenBooleanForm(forms.Form):
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('customFields')
         super(CreateChosenBooleanForm, self).__init__(*args, **kwargs)
 
+        #create a BooleanField for each item
         for i, field in enumerate(fields):
             self.fields['custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, help_text=field['description'])
             self.fields['custom_%s' % i].widget.attrs.update({
                 'class': 'checkbox',
             })
-            #help_texts[field['name']] = '<span class="my-class">'+field['description']+'</span>'
-        #print(fields)
 
     def getAllFields(self):
         for name, value in self.cleaned_data.items():
@@ -40,9 +41,13 @@ class CreateChosenBooleanFormWithoutDesc(forms.Form):
         fields = kwargs.pop('customFields')
         super(CreateChosenBooleanFormWithoutDesc, self).__init__(*args, **kwargs)
 
+        #create a BooleanField for each item
         for i, field in enumerate(fields):
+            #subject number and study group are checked by default
             if(field['name'] == "subject_number" or field['name'] == "study_group_name"):
                 self.fields[field['name'] + '_custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, initial=True)
+            
+            #all others are unchecked by default
             else:
                 self.fields[field['name'] + '_custom_%s' % i] = forms.BooleanField(label=field['name'], required=False, initial=False)
 

@@ -8,6 +8,9 @@ from uploader.viewHelpers import Helper, DBFunctions
 import pandas as pd 
 import numpy as np
 
+'''
+Purpose: Easy way to store all the data collected from the users and some way encapsulate the data
+'''
 class UploaderInfo:
     def __init__(self, studyName):
         self.studyName = studyName
@@ -28,14 +31,11 @@ class UploaderInfo:
         self.specialInsert = '' 
         
     
-    def getAllAttributes(self):
-        
-        return self.__dict__
-    
-    def addToSuccess(self, file):
-        self.success.append(file)
-        
-        
+    ###
+    # Description: simply verifies if the uploaded file has already been uploaded by checking to see if the filename exsists in the Document table 
+    # PARAMS: filename (string)
+    # RETURN: Boolean - whether the file exists within the Document table in the database
+    ###    
     def documentExists(self, filename):
         
         document_dcID = DBFunctions.getDataCategoryIDIfExists(self.categoryName, self.isTimeSeries, self.subjectOrganization, self.studyID)
@@ -49,11 +49,22 @@ class UploaderInfo:
         return False
     
     
+    ###
+    # Description: updates the object fields based on what is stored within the DataCategory table
+    # PARAMS: dcID (int) - the Data Category entry id to look at
+    # RETURN: None
+    ###
     def updateFieldsFromDataCategory(self, dcID):
         self.tableName = (DataCategory.objects.get(data_category_id=dcID)).dc_table_name
         self.isTimeSeries = (DataCategory.objects.get(data_category_id=dcID)).is_time_series
         self.hasSubjectNames = (DataCategory.objects.get(data_category_id=dcID)).has_subject_name
+      
         
+    ###
+    # Description: checks to see if the data category name already exists within the DataCategory table
+    # PARAMS: None
+    # RETURN Boolean - True if the data category name along with other attributes already exists within the DataCategory table
+    ###
     def isExistingDataCategory(self):
         res = DataCategory.objects.filter(data_category_name=self.categoryName, 
                                           is_time_series=self.isTimeSeries, 
@@ -61,13 +72,15 @@ class UploaderInfo:
         
         return res
         
-        
-        
-        
-    def dataCategoryHandler(self, myMap):
+    
+    ###
+    # Description: method to handle the inserts into the DataCategory and DataCategoryStudyXref tables
+    # PARAMS: description (string) - the description of the data category
+    # RETURN: Boolean - True if the inserts have been successful
+    ###
+    def dataCategoryHandler(self, description):
         
         errorMessage = None
-        description = myMap.get('DC_description')
         
         insertSuccess, errorMessage = DBFunctions.insertToDataCategory(self.categoryName, self.isTimeSeries, self.hasSubjectNames, self.tableName, description, self.subjectOrganization)
     
@@ -85,32 +98,37 @@ class UploaderInfo:
         return True, ''
 
     
+    ###
+    # Description: Puts the inserts to the DataCategory, DataCategoryStudyXref, and Attribute tables nto a transaction.
+    #              By putting them in a transaction statement, it will allow a rollback to be performed if any errors occurred during the transaction
+    # PARAMS: myMap (Dictionary), myExtras (List of tuples)
+    # RETURN: None
+    ###
     def __performTransaction(self, myMap, myExtras):
         
         errorMessage = ''
         
-        noErrors, errorMessage = self.dataCategoryHandler(myMap) 
+        noErrors, errorMessage = self.dataCategoryHandler(myMap.get('DC_description')) 
                 
         if noErrors is False:
-            print('data category')
             DBFunctions.dropTable(self.tableName)
             raise DatabaseError(errorMessage)
         
-        print(myExtras)
         cleanAttributeFormat = Helper.seperateByName(myExtras, 4, False, False, self.dcID)
                 
         noErrors, errorMessage = DBFunctions.insertToAttribute(cleanAttributeFormat, self.dcID)
                 
         if noErrors is False:
-            print('attribute')
             DBFunctions.dropTable(self.tableName)
             raise DatabaseError(errorMessage)
         
-        
-        
-    def handleMissingDataCategoryID(self, subjectRule, otherInfo):
-        
-        myFields, myExtras = otherInfo[0], otherInfo[1]
+    
+    ###
+    # Description: defines the whole process of when adding a new Data Category
+    # PARAMS: myFields (Dictionary), myExtras (List)
+    # RETURN: String or None - String if an error occurred and it returns the error message
+    ###    
+    def handleMissingDataCategoryID(self, myFields, myExtras):
         
         subjectVal = myFields.get('hasSubjectID')
         
@@ -131,11 +149,9 @@ class UploaderInfo:
         self.tableName = self.tableName.lower()
         myMap['tableName'] = self.tableName
         
-        # do this first because MySQL does not support DDL transactions
         noErrors, errorMessage = DBFunctions.createNewTable(myMap)
                 
         if noErrors is False:
-            print('creating table')
             return str(errorMessage)
             
         try:
@@ -143,13 +159,18 @@ class UploaderInfo:
                 self.__performTransaction(myMap, myExtras)
                  
         except DatabaseError as e:
-            print('SHOULD ROLLBACK')
+            print('ROLLBACK OCCURED')
             return str(e)
         
         return None
          
     
-    
+    ###
+    # Description: this method will always return a subjectID back to the user. If the subject does not exist within the Subject table
+    #               a new subject is inserted into the table and that subjectID will be retrieved and returned
+    # PARAMS: filename (string), subjectNumber (int)
+    # RETURN: Integer - the subjectID of the targeted subject in the Subject table 
+    ###
     def subjectHandler(self, filename, subjectNumber=None):
         subject_number = subjectNumber
         
@@ -170,7 +191,12 @@ class UploaderInfo:
         
         return subject_id, None
     
-    #private method
+    
+    ###
+    # Description: makes sure that the column of the dataframe is of the correct data type
+    # PARAMS: df (pandas dataframe), columnName (string), dt (int)
+    # RETURN: DataFrame - the dataframe with the correct data type for the targeted column name 
+    ###
     def __adjustDFTypes(self, df, columnName, dt):
         
         if dt == 1:
@@ -185,7 +211,7 @@ class UploaderInfo:
         elif dt == 4:
             firstDateTime = df.iloc[0, df.columns.get_loc(columnName)]
             
-            if firstDateTime.count(':') == 3:
+            if firstDateTime.count(':') == 3:   # handles the datetime format HH:MM:SS:MS and converts it to HH:MM:SS
                 df['reverse'] = df.loc[:,columnName].apply(lambda x: x[::-1])
                 df['reverse'] = df['reverse'].str.replace(':', '.', 1)
                 df[columnName] = df.loc[:,'reverse'].apply(lambda x: x[::-1])
@@ -200,6 +226,11 @@ class UploaderInfo:
         return df  
     
     
+    ###
+    # Description: performs the special upload on a Subject per Row that is Time Series
+    # PARAMS: df (pandas DataFrame), docID (integer), column_info (tuple)
+    # RETURN: (Boolean, String/None) - True if the upload was successful, string if an error occurred and it would be the specific error message
+    ### 
     def specialUploadToDatabase(self, df, docID, column_info):
         
         columnHeaders = DBClient.getTableColumns(self.tableName)
@@ -248,6 +279,12 @@ class UploaderInfo:
         
         return True, None
     
+    
+    ###
+    # Description: makes sure the column names in the dataframe are lowercased and contains no whitespaces 
+    # PARAMS: df (pandas DataFrame)
+    # RETURN: DataFrame - the dataframe that was updated
+    ###
     def __adjustDataframeColumnNames(self, df):
         df.columns = map(str.lower, df.columns)
         df.columns = df.columns.str.replace(' ', '')
@@ -255,18 +292,24 @@ class UploaderInfo:
         return df 
     
     
+    ###
+    # Description: performs the uploading from the CSV to the database
+    # PARAMS: df (pandas DataFrame), docID (integer), column_info (List of Tuple), organizedColumns (List of String)
+    # RETURN: (Boolean, String/None) - True if the upload was successful, string if an error occurred and it would be the specific error message
+    ### 
     def uploadToDatabase(self, df, filename, docID, column_info, organizedColumns):
         errorMessage = None
         columnFlag = False 
         
         df = self.__adjustDataframeColumnNames(df)
-
+        
+        # if subject per column, need to transpose the dataframe 
         if self.subjectPerCol is True:
             columnFlag = True
             df = Helper.transposeDataFrame(df, True)
             df = self.__adjustDataframeColumnNames(df)
             
-        filename = Helper.modifyFileName(filename)
+        filename = Helper.modifyFileName(filename)  
         
         df.columns = self.headers
         
@@ -287,7 +330,7 @@ class UploaderInfo:
                 listOfSubjects.append(currID)
             
             df = df.drop(df.columns[0], axis=1) # deleting the subjects column
-            df = df[organizedColumns]
+            df = df[organizedColumns]   # setting the dataframe columns to the correct order based on database table organization
             df['subject_id'] = listOfSubjects
         
         
@@ -311,7 +354,7 @@ class UploaderInfo:
         df['doc_id'] = docID
         
         try:
-            with transaction.atomic():
+            with transaction.atomic():  # make transaction so if error occurred, will perform a rollback
                 for col in column_info:
                     col_name = col[0]
                     dt = col[1]

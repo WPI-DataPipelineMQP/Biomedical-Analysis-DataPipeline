@@ -6,14 +6,9 @@
 <h3>Select number of bins and one column:</h3>
 <form action="{% url 'analysis-make_hist' %}" method="POST">
     {% csrf_token %}
-    <!-- <ul class="no-bullets"> -->
         {% for field in hist_fields %}
-        <!-- <li> -->
             {{ field }}
-            <!--label class="field-label" for="{{ categories_form.field.id_for_label }}"> {{ field.label }}</label-->
-        <!-- </li> -->
         {% endfor %}
-    <!-- </ul> -->
     <input type="submit" value="Submit">
 </form>
 <a href="{% static 'datapipeline/pdfs/Help_Page.pdf#page=15' %}" open>Click here to view the Help Page</a>

@@ -4,6 +4,7 @@ from . import views
 from mqp_project import settings
 import django
 
+#URLs for datapipeline application
 urlpatterns = [
     path('', views.home, name='datapipeline-home'),
     path('study_selection/', views.studySelection, name='datapipeline-studySelection'),

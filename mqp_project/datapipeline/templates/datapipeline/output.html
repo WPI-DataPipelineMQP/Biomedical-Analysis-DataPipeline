@@ -2,6 +2,8 @@
 {% load static %}
 {% block content %}
 <h2>Data:</h2>
+
+<!--Summary Statistics and Export for Summary-->
 <h3>Summary:</h3>
 <table class="table-bordered table-striped">
     <tbody>
@@ -30,7 +32,7 @@
 <!--    </thead>-->
 <!--</table>-->
 
-
+<!--Data Output-->
 <article class="media">
     <div class="media-body">
         <div class="output-scroll">
@@ -56,6 +58,8 @@
     </div>
 </article>
 <br />
+
+<!--Export and Analysis Buttons-->
 <form action="{% url 'datapipeline-export_data' %}">
     <input type="submit" value="Export Data to CSV">
 </form>

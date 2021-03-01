@@ -82,7 +82,7 @@ class UploaderInfoForm(forms.Form):
         if len(dataCategories) == 0:
             self.fields['categoryName'] = forms.CharField(label='Data Category Name', required=True)
         else:
-            self.fields['existingCategory'] = forms.CharField(label='Exisiting Data Categories:',
+            self.fields['existingCategory'] = forms.CharField(label='Existing Data Categories:',
                                                     widget=forms.Select(choices=dataCategories),
                                                     required=False)
             
@@ -95,7 +95,7 @@ class UploaderInfoForm(forms.Form):
             self.fields['groupName'] = forms.CharField(label='Study Group Name', required=False)
             
         else:
-            self.fields['existingStudyGroup'] = forms.CharField(label='Exisiting Study Groups:',
+            self.fields['existingStudyGroup'] = forms.CharField(label='Existing Study Groups:',
                                                     widget=forms.Select(choices=studyGroups),
                                                     required=False)
             
