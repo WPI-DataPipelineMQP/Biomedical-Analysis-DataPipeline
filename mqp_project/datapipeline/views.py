@@ -155,6 +155,9 @@ def dataSelection(request):
                 
         category_names = ViewHelper.getNameList(categories_data)
         study_group_names = ViewHelper.getNameList(study_groups_data)
+        
+        print("MY STUDY GROUPS\n")
+        print(study_group_names)
 
         #checks if at least one category and study group has been selected
         if len(category_names) <= 0:
@@ -183,7 +186,7 @@ def dataSelectionContinued(request):
     category_names = []
     if 'category_names' in request.session:
         category_names = request.session['category_names']
-
+    
     columnsForAttributeList = []
     columnsForFiltersList = []
     for table in category_names:
@@ -322,10 +325,10 @@ def make_conds(dictOfConds, study_group_names):
         seperator = " ("
         stripped = item.split(seperator, 1)[0]
         if first == True:
-            stry += ' AND (StudyGroup.study_group_name = "'+stripped+'"'
+            stry += " AND (StudyGroup.study_group_name = '"+stripped+"'"
             first = False
         else:
-            stry += ' OR StudyGroup.study_group_name = "'+stripped+'"'
+            stry += " OR StudyGroup.study_group_name = '"+stripped+"'"
     stry += ")"
     return stry
 
@@ -394,6 +397,7 @@ def output(request):
         'group-by': None,
         'order-by': None
     }
+    print(args)
     result = DBClient.executeQuery(args, 1)
 
     # Set up stats summary

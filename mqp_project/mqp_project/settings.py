@@ -173,8 +173,10 @@ DEFAULT_FROM_EMAIL = 'WPI Data Pipeline Team <wpidatapipeline@gmail.com>'
 
 
 # Celery Settings
-BROKER_URL = config('BROKER_URL')
-CELERY_RESULT_BACKEND = config('BROKER_URL')
+#BROKER_URL = config('BROKER_URL')
+BROKER_URL = "redis://localhost:6379"
+CELERY_RESULT_BACKEND = "redis://localhost:6379"
+#CELERY_RESULT_BACKEND = config('BROKER_URL')
 
 
 # AWS environment variables

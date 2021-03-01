@@ -273,6 +273,10 @@ def seperateByName(myList, flag, keepOriginal, retrieveAttribute, dcID):
         
         tableCols = DBClient.getTableColumns(tableName)[1:-2]
         
+        if len(orderedCols) != len(tableCols):
+            print('Mismatch')
+            return None 
+        
         for i in range(0, len(orderedCols), 1):
             key_name = orderedCols[i] 
             inner_dict = result.get(key_name)
@@ -409,7 +413,8 @@ def extractHeaders(df, subjectOrgVal):
         
     headers = list(df.columns)
     
-    headers = [col.lower().replace(' ', '') for col in headers]
+    regex = re.compile('[^a-zA-Z ]')
+    headers = [regex.sub('', col).lower() for col in headers]
     
     return headers, hasSubjectNames, subjectPerCol
 
@@ -440,7 +445,12 @@ def replaceWithNameOfValue(extras, name):
 
 def getUploadResults(filenames):
 
-    filesLeft = getAllKeysInS3()
+    raw_files = getAllKeysInS3()
+    filesLeft = []
+    for file in raw_files:
+        index = file.index('/')
+        filesLeft.append(file[index+1:])
+        
     
     if len(filesLeft) == 0:
         return filenames, ['none'] 
@@ -448,10 +458,8 @@ def getUploadResults(filenames):
     filesUploaded = []
     
     for file in filenames:
-        if file in filesLeft:
-            continue 
-        
-        filesUploaded.append(file)
+        if file not in filesLeft:
+            filesUploaded.append(file)
         
     if len(filesUploaded) == 0:
         filesUploaded.append('none')
