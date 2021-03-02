@@ -198,47 +198,6 @@ def addSubject(subject_number, studyGroup_id):
     subject = (subject_number, studyGroup_id)
     executeCommand(subject_insert_template, subject)
 
-
-######################################
-# Input: None
-# Returns: None
-# Description: Populate demographics table with randomly generated data for each subject
-######################################
-def populateDemographicsTable():
-    try:
-        for i in range(1, 71):
-            addDemographic(i)
-
-        print("Demographic Table populated successfully!")
-    except psycopg2.DatabaseError as e:
-        print(e)
-        print("ERROR: Issue Found When Populating Demographic Table")
-
-######################################
-# Input: subject_id - int of the Subject id for a given subject
-# Returns: None
-# Description: Generates random demographic data for individual subject. Currently unused.
-######################################
-def addDemographic(subject_id):
-    demographic_insert_template = ("""INSERT INTO Demographics """
-                               "(subject_id, age, sex, race, ethnicity, school_year, phone_num, address, "
-                                   "height, weight, med_history) "
-                               "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
-    age = random.randint(17,25)
-    sex = random.choice(["Male", "Female"])
-    race = random.choice(["White", "Black", "Native American/Alaskan", "Native Hawaiian/Pacific Islander", "Asian",
-                          "Other", "Unknown"])
-    ethnicity = random.choice(["Latino origin", "Non-Latino origin", "Unknown"])
-    school_year = random.choice([1, 2, 3, 4])
-    phone_num = "".join([str(random.randint(0,9)) for i in range(10)])
-    address = random.choice(["100 Institute Rd, Worcester, MA 01609", "123 Not WPI Road, Worcester, MA 01609"])
-    height = random.randint(122, 214)
-    weight = random.randint(40, 115)
-    med_history = random.choice(["", "Cardiovascular issues", "Respiratory issues"])
-
-    demographic = (subject_id, age, sex, race, ethnicity, school_year, phone_num, address, height, weight, med_history)
-    executeCommand(demographic_insert_template, demographic)
-
 ######################################
 # Input: None
 # Returns: None
