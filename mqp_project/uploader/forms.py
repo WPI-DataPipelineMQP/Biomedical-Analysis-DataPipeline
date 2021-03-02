@@ -25,7 +25,7 @@ class StudyNameForm(forms.Form):
         
             self.fields['which_study_field'] = forms.ChoiceField(choices=YES_NO,
                                                   widget=forms.RadioSelect(attrs={'required': 'required'}),
-                                                  label="Did you choose an exsiting study name?")
+                                                  label="Did you choose an existing study name?")
         
         else:
             self.fields['otherStudy'] = forms.CharField(label='Enter a Study Name:', required=True)
@@ -89,7 +89,7 @@ class UploaderInfoForm(forms.Form):
             self.fields['categoryName'] = forms.CharField(label='Other Data Category Name', required=False)
             
             self.fields['which-category-field'] = forms.ChoiceField(choices=YES_NO,
-                                            widget=forms.RadioSelect(attrs={'required': 'required'}), label="Did you choose an exsiting data category?")
+                                            widget=forms.RadioSelect(attrs={'required': 'required'}), label="Did you choose an existing data category?")
         
         if len(studyGroups) == 0:
             self.fields['groupName'] = forms.CharField(label='Study Group Name', required=False)
@@ -102,7 +102,7 @@ class UploaderInfoForm(forms.Form):
             self.fields['groupName'] = forms.CharField(label='Other Study Group Name', required=False)
             
             self.fields['which-group-field'] = forms.ChoiceField(choices=YES_NO,
-                                            widget=forms.RadioSelect(attrs={'required': 'required'}), label="Did you choose an exsiting study group?")
+                                            widget=forms.RadioSelect(attrs={'required': 'required'}), label="Did you choose an existing study group?")
             
         self.fields['subjectOrganization'] = forms.ChoiceField(choices=SUBJECT_CHOICES,
                                             widget=forms.RadioSelect(attrs={'required': 'required'}), label="What Format Does this Data Category Follow?")

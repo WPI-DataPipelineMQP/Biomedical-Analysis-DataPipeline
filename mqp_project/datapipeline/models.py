@@ -65,7 +65,6 @@ class DataCategoryStudyXref(models.Model):
     dc_study_id = models.AutoField(primary_key=True)                                        # Primary key
     data_category = models.ForeignKey(DataCategory, on_delete=models.CASCADE)               # Foreign key to data category
     study = models.ForeignKey(Study, on_delete=models.CASCADE)                              # Foreign key to study
-    dc_table_name = models.CharField(max_length=255, null=True, blank=True)
     
     class Meta:
         db_table = "datacategorystudyxref"  
