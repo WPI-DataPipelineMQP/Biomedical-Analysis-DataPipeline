@@ -17,6 +17,9 @@
 
     <script src="{% static 'celery_progress/celery_progress.js' %}"></script>
 
+    <!-- Adding Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'datapipeline/images/icon.png'%}"/>
+
     {% block progress_bar_js %}{% endblock progress_bar_js %}
 
     <link rel="stylesheet" type="text/css" href="{% static 'datapipeline/css/base.css' %}">
@@ -41,7 +44,7 @@
 	<header class="site-header">
     <nav class="navbar navbar-expand-xl navbar-dark navbar-bg-color fixed-top">
       <div class="container container-width">
-        <a class="navbar-brand mr-5" href="{% url 'datapipeline-home' %}"><h3 class="title-header">Analysis Data Pipeline</h3></a>
+        <a class="navbar-brand mr-5" href="{% url 'datapipeline-home' %}"><h3 class="title-header">G.I.L.B.E.R.T</h3></a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
