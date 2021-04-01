@@ -14,18 +14,12 @@ import boto3
 
 import random
 
-"""Function verifies that user is not jumping around pages when navigating through uploader
 
-PARAMS:
-session - the request session in dictionary data structure 
-uploadInfoFlag - a boolean to decide whether to check if the uploaderInfo stucture exists within the session
-
-LOGIC:
-if studyName is not in the session it means a incorrect jump was made so return False. Same concept applies 
-if checking for the 'uploaderInfo' key existing in the session
-
-returns Boolean - True if it detected that user tried going to a page they should not be accessing
-"""
+###
+# Description: verifies that user is not jumping around pages when navigating through uploader
+# PARAMS: session (dictionary), uploadInfoFlag (boolean)
+# RETURN: Boolean - True if it detected that user tried going to a page they should not be accessing 
+###
 def pathIsBroken(session, uploadInfoFlag=False):
  
     if session.get('studyName', None) != None:
@@ -41,7 +35,10 @@ def pathIsBroken(session, uploadInfoFlag=False):
     
     return True
 
-
+###
+# Description: gets all the keys in the AWS S3 Bucket
+# RETURN: List - a list of all the keys in the bucket
+###
 def getAllKeysInS3():
     s3 = boto3.resource('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
     bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
@@ -51,13 +48,10 @@ def getAllKeysInS3():
     return keys
 
     
-"""Function that deletes all the documents in the uploaded_csv folder
-
-LOGIC:
-- iterate through each csv file (ignoring the .gitignore file) and delete it
-
-returns None
-"""
+###
+# Description: deletes all the documents in the S3 Bucket. Goal is so we can keep the free plan :)
+# RETURN: None
+###
 def deleteAllDocuments():
     s3 = boto3.resource('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
     bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
@@ -68,6 +62,11 @@ def deleteAllDocuments():
         s3.Object(settings.AWS_STORAGE_BUCKET_NAME, key).delete()
   
       
+###
+# Description: deletes a specific file in the S3 Bucket
+# PARAM: file (String) [name of the file]
+# RETURN: None
+###
 def deleteFile(file):
     s3 = boto3.resource('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME 
@@ -76,25 +75,21 @@ def deleteFile(file):
     
         
         
-"""Function that removes uploaderInfo key from the session
-
-PARAMS:
-session - the request session to delete the key from
-
-returns None 
-"""
+###
+# Description: removes a key and value from session dictionary
+# PARAMS: session (dictionary), key (String)
+# RETURN: None
+###
 def clearKeyInSession(session, key):
     if session.get(key, None) != None:
         del session[key]
 
 
-"""Function to return the value of 'SpecialCase' in the uploaderInfo dictionary (if exists)
-
-PARAMS:
-session - the request session to get the uploaderInfo from
-
-returns Boolean - the value of SpecialCase or False if uploaderInfo is not in the session
-"""       
+###
+# Description: checks to see if the uploaderInfo contains the 'SpecialCase' key in the dictionary 
+# PARAMS: session (dictionary)
+# RETURN: Boolean - returns the value of SpecialCase of False if the key was not in the session  
+###
 def checkForSpecialCase(session):
     uploaderInfo = session.get('uploaderInfo')
     
@@ -104,17 +99,11 @@ def checkForSpecialCase(session):
     return False
        
        
-"""Function to extract the actual column names from a form POST request
-
-PARAMS:
-string - a string value of the raw column name to extract the name from
-
-LOGIC:
-- finds the index of the first occurance of '_' in the string 
-- obtains the name from getting a substring of the string from 0 to the found index
-
-returns String - the actual name of the column
-"""       
+###
+# Description: extracts the column name from a form POST request
+# PARAMS: string ( string )
+# RETURN: String - the name  
+###    
 def extractName(string):
     indexPos = string.find('_')
     
@@ -123,17 +112,10 @@ def extractName(string):
     return name 
 
 
-"""Function to extract the field name from a form POST request
-
-PARAMS:
-string - a string value of the raw column name to extract the field name from
-
-LOGIC:
-- finds the index of the last occurance of '_' in the string 
-- obtains the name from getting a substring of the string from the index after found index to the end of string
-
-returns String - the field name
-"""  
+###
+# Description: extracts the field name from a form POST request
+# PARAMS: string (string)
+# RETURN: String - the field name
 def getFieldName(string):
     indexPos = string.rfind('_')
     
@@ -142,19 +124,10 @@ def getFieldName(string):
     return name
 
 
-"""Function to organize the raw extras from the form to a list of tuples with the column name and its value in a tuple 
-
-ex: [ (column1, value), (column2, value), ... ]
-
-PARAMS:
-myList - a list of the raw extras from the form
-
-LOGIC:
-- only perform the logic on column names that contains '_custom_dataType'
-- if check is True, extract the value and the actual column name, put them into a tuple and add to the list
-
-returns List - a clean list to easily parse through and get the necessary information from
-""" 
+###
+# Description: organizes the raw extras from the form to a list of tuples with the column name and its value in a tuple
+# PARAMS: myList (list of tuples) ex: [ (column1, value), (column2, value), ... ]
+# RETURN: List - a clean list to easily parse through and get the necessary information from
 def organizeExtraColsDataType(myList):
     clean = []
     for (name, val) in myList:
@@ -166,6 +139,11 @@ def organizeExtraColsDataType(myList):
     return clean
 
 
+###
+# Description: gets the corresponding PostgreSQL Datatype depending on the value that is passed in
+# PARAMS: string (string)
+# RETURN: String - the corresponding PostgreSQL datatype 
+###
 def getActualDataType(string):
     dataTypeMap = {
         '1' : 'TEXT',
@@ -177,7 +155,11 @@ def getActualDataType(string):
     
     return dataTypeMap.get(string)
 
-
+###
+# Description: gets the corresponding PostgreSQL Datatype integer value based on the getActualDataType function map
+# PARAMS: string (string)
+# RETURN: String - the corresponding PostgreSQL datatype integer value
+###
 def convertToIntValue(string):
     dataTypeMap = {
         'TEXT': 1,
@@ -190,23 +172,17 @@ def convertToIntValue(string):
     return dataTypeMap.get(string)
 
 
-"""Function produces a nested dictionary so that each column will point to a dictionary of the fields corressponding to that column
-
-ex: {
-    'column1':
-        {
-            'field1': val,
-            'field2': val
-        }
-    }
-    
-PARAMS:
-columns - a list of the raw columns from the form
-keepOriginal - boolean value that determines if the column name should stay the same (with the included spaces in between words)
-
-
-returns Dictionary - a clean way to parse through the columns and their respective field values
-"""
+###
+# Description: produces a nested dictionary so that each column will point to a dictionary of the fields corresponding to that column
+# PARAMS: columns (list), keepOriginal (Boolean)
+# RETURN: Dictionary - a clean way to parse through the columns and their respective field values
+# {
+#     'column1':
+#         {
+#             'field1': val,
+#             'field2': val
+#         }
+# }
 def clean(columns, keepOriginal):
     myMap = {}
     
@@ -231,6 +207,10 @@ def clean(columns, keepOriginal):
     return myMap 
 
 
+###
+# Description: reorders the columns to their correct position within the database table
+# PARAMS: result (dictionary)
+# RETURN: List - the proper ordering of the columns according to the corresponding database table
 def reorderColsByPosition(result):
     numOfKeys = len(result.keys())
     
@@ -243,28 +223,24 @@ def reorderColsByPosition(result):
         
     return orderedByPosition
 
-"""Function does the whole process of taking in raw inputs from the form and organizing it in the format that is produced from the clean function (look above)
-
-PARAMS:
-- myList - a raw list of tuples of the data gathered from the form
-- flag - a int value to decide when to move on to next column. Say if there are 4 fields for each column, flag should be 4
-    - will be used for iterating through myList. Iterate by the value of flag
-    
-- keepOriginal - boolean value that determines if the column name should stay the same (with the included spaces in between words)
-
-
-return Dictionary (output of clean function)
-"""          
+         
+###
+# Description: takes in the raw inputs from the form and organizes it into the format that is produced from the clean function
+# PARAMS: myList (List of tuples), flag (Integer), keepOriginal (Boolean), retrieveAttribute (Boolean), dcID (Integer)
+# RETURN: Dictionary - look at the clean function
+###
 def seperateByName(myList, flag, keepOriginal, retrieveAttribute, dcID):
 
     columns = [] # will be a 2D array (number of columns x value of flag)
-
+    
+    # flag is used to decide when to move on to the next column. Say if there are 4 fields for each column, flag should be 4
     for i in range(0, len(myList), flag):
         currentList = myList[i:i+flag]
         columns.append(currentList)
     
     result = clean(columns, keepOriginal)
     
+    # does some extra stuff when retrieving the attributes (basically just gets the data type from the Attribute Database Table)
     if retrieveAttribute: 
         orderedCols = reorderColsByPosition(result)
         
@@ -292,7 +268,12 @@ def seperateByName(myList, flag, keepOriginal, retrieveAttribute, dcID):
             
     return result         
        
-            
+
+###
+# Description: checks if the user entered in duplicate positions 
+# PARAMS: myMap (Dictionary)
+# RETURN: Boolean - True if duplicate position was detected
+###
 def foundDuplicatePositions(myMap):
     foundPositions = set()
     
@@ -309,12 +290,22 @@ def foundDuplicatePositions(myMap):
     return False
 
 
+###
+# Description: gets the datetime object of the entered in date (this is in String form)
+# PARAMS: string (String)
+# RETURN: Datetime
+###
 def getDatetime(string):
     dateObj = datetime.strptime(string, '%Y-%m-%d').date()
     
     return dateObj
 
 
+###
+# Description: checks if the end date is before the start date
+# PARAMS: start (Datetime), end (Datetime)
+# RETURN: Boolean - True if the start date is before the end date
+###
 def validDates(start, end):
     if start <= end:
         return True 
@@ -322,6 +313,10 @@ def validDates(start, end):
     return False
 
 
+###
+# Description: gets all the column information and organizes the columns to allow the data to be uploaded to the db successfully
+# PARAMS: positionInfo (Dictionary)
+# RETURN: Tuple - (List of tuple, List of String)
 def getInfo(positionInfo):
     organizedColumns = [''] * len(positionInfo)
     columnInfo = []
@@ -339,7 +334,11 @@ def getInfo(positionInfo):
     
     return columnInfo, organizedColumns
 
-
+###
+# Description: modifies the subject names to be in all caps (makes things easier to query [at least at the state that it is in right now])
+# PARAMS: name (String)
+# RETURN: String - modified name with the subject name in all caps
+###
 def modifyFileName(name):
     modifiedResult = name
     
@@ -357,6 +356,11 @@ def modifyFileName(name):
     return modifiedResult
         
 
+###
+# Description: checks if there is a date within the string
+# PARAM: string (String)
+# RETURN: Boolean - True if it found a date in the string
+###
 def hasDate(string):
     try:
         parse(string)
@@ -364,7 +368,12 @@ def hasDate(string):
     
     except ValueError:
         return False 
-    
+
+###
+# Description: gets the dataframe of the csv file that was uploaded in the AWS S3 Bucket
+# PARAMS: filename (String)
+# RETURN: Dataframe - the data frame of the corresponding csv file stored in the S3 Bucket
+###
 def getDataFrame(filename):
     filename = "uploaded_csvs/" + filename
     client = boto3.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
@@ -382,7 +391,11 @@ def getDataFrame(filename):
     except:
         return None
     
-    
+###
+# Description: checks if the csv file has acceptable headers (no unnamed columns, columns containing dates, or columns containing numbers)
+# PARAMS: df (DataFrame)
+# RETURN: Boolean - True if the csv file has acceptable headers
+###
 def hasAcceptableHeaders(df):
     
     unnamedCols = any(col == True for col in df.columns.str.contains('^Unnamed'))
@@ -400,7 +413,11 @@ def hasAcceptableHeaders(df):
     
     return True
 
-
+###
+# Description: gets the header names and makes any necessary modifications to them if needed
+# PARAMS: df (Dataframe), subjectOrgVal (String)
+# RETURN: Tuple - (list of string, Boolean, Boolean)
+###
 def extractHeaders(df, subjectOrgVal):
     
     hasSubjectNames = False 
@@ -419,6 +436,11 @@ def extractHeaders(df, subjectOrgVal):
     return headers, hasSubjectNames, subjectPerCol
 
 
+###
+# Description: does a transpose on the provided dataframe 
+# PARAMS: df (Dataframe), withSubjects (Boolean)
+# RETURN: the transpose version of the inputted dataframe
+###
 def transposeDataFrame(df, withSubjects=True):
     indexVal = df.columns[0] # used to maintain labels after transposing
     
@@ -432,6 +454,13 @@ def transposeDataFrame(df, withSubjects=True):
     
     return df_t   
 
+
+###
+# Description: instead of reading the header from the csv, it allows the user to add in their on column name.
+#    This is used for if the file is subject by row and is time series since this file does not expect there to be a header included
+# PARAMS: extras (list of tuples), name (String)
+# RETURN: List of Tuples
+###
 def replaceWithNameOfValue(extras, name):
     newExtras = []
     for i, item in enumerate(extras):
@@ -442,7 +471,11 @@ def replaceWithNameOfValue(extras, name):
         
     return newExtras
 
-
+###
+# Description: looks at what is left in the AWS S3 Bucket to see which files were uploaded successfully and those that were not
+# PARAMS: filenames (List of String)
+# RETURN: Tuple - (List of String, List of String)
+###
 def getUploadResults(filenames):
 
     raw_files = getAllKeysInS3()
@@ -466,7 +499,12 @@ def getUploadResults(filenames):
         
     return filesUploaded, filesLeft 
 
-    
+
+###
+# Description: gets the raw results from the form and organizes the fields into a dictionary and the filenames into a list
+# PARAMS: uploaderForm (Django Form), files (List of Files)
+# RETURN: Tuple - (Dictionary of the Fields, List of the Filenames)
+###
 def getFieldsFromInfoForm(uploaderForm, files):
     fields, filenames = {}, []
     
@@ -485,14 +523,23 @@ def getFieldsFromInfoForm(uploaderForm, files):
                 
     return fields, filenames
 
+###
+# Description: makes the category name acceptable to be a name of a database table
+# PARAMS: name (String)
+# RETURN: String - a cleaned version of the provided name
+###
 def cleanCategoryName(name):
     
     name = re.sub(r'[^A-Za-z0-9]+', '', name)
-    
-    print(name)
         
     return name
 
+
+###
+# Description: checks to see if the filename contains a "_" character and has text before the "_"
+# PARAMS: files (List of String)
+# RETURN: Boolean - True if all the filenames follow the proper naming convention
+###
 def passFilenameCheck(files):
     for file in files:
         if file.find('_') == -1:

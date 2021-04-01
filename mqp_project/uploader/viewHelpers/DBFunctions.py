@@ -1,14 +1,22 @@
 from datapipeline.database import DBClient
 from datapipeline.models import Study, StudyGroup, Subject, DataCategory, DataCategoryStudyXref, Attribute
 
-
+###
+# Description: does an insert to the StudyGroup table
+# PARAMS: groupName (String), description (String), studyID (Integer)
+# RETURN: None
+###
 def insertToStudyGroup(groupName, description, studyID):
     studyObj = Study.objects.get(study_id=studyID)
     newStudyGroup = StudyGroup.objects.create(study_group_name=groupName,
                                               study_group_description=description,
                                               study=studyObj)
     
-    
+###
+# Description: gets the StudyGroup ID (if exists)
+# PARAMS: groupName (String), studyID (Integer)
+# RETURN: Integer - will return a -1 if ID does not exist
+###    
 def getGroupID(groupName, studyID):
     
     groupExists = StudyGroup.objects.filter(study_group_name=groupName, study=studyID).exists()
@@ -19,6 +27,11 @@ def getGroupID(groupName, studyID):
     return -1
 
 
+###
+# Description: gets the DataCategory ID (if exists)
+# PARAMS: category_name (String), timeSeries (Boolean), subjectOrg (String), studyID (Integer)
+# RETURN: Integer - will return a -1 if ID does not exist
+###
 def getDataCategoryIDIfExists(category_name, timeSeries, subjectOrg, studyID):
     data_category_id = -1
     
@@ -37,7 +50,11 @@ def getDataCategoryIDIfExists(category_name, timeSeries, subjectOrg, studyID):
     return data_category_id
 
 
-
+###
+# Description: does an insert into the DataCategory database table
+# PARAMS: category_name (String), time_series_val (Boolean), hasSubjectNames (Boolean), dc_table_name (String), description (String), subjectOrg (String)
+# RETURN: Tuple - (Boolean, String)
+###
 def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_table_name, description, subjectOrg):
     
     try:
@@ -55,14 +72,22 @@ def insertToDataCategory(category_name, time_series_val, hasSubjectNames, dc_tab
         return False, str(e)
 
 
-
+###
+# Description: gets the DataCategory ID
+# PARAMS: tableName (String), is_time_series (Boolean)
+# RETURN: Integer - the DataCategory ID
+###
 def getDataCategoryID(tableName, is_time_series):
     
     return (DataCategory.objects.get(dc_table_name=tableName, is_time_series=is_time_series)).data_category_id  
 
     
     
-    
+###
+# Description: does an insert into the DataCategoryStudyXref database table
+# PARAMS: category_id (Integer), study_id (Integer)
+# RETURN: Tuple - (Boolean, String)
+###
 def insertToDataCategoryXref(category_id, study_id):
     
     try:
@@ -76,7 +101,11 @@ def insertToDataCategoryXref(category_id, study_id):
     except Exception as e:
         return False, str(e)
     
-    
+###
+# Description: does an insert into the Attribute database table
+# PARAMS: attributes (Dictionary), dcID (Integer)
+# RETURN: Tuple - (Boolean, String)
+###   
 def insertToAttribute(attributes, dcID):
     
     for colName in attributes:
@@ -102,7 +131,11 @@ def insertToAttribute(attributes, dcID):
     
     return True, ''
 
-
+###
+# Description: drops the specified table from the database
+# PARAMS: tableName (String)
+# RETURN: None
+###
 def dropTable(tableName):
     stmt = f"DROP TABLE IF EXISTS {tableName}"
     
@@ -110,7 +143,11 @@ def dropTable(tableName):
     
     print(f"DROPPED TABLE: {tableName}")
     
-
+###
+# Description: creates a new database table 
+# PARAMS: myMap (Dictionary)
+# RETURN: Tuple - (Boolean, String)
+###
 def createNewTable(myMap):
     result = False 
     
@@ -126,14 +163,17 @@ def createNewTable(myMap):
         table_name = myMap.get('tableName')
         #table_name = table_name.lower()
         
+        # setting the known statements within the create table query statement
         dataID_field = "data_id SERIAL,"
         subjectID_field = "subject_id INT,"
         docID_field = "doc_id INT,"
         pk_field = "PRIMARY KEY (data_id),"
         fk_field = "CONSTRAINT FK_{}_SubjectID FOREIGN KEY(subject_id) REFERENCES Subject(subject_id) ON DELETE CASCADE)".format(table_name.upper())
-    
+        
+        
+        # the following lines builds the actual query statement
         stmt = "CREATE TABLE {}({}".format(table_name, dataID_field)
-    
+        
         for column in myMap.get('columns'):
             field_name = column[0]
             data_type = dataTypeMap.get(column[1]) 
@@ -153,6 +193,11 @@ def createNewTable(myMap):
     return result, errorMessage
         
 
+###
+# Description: gets the attribute of the specified table
+# PARAMS: tableName (String)
+# RETURN: Tuple - (String, String)
+###
 def getAttributeOfTable(tableName):
     
     dc_ID = (DataCategory.objects.get(dc_table_name=tableName)).data_category_id
@@ -167,7 +212,11 @@ def getAttributeOfTable(tableName):
     return attributeName, attributeType
 
 
-
+###
+# Description: gets the schema of the specified tablename with the corresponding data category ID
+# PARAMS: tableName (String), dcID (Integer)
+# RETURN: String - a string of the table schema
+###
 def getTableSchema(tableName, dcID):
     string = '{} SCHEMA: '.format(tableName)
     
@@ -188,6 +237,11 @@ def getTableSchema(tableName, dcID):
     return string
 
 
+###
+# Description: gets all the data categories of the study with the provided study ID
+# PARAMS: studyID (Integer)
+# RETURN: List of String - list of all the data category names of the particular study
+###
 def getAllDataCategoriesOfStudy(studyID):
     
     studyObj = Study.objects.get(study_id=studyID)
@@ -206,6 +260,11 @@ def getAllDataCategoriesOfStudy(studyID):
     return studysDCs 
 
 
+###
+# Description: gets the Subject ID from the Subject database table
+# PARAMS: subjectNumber (String), study_group_id (Integer)
+# RETURN: Integer - returns a -1 if the subject does not exist within the table
+###
 def getSubjectID(subjectNumber, study_group_id):
     subjectID = -1 
     
@@ -218,6 +277,10 @@ def getSubjectID(subjectNumber, study_group_id):
     return subjectID
 
 
+###
+# Description: does an insert into the Subject database table 
+# PARAMS: subjectNumber (String), study_group_id (Integer)
+# RETURN: Boolean - True if the insert into the Subject database table was successful
 def insertToSubject(subjectNumber, study_group_id):
     
     try:
